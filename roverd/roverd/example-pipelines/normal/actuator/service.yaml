@@ -1,0 +1,44 @@
+name: actuator
+author: vu-ase
+source: github.com/vu-ase/actuator
+version: 1.0.0
+description: Dummy service that actuates the motors and servo from commands.
+
+commands:
+  build: make build
+  run: ./bin/actuator
+
+inputs:
+  - service: controller
+    streams:
+      - decision
+
+outputs: []
+
+configuration:
+  - name: bus
+    tunable: false # don't allow OTA changes
+    value: 3
+
+  - name: electronic-diff
+    tunable: false
+    value: 1 # 1 is enabled, 0 disabled
+
+  - name: track-width
+    tunable: false
+    value: 60.0
+
+  # This value is used to scale the travel of the servo to its full range.
+  # The current value of 1.0 is sufficient for students, however it can be
+  # increased/decreased to change range
+  - name: servo-scaler
+    tunable: true
+    value: 1
+
+  - name: servo-trim
+    tunable: true # This value is to be set once and then not updated
+    value: 0
+    # 0 is center, positive is right, negative is left
+  - name: fan-cap
+    tunable: false
+    value: 100 # the fan can spin at 100% speed

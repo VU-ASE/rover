@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "Starting Transceiver"
+
+sleep 1
+
+echo '--- Injected ENV ---'
+echo $ASE_SERVICE
+echo '--------------------'
+
+COUNTER=0
+while true; do
+    echo "compute... $COUNTER"
+    ((COUNTER=COUNTER+1))
+    sleep 1
+
+
+    if [ $COUNTER -gt 10 ]; then
+        exit 1
+    fi
+
+done;

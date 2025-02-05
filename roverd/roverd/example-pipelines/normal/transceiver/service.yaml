@@ -1,0 +1,14 @@
+name: transceiver
+author: vu-ase
+source: github.com/vu-ase/transceiver
+version: 1.0.0
+description: debugger
+
+commands:
+  run: ./bin/transceiver
+
+inputs: []
+
+outputs: []
+
+configuration: []

@@ -1,0 +1,19 @@
+name: b
+author: vu-ase
+source: github.com/vu-ase/example-service
+version: 1.0.0
+
+commands:
+  build: make build
+  run: ./example-service
+
+inputs:
+  # this is a cyclic dependency, because a depends on b also
+  - service: a
+    streams:
+      - a
+
+outputs:
+  - b
+
+configuration:

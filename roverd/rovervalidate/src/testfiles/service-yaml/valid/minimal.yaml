@@ -1,0 +1,13 @@
+name: service
+author: author
+source: source.com
+version: 1.0.0
+
+commands:
+  run: ./abc
+
+inputs:
+
+outputs:
+
+configuration:

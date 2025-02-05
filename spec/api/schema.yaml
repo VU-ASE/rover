@@ -1,0 +1,959 @@
+openapi: "3.0.0"
+info:
+  title: "roverd REST API"
+  description: "API exposed from each rover to allow process, service, source and file management"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost"
+    description: "Local rover instance"
+  - url: "http://192.168.0.112"
+    description: "rover12"
+
+tags:
+  - name: "Pipeline"
+    description: "Managing pipeline execution and processes"
+  - name: "Services"
+    description: "Managing services that compose a pipeline"
+  - name: "Health"
+    description: "Health and versioning information"
+
+paths:
+  #
+  # Pipeline processes and commands
+  #
+  /pipeline:
+    get:
+      tags:
+        - "Pipeline"
+      summary: "Retrieve pipeline status and process execution information"
+      responses:
+        "200":
+          description: "Pipeline status and an array of processes"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "status"
+                  - "enabled"
+                properties:
+                  status:
+                    $ref: "#/components/schemas/PipelineStatus"
+                    description: "The status of the pipeline"
+                    example: "running"
+                  last_start:
+                    type: integer
+                    format: "int64"
+                    description: "Milliseconds since epoch when the pipeline was manually started"
+                    example: 1612345678211
+                  last_stop:
+                    type: integer
+                    format: "int64"
+                    description: "Milliseconds since epoch when the pipeline was manually stopped"
+                    example: 1612345678910
+                  last_restart:
+                    type: integer
+                    format: "int64"
+                    description: "Milliseconds since epoch when the pipeline was automatically restarted (on process faults)"
+                    example: 1612345678901
+                  enabled:
+                    type: array
+                    description: "The list of fully qualified services that are enabled in this pipeline. If the pipeline was started, this includes a process for each service"
+                    items:
+                      type: object
+                      required:
+                        - "service"
+                      properties:
+                        service:
+                          type: object
+                          description: "The fully qualified service that is enabled"
+                          required:
+                            - "name"
+                            - "version"
+                            - "author"
+                            - "faults"
+                            - "exit"
+                          properties:
+                            name:
+                              type: string
+                              description: "The name of the service"
+                            version:
+                              type: string
+                              description: "The version of the service"
+                            author:
+                              type: string
+                              description: "The author of the service"
+                            faults:
+                              type: integer
+                              description: "The number of faults that have occurred (causing the pipeline to restart) since pipeline.last_start"
+                              example: 1
+                            exit:
+                              type: integer
+                              description: "The most recent exit code returned by the process."
+                              example: 1
+                        process:
+                          type: object
+                          description: "The last process that was started for this service (instantiated from the service). This can be undefined if the pipeline was not started before."
+                          required:
+                            - "status"
+                            - "pid"
+                            - "uptime"
+                            - "memory"
+                            - "cpu"
+                          properties:
+                            pid:
+                              type: integer
+                              description: "The process ID. Depending on the status, this PID might not exist anymore"
+                              example: 7890
+                            status:
+                              $ref: "#/components/schemas/ProcessStatus"
+                              description: "The status of the process"
+                              example: "running"
+                            uptime:
+                              type: integer
+                              format: "int64"
+                              description: "The number of milliseconds the process has been running"
+                              example: 121
+                            memory:
+                              type: integer
+                              description: "The amount of memory used by the process in megabytes"
+                              example: 1024
+                            cpu:
+                              type: integer
+                              description: "The percentage of CPU used by the process"
+                              example: 20
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      tags:
+        - "Pipeline"
+      summary: "Set the services that are enabled in this pipeline, by specifying the fully qualified services"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - "name"
+                  - "version"
+                  - "author"
+                properties:
+                  name:
+                    type: string
+                    description: "The name of the service"
+                    example: "imaging"
+                  version:
+                    type: string
+                    description: "The version of the service"
+                    example: "1.0.0"
+                  author:
+                    type: string
+                    description: "The author of the service"
+                    example: "vu-ase"
+      responses:
+        "200":
+          description: "The pipeline was updated successfully"
+        "400":
+          description: "The pipeline was not valid and could not be set"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "validation_errors"
+                properties:
+                  message:
+                    type: string
+                    description: "Additional information"
+                  validation_errors:
+                    type: object
+                    description: "The validation errors that prevent the pipeline from being set"
+                    properties:
+                      unmet_streams:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/UnmetStreamError"
+                      unmet_services:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/UnmetServiceError"
+                      duplicate_service:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/DuplicateServiceError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /pipeline/start:
+    post:
+      tags:
+        - "Pipeline"
+      summary: "Start the pipeline"
+      responses:
+        "200":
+          description: "The pipeline was started successfully. You can view its information with GET /pipeline"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /pipeline/stop:
+    post:
+      tags:
+        - "Pipeline"
+      summary: "Stop the pipeline"
+      responses:
+        "200":
+          description: "The pipeline was stopped successfully. You can view its information with GET /pipeline"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /logs/{author}/{name}/{version}:
+    get:
+      tags:
+        - "Pipeline"
+      summary: "Retrieve logs for any service. Logs from running or previously run services can be viewed and will be kept until rover reboot."
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author of the service."
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: name
+          in: path
+          required: true
+          description: "The name of the service."
+          schema:
+            type: string
+          example: "imaging"
+        - name: version
+          in: path
+          required: true
+          description: "The version of the service."
+          schema:
+            type: string
+          example: "1.0.0"
+        - name: lines
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+            maximum: 1000
+          description: "The number of log lines to retrieve"
+          example: 100
+      responses:
+        "200":
+          description: "The collection of logs"
+          content:
+            application/json:
+              schema:
+                type: array
+                description: "The latest <lines> log lines of the process"
+                items:
+                  type: string
+                example:
+                  [
+                    "INFO: Starting imaging service",
+                    "INFO: Imaging service completed",
+                  ]
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  #
+  # Upload ZIP endpoint
+  #
+  /fetch:
+    post:
+      tags:
+        - "Services"
+      summary: "Fetches the zip file from the given URL and installs the service onto the filesystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - "url"
+              properties:
+                url:
+                  type: string
+                  description: "Download URL of the service to be downloaded, must include scheme"
+                  example: "https://downloads.ase.vu.nl/api/imaging/v1.0.0"
+      responses:
+        "200":
+          description: "The service was uploaded successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "name"
+                  - "version"
+                  - "author"
+                  - "invalidated_pipeline"
+                properties:
+                  name:
+                    type: string
+                    description: "The name of the service"
+                    example: "imaging"
+                  version:
+                    type: string
+                    description: "The version of the service"
+                    example: "1.0.0"
+                  author:
+                    type: string
+                    description: "The author of the service"
+                    example: "vu-ase"
+                  invalidated_pipeline:
+                    type: boolean
+                    description: "Whether the pipeline was invalidated by this service upload"
+                    example: true
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  #
+  # Upload ZIP endpoint
+  #
+  /upload:
+    post:
+      tags:
+        - "Services"
+      summary: "Upload a new service or new version to the rover by uploading a ZIP file"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  format: binary
+                  description: "The content of the ZIP file to upload"
+      responses:
+        "200":
+          description: "The service was uploaded successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "name"
+                  - "version"
+                  - "author"
+                  - "invalidated_pipeline"
+                properties:
+                  name:
+                    type: string
+                    description: "The name of the service"
+                    example: "imaging"
+                  version:
+                    type: string
+                    description: "The version of the service"
+                    example: "1.0.0"
+                  author:
+                    type: string
+                    description: "The author of the service"
+                    example: "vu-ase"
+                  invalidated_pipeline:
+                    type: boolean
+                    description: "Whether the pipeline was invalidated by this service upload"
+                    example: true
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  #
+  # Services
+  #
+  /fqns:
+    get:
+      tags:
+        - "Services"
+      summary: "Retrieve a list of all fully qualified services"
+      responses:
+        "200":
+          description: "Fully qualified services"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - "author"
+                    - "version"
+                    - "name"
+                  properties:
+                    author:
+                      type: string
+                      example: "vu-ase"
+                    name:
+                      type: string
+                      example: "imaging"
+                    version:
+                      type: string
+                      example: "1.0.0"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+  /services:
+    get:
+      tags:
+        - "Services"
+      summary: "Retrieve the list of all authors that have parsable services. With these authors you can query further for services"
+      responses:
+        "200":
+          description: "The list of authors"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: "An author of a parsable service"
+                  example: "vu-ase"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /services/{author}:
+    get:
+      tags:
+        - "Services"
+      summary: "Retrieve the list of parsable services for a specific author"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+      responses:
+        "200":
+          description: "The list of services for the author"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: "The name of the service"
+                example:
+                  - "imaging"
+                  - "actuator"
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /services/{author}/{service}:
+    get:
+      tags:
+        - "Services"
+      summary: "Retrieve the list of parsable service versions for a specific author and service"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: service
+          in: path
+          required: true
+          description: "The service name"
+          schema:
+            type: string
+          example: "imaging"
+      responses:
+        "200":
+          description: "The list of versions for this author and service name"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: "The version of the service"
+                example:
+                  - "1.0.0"
+                  - "1.0.1"
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /services/{author}/{service}/{version}:
+    get:
+      tags:
+        - "Services"
+      summary: "Retrieve the status of a specific version of a service"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: service
+          in: path
+          required: true
+          description: "The service name"
+          schema:
+            type: string
+          example: "imaging"
+        - name: version
+          in: path
+          required: true
+          description: "The version of the service"
+          schema:
+            type: string
+          example: "1.0.0"
+      responses:
+        "200":
+          description: "A full description of the service at this version, with inputs, outputs and configuration"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "inputs"
+                  - "outputs"
+                  - "configuration"
+                properties:
+                  built_at:
+                    type: integer
+                    format: "int64"
+                    description: "The time this version was last built as milliseconds since epoch, not set if the service was never built"
+                    example: 1612345678142
+                  inputs:
+                    type: array
+                    description: "The dependencies/inputs of this service version"
+                    items:
+                      type: object
+                      required:
+                        - "service"
+                        - "streams"
+                      properties:
+                        service:
+                          type: string
+                          description: "The name of the service dependency"
+                        streams:
+                          type: array
+                          description: "The streams of the service dependency"
+                          items:
+                            type: string
+                    example:
+                      [
+                        {
+                          "service": "lux",
+                          "streams": ["light_level", "temperature"],
+                        },
+                      ]
+                  outputs:
+                    type: array
+                    description: "The output streams of this service version"
+                    items:
+                      type: string
+                    example: ["image"]
+                  configuration:
+                    type: array
+                    description: "All configuration values of this service version and their tunability"
+                    items:
+                      type: object
+                      required:
+                        - "name"
+                        - "type"
+                        - "value"
+                        - "tunable"
+                      properties:
+                        name:
+                          type: string
+                          description: "The name of the configuration value"
+                        type:
+                          type: string
+                          enum:
+                            - string
+                            - number
+                          description: "The type of the configuration value"
+                        value:
+                          oneOf:
+                            - type: string
+                            - type: number
+                          description: "The value of the configuration"
+                        tunable:
+                          type: boolean
+                          description: "Whether this configuration value is tunable"
+                    example:
+                      [
+                        {
+                          "name": "threshold",
+                          "type": "number",
+                          "value": 0.5,
+                          "tunable": true,
+                        },
+                      ]
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      tags:
+        - "Services"
+      summary: "Build a fully qualified service version"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: service
+          in: path
+          required: true
+          description: "The service name"
+          schema:
+            type: string
+          example: "imaging"
+        - name: version
+          in: path
+          required: true
+          description: "The version of the service"
+          schema:
+            type: string
+          example: "1.0.0"
+      responses:
+        "200":
+          description: "The service was built successfully"
+        "400":
+          description: "The build failed"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "message"
+                  - "build_log"
+                properties:
+                  message:
+                    type: string
+                    description: "The error message"
+                  build_log:
+                    type: array
+                    description: "The build log (one log line per item)"
+                    items:
+                      type: string
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    delete:
+      tags:
+        - "Services"
+      summary: "Delete a specific version of a service"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: service
+          in: path
+          required: true
+          description: "The service name"
+          schema:
+            type: string
+          example: "imaging"
+        - name: version
+          in: path
+          required: true
+          description: "The version of the service"
+          schema:
+            type: string
+          example: "1.0.0"
+      responses:
+        "200":
+          description: "The service version was deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "invalidated_pipeline"
+                properties:
+                  invalidated_pipeline:
+                    type: boolean
+                    description: "Whether the pipeline was invalidated by this service deletion"
+                    example: true
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  #
+  # Health
+  #
+  /status:
+    get:
+      tags:
+        - "Health"
+      summary: "Retrieve the health and versioning information"
+      security: []
+      responses:
+        "200":
+          description: "The health and versioning information"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - "status"
+                  - "version"
+                  - "uptime"
+                  - "os"
+                  - "systime"
+                  - "cpu"
+                  - "memory"
+                properties:
+                  status:
+                    $ref: "#/components/schemas/DaemonStatus"
+                    description: "The status of the roverd daemon process"
+                    example: "operational"
+                  error_message:
+                    type: string
+                    description: "Error message of the daemon status"
+                    example: "none"
+                  version:
+                    type: string
+                    description: "The version of the roverd daemon"
+                    example: "1.0.0"
+                  uptime:
+                    type: integer
+                    format: "int64"
+                    description: "The number of milliseconds the roverd daemon process has been running"
+                    example: 2751
+                  os:
+                    type: string
+                    description: "The operating system of the rover"
+                    example: "linux 5.4.0-65-generic x86_64 ubuntu 20.04"
+                  systime:
+                    type: integer
+                    format: "int64"
+                    description: "The system time of the rover as milliseconds since epoch"
+                    example: 1612345674703
+                  rover_id:
+                    type: integer
+                    description: "The unique identifier of the rover"
+                    example: 12
+                  rover_name:
+                    type: string
+                    description: "The unique name of the rover"
+                    example: "zenith"
+                  memory:
+                    type: object
+                    description: "Memory usage information"
+                    required:
+                      - "used"
+                      - "total"
+                    properties:
+                      total:
+                        type: integer
+                        description: "The total amount of memory available on the rover in megabytes"
+                      used:
+                        type: integer
+                        description: "The amount of memory used on the rover in megabytes"
+                  cpu:
+                    type: array
+                    description: "The CPU usage of the roverd process"
+                    items:
+                      type: object
+                      description: "CPU usage information about a specific core"
+                      required:
+                        - "core"
+                        - "total"
+                        - "used"
+                      properties:
+                        core:
+                          type: integer
+                          description: "The core number"
+                        total:
+                          type: integer
+                          description: "The total amount of CPU available on the core"
+                        used:
+                          type: integer
+                          description: "The amount of CPU used on the core"
+
+        "400":
+          $ref: "#/components/responses/Error"
+
+  /update:
+    post:
+      tags:
+        - "Health"
+      summary: "Self-update the roverd daemon process"
+      responses:
+        "200":
+          description: "The roverd daemon process initiated a self-update successfully. You should expect the process to terminate and restart soon."
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+  /:
+    $ref: "#/paths/~1status"
+  /shutdown:
+    post:
+      tags:
+        - "Health"
+      summary: "Shutdown the rover."
+      responses:
+        "200":
+          description: "Rover shutdown successfully."
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+# Set global security requirement
+security:
+  - BasicAuth: []
+
+components:
+  # We require basic auth for all endpoints
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    PipelineStatus:
+      type: string
+      description: The status of the entire pipeline corresponding to a state machine
+      enum:
+        - empty
+        - startable
+        - started
+
+    # PipelineValidationError:
+    #   type: object
+    #   description: In the case of an invalid pipeline, this object returns useful information
+    #   oneOf:
+    #     - $ref: "#/components/schemas/UnmetDependencyError"
+    #     - $ref: "#/components/schemas/DuplicateServiceError"
+
+    # UnmetDependencyError:
+    #   type: object
+    #   description: UnmetDependencyError
+    #   oneOf:
+    #     - $ref: "#/components/schemas/UnmetServiceError"
+    #     - $ref: "#/components/schemas/UnmetStreamError"
+    UnmetStreamError:
+      type: object
+      description: UnmetStreamError
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        stream:
+          type: string
+    UnmetServiceError:
+      type: object
+      description: UnmetServiceError
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+
+    DuplicateServiceError:
+      type: string
+      description: DuplicateServiceError
+
+    ProcessStatus:
+      type: string
+      enum:
+        - running
+        - stopped
+        - terminated
+        - killed
+      description: "The status of a process in the pipeline"
+    ServiceStatus:
+      type: string
+      description: The status of any given service is either enabled or disabled
+      enum:
+        - enabled
+        - disabled
+    DaemonStatus:
+      type: string
+      enum:
+        - operational
+        - recoverable
+        - unrecoverable
+      description: "The status of the roverd process"
+    ReferencedService:
+      type: object
+      properties:
+        url:
+          type: string
+          description: "Fully qualified download url."
+          example: "https://downloads.ase.vu.nl/api/imaging/v1.0.0"
+
+    GenericError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "A message describing the error"
+        code:
+          type: integer
+          description: "A code describing the error (this is not an HTTP status code)"
+  responses:
+    Error:
+      description: "An error occurred"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GenericError"
+    UnauthorizedError:
+      description: "Unauthorized access (you need to set the Authorization header with a valid username and password)"
+    NotFoundError:
+      description: "Entity not found"

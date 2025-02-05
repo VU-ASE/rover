@@ -1,0 +1,28 @@
+name: a
+author: vu-ase
+source: github.com/vu-ase/example-service
+version: 1.0.0
+
+commands:
+  build: make build
+  run: ./example-service
+
+inputs:
+  # depends on all other services in the pipeline
+  - service: b
+    streams:
+      - b
+  - service: c
+    streams:
+      - c
+  - service: d
+    streams:
+      - d
+  - service: e
+    streams:
+      - e
+
+outputs:
+  # no outputs
+
+configuration:

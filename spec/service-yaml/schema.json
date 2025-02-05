@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Service Configuration Schema",
+    "description": "Configuration file for a service in the ASE Rover platform, defining service identity, commands, data streams, and runtime options.",
+    "type": "object",
+    "required": [
+        "name",
+        "author",
+        "source",
+        "version",
+        "commands",
+        "inputs",
+        "outputs",
+        "configuration"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The name of the service.",
+            "example": "example-service",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "author": {
+            "type": "string",
+            "description": "The author of the service.",
+            "example": "vu-ase",
+            "pattern": "^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$"
+        },
+        "source": {
+            "type": "string",
+            "description": "URL of the service's source repository.",
+            "example": "github.com/vu-ase/example-service",
+            "pattern": "^(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}(?::\\d{1,5})?(?:\\/[^\\s]*)?$"
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the service.",
+            "example": "1.0.0",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+        },
+        "as": {
+            "type": "string",
+            "description": "(Optional) The pipeline alias name of the service.",
+            "example": "controller",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "commands": {
+            "type": "object",
+            "description": "Commands to build and run the service. Executed from the service folder.",
+            "required": [
+                "run"
+            ],
+            "properties": {
+                "build": {
+                    "type": "string",
+                    "description": "The command to build the service. Optional if no build step is involved.",
+                    "example": "make build"
+                },
+                "run": {
+                    "type": "string",
+                    "description": "The command to run the service.",
+                    "example": "./example-service"
+                }
+            }
+        },
+        "inputs": {
+            "type": "array",
+            "description": "List of input streams this service consumes from other services.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "service",
+                    "streams"
+                ],
+                "properties": {
+                    "service": {
+                        "type": "string",
+                        "description": "The name of the service providing the input streams.",
+                        "example": "imaging",
+                        "pattern": "^[a-z]+(-[a-z]+)*$"
+                    },
+                    "streams": {
+                        "type": "array",
+                        "description": "List of streams from the specified service that this service consumes.",
+                        "items": {
+                            "type": "string",
+                            "example": "track",
+                            "pattern": "^[a-z]+(-[a-z]+)*$"
+                        }
+                    }
+                }
+            }
+        },
+        "outputs": {
+            "type": "array",
+            "description": "Names of the streams that this service produces.",
+            "items": {
+                "type": "string",
+                "example": "trajectory",
+                "pattern": "^[a-z]+(-[a-z]+)*$"
+            }
+        },
+        "configuration": {
+            "type": "array",
+            "description": "List of configuration options that can be accessed during runtime.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "value"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the configuration option.",
+                        "example": "speed",
+                        "pattern": "^[a-z]+(-[a-z]+)*$"
+                    },
+                    "value": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "A string value for the configuration option."
+                            },
+                            {
+                                "type": "number",
+                                "description": "A float value for the configuration option."
+                            }
+                        ],
+                        "description": "The value of the configuration option, which can be a string or number.",
+                        "example": 1.0
+                    },
+                    "tunable": {
+                        "type": "boolean",
+                        "description": "Indicates if the configuration option can be changed during runtime.",
+                        "example": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Specifies the type of the configuration value if it needs to override auto-detection (options: string, number).",
+                        "enum": [
+                            "string",
+                            "number"
+                        ],
+                        "example": "string"
+                    }
+                }
+            }
+        }
+    }
+}

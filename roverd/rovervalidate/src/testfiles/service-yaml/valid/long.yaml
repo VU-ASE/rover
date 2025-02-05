@@ -1,0 +1,47 @@
+name: example-service-with-a-long-name
+author: vu-ase-author
+source: github.com/vu-ase/example-service/source
+version: 15.16.17
+
+commands:
+  build: make build
+  run: ./example-service
+  extra: not-used
+
+inputs:
+  - service: imaging
+    extra: not-used
+    streams:
+      - debug
+      - track
+  - service: controller-this-is-a-controller
+    extra: not-used
+    streams:
+      - decision
+      - debug
+      - track
+  - service: vu-actuator-module-vu-ase
+    extra: not-used
+    streams:
+      - decision
+  - service: vu-actuator-module-vu-ase-two
+    streams:
+      - decision
+
+outputs:
+  - trajectory
+  - debugdata
+
+configuration:
+  - name: speed
+    value: 1.0
+    type: number
+    tunable: false
+  - name: ki
+    value: "123.0"
+    tunable: true
+    type: string
+  - name: kp
+    value: "456"
+    tunable: true
+    type: string

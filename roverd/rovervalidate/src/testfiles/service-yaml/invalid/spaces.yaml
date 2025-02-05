@@ -1,0 +1,32 @@
+name: example service # service name is invalid
+author: vu-ase
+source: github.com/vu-ase/example-service
+version: 1.0.0
+
+commands:
+  build: make build 
+  run: ./example-service
+
+inputs:
+  - service: imaging
+    streams:
+      - track
+      - debug
+  - service: controller
+    streams:
+      - decision
+    
+outputs:
+  - trajectory
+  - debugdata
+
+configuration:
+  - name: speed
+    value: 1.0
+  - name: ki
+    value: 123
+    tunable: true 
+  - name: kp
+    value: 456
+    tunable: true
+    type: string 

@@ -1,0 +1,56 @@
+{
+    "name": "controller",
+    "version": "1.0.1",
+    "inputs": [{
+            "service": "imaging",
+            "streams": [{
+                    "name": "track_data",
+                    "address": "tcp://unix:7890"
+                },
+                {
+                    "name": "debug_info",
+                    "address": "tcp://unix:7891"
+                }
+            ]
+        },
+        {
+            "service": "navigation",
+            "streams": [{
+                "name": "location_data",
+                "address": "tcp://unix:7892"
+            }]
+        }
+    ],
+    "outputs": [{
+            "name": "motor_movement",
+            "address": "tcp://unix:7882"
+        },
+        {
+            "name": "sensor_data",
+            "address": "tcp://unix:7883"
+        }
+    ],
+    "configuration": [{
+            "name": "max-iterations",
+            "type": "float",
+            "tunable": true,
+            "value": 100
+        },
+        {
+            "name": "speed",
+            "type": "float",
+            "tunable": false,
+            "value": 1.5
+        },
+        {
+            "name": "log-level",
+            "type": "string",
+            "tunable": false,
+            "value": "debug"
+        }
+    ],
+    "tuning": {
+        "enabled": true,
+        "address": "tcp://unix:8829"
+    }
+}

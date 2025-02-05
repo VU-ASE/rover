@@ -1,0 +1,136 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "injectedService",
+    "type": "object",
+    "description": "The object that injected into a rover process by roverd and then parsed by roverlib to be made available for the user process",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The name of the service (only lowercase letters and hyphens)",
+            "example": "controller",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "version": {
+            "type": "string",
+            "description": "The specific version of the service",
+            "example": "1.0.1",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+        },
+        "inputs": {
+            "type": "array",
+            "description": "The resolved input dependencies",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "service": {
+                        "type": "string",
+                        "description": "The name of the service for this dependency",
+                        "example": "imaging",
+                        "pattern": "^[a-z]+(-[a-z]+)*$"
+                    },
+                    "streams": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "The name of the stream as outputted by the dependency service",
+                                    "example": "track_data",
+                                    "pattern": "^[a-z]+(-[a-z]+)*$"
+                                },
+                                "address": {
+                                    "type": "string",
+                                    "description": "The (zmq) socket address that input can be read on",
+                                    "example": "tcp://unix:7890"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "outputs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the output published by this service",
+                        "example": "motor-movement",
+                        "pattern": "^[a-z]+(-[a-z]+)*$"
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "The (zmq) socket address that output can be written to",
+                        "example": "tcp://unix:7882"
+                    }
+                }
+            }
+        },
+        "configuration": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Unique name of this configuration option",
+                        "example": "max-iterations",
+                        "pattern": "^[a-z]+(-[a-z]+)*$"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "The type of this configuration option",
+                        "enum": [
+                            "string",
+                            "number"
+                        ],
+                        "example": "number"
+                    },
+                    "tunable": {
+                        "type": "boolean",
+                        "description": "Whether or not this value can be tuned (ota)",
+                        "example": true
+                    },
+                    "value": {
+                        "oneOf": [{
+                                "type": "string",
+                                "description": "The value can be a string"
+                            },
+                            {
+                                "type": "number",
+                                "description": "The value can be a floating-point number or integer"
+                            }
+                        ],
+                        "description": "The value of this configuration option, which can be a string or float",
+                        "example": 100
+                    }
+                }
+            }
+        },
+        "tuning": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Whether or not live (ota) tuning is enabled",
+                    "example": true
+                },
+                "address": {
+                    "type": "string",
+                    "description": "(If enabled) the (zmq) socket address that tuning data can be read from",
+                    "example": "tcp://unix:8829"
+                }
+            }
+        }
+    },
+    "required": [
+        "service",
+        "inputs",
+        "outputs",
+        "configuration",
+        "tuning"
+    ]
+}

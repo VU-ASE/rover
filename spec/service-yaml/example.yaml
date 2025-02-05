@@ -1,0 +1,44 @@
+# Template for a service configuration in the ASE Rover platform,
+# as parsed by the ASE roverd tools.
+
+# Service identity
+name: example-service
+author: vu-ase
+source: https://github.com/vu-ase/example-service
+version: 1.0.0
+
+# Optional alias to change the name of the serivce in the pipeline
+as: controller
+
+# The rover will execute these commands to build and start the service
+# NB: they will be executed from the service folder, where the service.yaml file is located
+commands:
+  build: make build # you can omit this if there is no build step involved
+  run: ./example-service
+
+# From each service, describe which stream we are interested in
+inputs:
+  - service: imaging
+    streams:
+      - track
+      - debug
+  - service: controller
+    streams:
+      - decision
+
+# The names of the streams that this service will produce
+outputs:
+  - trajectory
+  - debugdata
+
+# Here you define options values that can be accessed during runtime, by the roverlib
+configuration:
+  - name: speed
+    value: 1.0
+  - name: ki
+    value: 123
+    tunable: true # do you want to be able to change this value during runtime?
+  - name: kp
+    value: 456
+    tunable: true
+    type: string # override the auto-detected type (can be string/int/float)

@@ -1,0 +1,55 @@
+# ------------------
+# --- ASE ROVERS ---
+# ------------------
+
+Host roverbuilder
+	HostName 192.168.0.100
+	User debix
+
+Host rover01
+	HostName 192.168.0.101
+	User debix
+
+Host rover02
+	HostName 192.168.0.102
+	User debix
+
+Host rover03
+	HostName 192.168.0.103
+	User debix
+
+Host rover04
+	HostName 192.168.0.104
+	User debix
+
+Host rover05
+	HostName 192.168.0.105
+	User debix
+
+Host rover06
+	HostName 192.168.0.106
+	User debix
+
+Host rover07
+	HostName 192.168.0.107
+	User debix
+
+Host rover08
+	HostName 192.168.0.108
+	User debix
+
+Host rover09
+	HostName 192.168.0.109
+	User debix
+
+Host rover10
+	HostName 192.168.0.110
+	User debix
+
+Host rover11
+	HostName 192.168.0.111
+	User debix
+
+Host rover12
+	HostName 192.168.0.112
+	User debix

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.5/.schema/devbox.schema.json",
+  "packages": [
+    "rustup@1.27.1",
+    "libiconv@2.40",
+    "openapi-generator-cli@7.9.0"
+  ]
+}

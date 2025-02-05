@@ -1,0 +1,38 @@
+name: example-service
+author: vu-ase
+source: github.com/vu-ase/example-service
+version: 1.0.0
+
+commands:
+  build: make build
+  run: ./example-service
+
+inputs:
+  # duplicate streams can exist among different services
+  - service: a
+    streams:
+      - decision
+  - service: b
+    streams:
+      - decision
+  - service: c
+    streams:
+      - decision
+  - service: d
+    streams:
+      - decision
+
+outputs:
+  - trajectory
+  - debugdata
+
+configuration:
+  - name: spe-ed
+    value: 1.0
+  - name: ki-value
+    value: "123456"
+    tunable: true
+  - name: kp
+    value: "456"
+    tunable: true
+    type: string

@@ -1,15 +1,76 @@
-name: build-and-upload
+name: Build and release all software
 
 on:
-  release:
-    types: [published]
+    release:
+        types: [published]
 
 permissions:
-  contents: write
-  packages: write
+    contents: write
+    packages: write
 
 jobs:
-  build-and-upload:
-    uses: VU-ASE/actions/.github/workflows/build-and-upload.yaml@main
-    secrets:
-      gh_token: ${{ secrets.GITHUB_TOKEN }}
+    build-and-release-roverctl:
+        name: Build and release roverctl
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.21.6"
+
+            - name: Set VERSION from tag
+              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+            - name: Build binaries for linux and macos (amd64 and arm64)
+              env:
+                  VERSION: ${{ env.VERSION }}
+              working-directory: roverctl/src
+              run: |
+                  BUILD_DIR=../bin/
+                  BINARY_NAME=roverctl
+                  LDFLAGS="-X 'github.com/VU-ASE/rover/roverctl/src/views.version=${VERSION}'"
+                  mkdir -p $BUILD_DIR
+
+                  # Build for macOS Intel
+                  GOOS=darwin GOARCH=amd64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-macos-amd64"
+
+                  # Build for macOS Silicon
+                  GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-macos-arm64"
+
+                  # Build for Linux AMD64
+                  GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-linux-amd64"
+
+                  # Build for Linux ARM64
+                  GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-linux-arm64"
+
+            - uses: AButler/upload-release-assets@v3.0
+              with:
+                  files: "roverctl/bin/*"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  release-tag: ${{ env.VERSION }}
+    build-and-release-roverd:
+        name: Build and release roverd
+        runs-on:
+            - self-hosted
+            - X64
+            - Linux
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Build and run in Docker container
+              run: |
+                  cd roverd
+                  docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f ../.devcontainer/roverd/Dockerfile .
+                  docker run --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work'
+
+            - name: Set VERSION from tag
+              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+            - uses: AButler/upload-release-assets@v3.0
+              with:
+                  files: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  release-tag: ${{ env.VERSION }}

@@ -1,0 +1,5 @@
+enabled:
+  - /home/debix/.rover/vu-ase/imaging/1.0.0
+  - /home/debix/.rover/vu-ase/controller/1.0.1
+  - /home/debix/.rover/vu-ase/actuator/1.0.5/
+

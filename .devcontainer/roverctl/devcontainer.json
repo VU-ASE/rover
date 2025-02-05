@@ -1,0 +1,30 @@
+{
+    "name": "ASE-roverctl",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceFolder": "/workspace/roverctl",
+    "workspaceMount": "source=${localWorkspaceFolder}/roverctl,target=/workspace/roverctl,type=bind",
+    "mounts": [
+        "source=${localWorkspaceFolder}/spec,target=/workspace/spec,type=bind"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "streetsidesoftware.code-spell-checker",
+                "golang.go", // Go language server extension
+                "golangci.golangci-lint", // golangci-lint extension
+                "ms-vscode.makefile-tools", // Makefile Tools extension
+                "dbankier.vscode-quick-select", // Quick select with cmd/ctrl+k "
+                "ms-azuretools.vscode-docker" // docker extension:
+            ]
+        }
+    },
+    "capAdd": [
+        "SYS_PTRACE"
+    ],
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "forwardPorts": []
+}

@@ -1,0 +1,34 @@
+name: controller
+author: vu-ase
+source: github.com/vu-ase/controller
+version: 1.0.0
+description: Makes the main control decisions steering the car to victory.
+
+commands:
+  build: make build
+  run: ./bin/controller
+
+inputs:
+  - service: imaging
+    streams:
+      - path
+
+outputs:
+  - decision
+
+configuration:
+  - name: speed
+    tunable: true
+    value: 0.2
+  - name: kp
+    tunable: true
+    value: 0.01
+  - name: kd
+    tunable: true
+    value: 0
+  - name: ki
+    tunable: true
+    value: 0
+  - name: desired-trajectory-point
+    tunable: false
+    value: 320 # 640 / 2
