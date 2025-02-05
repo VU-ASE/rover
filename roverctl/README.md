@@ -4,7 +4,7 @@
 
 <h1 align="center"><code>roverctl</code></h1>
 <div align="center">
-  <a href="https://github.com/VU-ASE/roverctl/releases/latest">Latest release</a>
+  <a href="https://github.com/VU-ASE/rover/roverctl/releases/latest">Latest release</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://ase.vu.nl/docs/category/roverctl">Documentation</a>
   <br />

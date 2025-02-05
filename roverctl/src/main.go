@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/VU-ASE/roverctl/src/configuration"
-	"github.com/VU-ASE/roverctl/src/state"
-	"github.com/VU-ASE/roverctl/src/utils"
-	"github.com/VU-ASE/roverctl/src/views"
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
+	"github.com/VU-ASE/rover/roverctl/src/state"
+	"github.com/VU-ASE/rover/roverctl/src/utils"
+	"github.com/VU-ASE/rover/roverctl/src/views"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

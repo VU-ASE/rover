@@ -1,8 +1,8 @@
 package views
 
 import (
-	"github.com/VU-ASE/roverctl/src/style"
-	"github.com/VU-ASE/roverctl/src/utils"
+	"github.com/VU-ASE/rover/roverctl/src/style"
+	"github.com/VU-ASE/rover/roverctl/src/utils"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"

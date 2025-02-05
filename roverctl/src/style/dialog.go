@@ -1,7 +1,7 @@
 package style
 
 import (
-	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/charmbracelet/lipgloss"
 )
 

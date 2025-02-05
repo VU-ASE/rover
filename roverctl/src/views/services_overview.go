@@ -3,10 +3,10 @@ package views
 import (
 	"os"
 
-	"github.com/VU-ASE/roverctl/src/components"
-	"github.com/VU-ASE/roverctl/src/state"
-	"github.com/VU-ASE/roverctl/src/style"
-	"github.com/VU-ASE/roverctl/src/utils"
+	"github.com/VU-ASE/rover/roverctl/src/components"
+	"github.com/VU-ASE/rover/roverctl/src/state"
+	"github.com/VU-ASE/rover/roverctl/src/style"
+	"github.com/VU-ASE/rover/roverctl/src/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

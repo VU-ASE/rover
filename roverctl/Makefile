@@ -31,7 +31,7 @@ build: build-open-api build-src
 # make start runargs="-debug" buildargs="-verbose"
 # make build buildargs="-verbose"
 #
-start: build
+start: build-src
 	@echo "starting ${BINARY_NAME}"
 	./${BUILD_DIR}${BINARY_NAME} ${runargs}
 

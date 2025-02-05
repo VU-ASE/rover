@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/VU-ASE/roverctl/src/openapi"
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
