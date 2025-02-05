@@ -14,7 +14,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Set up Go
               uses: actions/setup-go@v4
@@ -28,6 +28,13 @@ jobs:
               run: |
                   cd roverctl
                   docker build --build-arg HOST_UID=$(id -u) -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
+
+                  # Debug step
+                  docker run --rm \
+                    -v "$(pwd):/home/devuser/roverctl" \
+                    -v "$(pwd)/../spec:/home/devuser/spec" \
+                    roverctl-build-container bash -ic 'ls -al /home/devuser/roverctl/; echo ====; ls -al /home/devuser/spec'
+
                   docker run --rm  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
 
             - name: Build binaries for linux and macos (amd64 and arm64)
