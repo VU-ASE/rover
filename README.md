@@ -1,4 +1,4 @@
-# service-template-go
+# rover
 
-This is best used in combination with roverctl.
-wip, docs soon.
+This repository bundles and versions all software that is used to control the Rover (remotely) and to run services on it.
+It contains our most important software.
