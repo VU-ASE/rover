@@ -1,0 +1,15 @@
+name: build-and-upload
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-upload:
+    uses: VU-ASE/actions/.github/workflows/build-and-upload.yaml@main
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}

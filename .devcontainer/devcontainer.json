@@ -1,0 +1,24 @@
+{
+    "name": "ASE-service",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "streetsidesoftware.code-spell-checker",
+                "golang.go", // Go language server extension
+                "golangci.golangci-lint", // golangci-lint extension
+                "ms-vscode.makefile-tools", // Makefile Tools extension
+                "dbankier.vscode-quick-select" // Quick select with cmd/ctrl+k "
+            ]
+        }
+    },
+    "capAdd": [
+        "SYS_PTRACE"
+    ],
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "forwardPorts": []
+}

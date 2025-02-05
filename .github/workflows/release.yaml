@@ -1,0 +1,16 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    uses: VU-ASE/actions/.github/workflows/release.yaml@main
+    secrets:
+      release_please_token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
