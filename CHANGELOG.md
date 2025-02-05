@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/VU-ASE/rover/compare/v1.0.3...v1.0.4) (2025-02-05)
+
+
+### Bug Fixes
+
+* run open-api generator as devuser ([e8e84c8](https://github.com/VU-ASE/rover/commit/e8e84c85578d578299798f469782f04e9acff0f0))
+
 ## [1.0.3](https://github.com/VU-ASE/rover/compare/v1.0.2...v1.0.3) (2025-02-05)
 
 
