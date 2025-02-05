@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/VU-ASE/rover/compare/v1.0.0...v1.0.1) (2025-02-05)
+
+
+### Bug Fixes
+
+* move github.com/VU-ASE/roverctl to github.com/VU-ASE/rover/roverctl ([a35e0dc](https://github.com/VU-ASE/rover/commit/a35e0dc12895750545256432284054e560e9eb65))
+
 ## 1.0.0 (2025-02-05)
 
 
