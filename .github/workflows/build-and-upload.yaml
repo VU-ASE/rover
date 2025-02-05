@@ -35,7 +35,7 @@ jobs:
                     -v "$(pwd)/../spec:/home/devuser/spec" \
                     roverctl-build-container bash -ic 'ls -al /home/devuser/roverctl/; echo ====; ls -al /home/devuser/spec'
 
-                  docker run --rm  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
+                  docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
 
             - name: Build binaries for linux and macos (amd64 and arm64)
               env:
