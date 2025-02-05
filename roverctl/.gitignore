@@ -23,6 +23,9 @@ go.work
 # Build outputs
 bin
 
+# OpenAPI files should be generated on every build
+src/openapi
+
 # :/
 .DS_Store
 
