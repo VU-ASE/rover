@@ -124,6 +124,12 @@ impl Pipeline for Roverd {
                                     rovervalidate::error::PipelineValidationError::DuplicateServiceError(s) => {
                                         duplicate_service.push(openapi::models::DuplicateServiceError(s));
                                     },
+                                    rovervalidate::error::PipelineValidationError::DuplicateAliasError(_) => {
+                                        todo!("Implement the DuplicateAliasError in openapi");
+                                    },
+                                    rovervalidate::error::PipelineValidationError::AliasInUseAsNameError(_) => {
+                                        todo!("Implement the AliasInUseAsNameError in openapi");
+                                    },
                                 }
                         }
 
