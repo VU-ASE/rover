@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/VU-ASE/rover/compare/v1.0.1...v1.0.2) (2025-02-05)
+
+
+### Bug Fixes
+
+* do not build roverd on self-hosted ([af62651](https://github.com/VU-ASE/rover/commit/af626516335e3f1c2a5682aaa8fb54b5f72deb5c))
+* do not publish openapi files ([f7f7ff0](https://github.com/VU-ASE/rover/commit/f7f7ff039253c5ebfc893fa0d53b5daad304968d))
+* roverctl, build openapi files in Dockerfile ([af01eb6](https://github.com/VU-ASE/rover/commit/af01eb620b565518860cb84d5665595788b0de71))
+
 ## [1.0.1](https://github.com/VU-ASE/rover/compare/v1.0.0...v1.0.1) (2025-02-05)
 
 

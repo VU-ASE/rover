@@ -24,6 +24,12 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
+            - name: Generate OpenAPI files in devcontainer
+              run: |
+                  cd roverctl
+                  docker build --build-arg HOST_UID=$(id -u) -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
+                  docker run --rm  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
+
             - name: Build binaries for linux and macos (amd64 and arm64)
               env:
                   VERSION: ${{ env.VERSION }}
