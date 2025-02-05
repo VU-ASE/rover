@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/VU-ASE/rover/compare/v1.0.2...v1.0.3) (2025-02-05)
+
+
+### Bug Fixes
+
+* open-api-gen debugging ([013bce9](https://github.com/VU-ASE/rover/commit/013bce9f4a0838ccf91ddb53e429d27cb7132178))
+
 ## [1.0.2](https://github.com/VU-ASE/rover/compare/v1.0.1...v1.0.2) (2025-02-05)
 
 
