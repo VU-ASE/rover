@@ -112,7 +112,7 @@ jobs:
               uses: actions/download-artifact@v4
               with:
                   name: roverctl-binaries
-                  path: roverctl/bin/
+                  path: roverctl-bin/
 
             - name: Extract roverctl artifacts
               run: |
@@ -124,7 +124,7 @@ jobs:
               uses: actions/download-artifact@v4
               with:
                   name: roverd-binary
-                  path: roverd/target/aarch64-unknown-linux-gnu/release/
+                  path: roverd-bin/
 
             - name: Extract roverd artifact
               run: |
