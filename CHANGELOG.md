@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/VU-ASE/rover/compare/v0.0.1...v0.0.2) (2025-02-06)
+
+
+### Bug Fixes
+
+* debug missing assets ([508f3dc](https://github.com/VU-ASE/rover/commit/508f3dcef4aab0035d5709d8f9a3922f5a1c26e6))
+
 ## [0.0.1](https://github.com/VU-ASE/rover/compare/v1.0.14...v0.0.1) (2025-02-06)
 
 
