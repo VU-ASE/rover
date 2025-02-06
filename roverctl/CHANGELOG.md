@@ -1,5 +1,8 @@
 # Changelog
 
+> [!NOTE]  
+> This changelog is pulled from the original roverctl repo (before merge into rover). This changelog is not updated anymore, see the root changelog for the rover repository instead.
+
 ## [1.8.1](https://github.com/VU-ASE/rover/roverctl/compare/v1.8.0...v1.8.1) (2025-01-23)
 
 

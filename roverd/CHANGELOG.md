@@ -1,5 +1,8 @@
 # Changelog
 
+> [!NOTE]  
+> This changelog is pulled from the original roverd repo (before merge into rover). This changelog is not updated anymore, see the root changelog for the rover repository instead.
+
 ## [0.2.0](https://github.com/VU-ASE/roverd/compare/v0.1.1...v0.2.0) (2025-01-17)
 
 
