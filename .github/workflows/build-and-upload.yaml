@@ -68,6 +68,10 @@ jobs:
                   name: roverctl-binaries
                   path: roverctl/bin/*
 
+
+            #
+            # Old method of uploading assets:
+            #
             # - uses: AButler/upload-release-assets@v3.0
             #   with:
             #       files: "roverctl/bin/*"
