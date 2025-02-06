@@ -46,7 +46,7 @@ jobs:
                   VERSION: ${{ env.VERSION }}
               working-directory: roverctl/src
               run: |
-                  BUILD_DIR=../bin/
+                  BUILD_DIR=./bin/
                   BINARY_NAME=roverctl
                   LDFLAGS="-X 'github.com/VU-ASE/rover/roverctl/src/views.version=${VERSION}'"
                   mkdir -p $BUILD_DIR
