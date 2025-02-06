@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/VU-ASE/rover/compare/v0.1.1...v0.1.2) (2025-02-06)
+
+
+### Bug Fixes
+
+* version update script now accepts "v" prefix ([362c24c](https://github.com/VU-ASE/rover/commit/362c24c0b3264ce7d3aef7fdfabbfb6bea72d45a))
+
 ## [0.1.1](https://github.com/VU-ASE/rover/compare/v0.1.0...v0.1.1) (2025-02-06)
 
 
