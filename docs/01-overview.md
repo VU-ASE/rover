@@ -7,6 +7,8 @@ The [rover repository](https://github.com/VU-ASE/rover) houses the software fram
 
 Additional tools are available for debugging and tuning your Rover.
 
+![Schematic of roverd and roverctl](https://github.com/user-attachments/assets/dce0e95f-f35e-47f8-9250-a53d1303edc5)
+
 ## Versioning and compatibility
 
 Both `roverd` and `roverctl` contain partly auto-generated code based on several specs, expressed as OpenAPI specs and JSON schemas (you can find them [here](https://github.com/VU-ASE/rover/tree/main/spec)). Because all tools are incorporated into one repository, all software is recompiled on every release. This means that different software under the same release is **guaranteed to work**. I.e. `roverctl` version 1.8.1 is one-to-one compatible with `roverd` version 1.8.1. 
