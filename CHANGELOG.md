@@ -7,6 +7,21 @@
 
 * debug missing assets ([508f3dc](https://github.com/VU-ASE/rover/commit/508f3dcef4aab0035d5709d8f9a3922f5a1c26e6))
 * exact match with roverd upload ([b8d38a6](https://github.com/VU-ASE/rover/commit/b8d38a6c927bc1539bece3833dff9ece119b07e6))
+* remove whitespace from upload action ([0b89220](https://github.com/VU-ASE/rover/commit/0b892200cb4e12c3321ec080a40dc8286951ac3c))
+* use correct file separator for asset upload ([699d913](https://github.com/VU-ASE/rover/commit/699d913477799a2e487821df38645650c3d5b7b5))
+
+
+### Miscellaneous Chores
+
+* release 0.0.1 ([0112285](https://github.com/VU-ASE/rover/commit/0112285b31119bb0d0262a3796a91415932d9c3e))
+
+## [0.0.1](https://github.com/VU-ASE/rover/compare/v0.0.1...v0.0.1) (2025-02-06)
+
+
+### Bug Fixes
+
+* debug missing assets ([508f3dc](https://github.com/VU-ASE/rover/commit/508f3dcef4aab0035d5709d8f9a3922f5a1c26e6))
+* exact match with roverd upload ([b8d38a6](https://github.com/VU-ASE/rover/commit/b8d38a6c927bc1539bece3833dff9ece119b07e6))
 * use correct file separator for asset upload ([699d913](https://github.com/VU-ASE/rover/commit/699d913477799a2e487821df38645650c3d5b7b5))
 
 
