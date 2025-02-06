@@ -4,6 +4,7 @@ set -e
 
 REPO="VU-ASE/rover"
 INSTALL_DIR="/usr/local/bin"
+VERSION="$1"
 
 # Function to detect OS
 detect_os() {
@@ -42,20 +43,22 @@ detect_arch
 # Construct the binary name
 binary_name="roverctl-${os}-${arch}"
 
-# Get the latest release tag
-echo "Fetching the latest release..."
-latest_release=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
-
-if [ -z "$latest_release" ]; then
-  echo "Failed to fetch the latest release from $REPO."
-  exit 1
+# Determine which version to install
+if [ -z "$VERSION" ]; then
+  echo "Fetching the latest release..."
+  VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
+  if [ -z "$VERSION" ]; then
+    echo "Failed to fetch the latest release from $REPO."
+    exit 1
+  fi
+  echo "Latest release: $VERSION"
+else
+  echo "Installing specified version: $VERSION"
 fi
-
-echo "Latest release: $latest_release"
 
 # Download the binary
 echo "Downloading the binary for ${os}/${arch}..."
-curl -Lo "/tmp/${binary_name}" "https://github.com/${REPO}/releases/download/${latest_release}/${binary_name}"
+curl -Lo "/tmp/${binary_name}" "https://github.com/${REPO}/releases/download/${VERSION}/${binary_name}"
 
 # Make it executable
 chmod +x "/tmp/${binary_name}"
