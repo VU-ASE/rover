@@ -12,6 +12,7 @@ build-open-api:
 		exit 1; \
 	fi
 	@echo "generating openapi client"
+	@mkdir -p src/openapi
 	@openapi-generator-cli generate -i ../spec/api/schema.yaml -g go -o src/openapi --additional-properties=withGoMod=false
 
 build-src: #build-open-api
