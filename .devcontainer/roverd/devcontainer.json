@@ -10,11 +10,11 @@
       "HOST_UID": "1000"
     }
   },
-  "workspaceFolder": "/workspace/roverd",
-  "workspaceMount": "source=${localWorkspaceFolder}/roverd,target=/workspace/roverd,type=bind",
-  "mounts": [
-      "source=${localWorkspaceFolder}/spec,target=/workspace/spec,type=bind"
-  ],
+  // The entire repo will be available inside the docker container so that git commands
+  // can be done straight from the container's terminal. So we mount the entire directory
+  // but then open VSCode inside roverd.
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/rover,type=bind",
+  "workspaceFolder": "/workspace/rover/roverd",
   "customizations": {
     "vscode": {
       "extensions": [
