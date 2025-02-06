@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.10](https://github.com/VU-ASE/rover/compare/v1.0.9...v1.0.10) (2025-02-06)
+
+
+### Bug Fixes
+
+* remove unused view ([31f91cd](https://github.com/VU-ASE/rover/commit/31f91cd1bd482a2a1bb05af107ebb19b153d1de5))
+
 ## [1.0.9](https://github.com/VU-ASE/rover/compare/v1.0.8...v1.0.9) (2025-02-06)
 
 
