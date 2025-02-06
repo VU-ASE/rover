@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.13](https://github.com/VU-ASE/rover/compare/v1.0.12...v1.0.13) (2025-02-06)
+
+
+### Bug Fixes
+
+* extract artifact downloads first ([37762b7](https://github.com/VU-ASE/rover/commit/37762b77e75becc3a8fb960e83ddd72f47305729))
+
 ## [1.0.12](https://github.com/VU-ASE/rover/compare/v1.0.11...v1.0.12) (2025-02-06)
 
 
