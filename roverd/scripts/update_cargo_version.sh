@@ -13,11 +13,14 @@ VERSION=$1
 # Cargo toml file path
 TOML_FILE=$2
 
-# Validate that the version matches semantic versioning format (x.y.z)
-if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "Error: Version must be in format x.y.z (e.g., 1.1.5)"
+# Validate that the version matches semantic versioning format (x.y.z or vx.y.z)
+if ! [[ $VERSION =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Error: Version must be in format x.y.z or vx.y.z (e.g., 1.1.5 or v1.1.5)"
     exit 1
 fi
+
+# Remove 'v' prefix if present
+VERSION=${VERSION#v}
 
 # Check if Cargo.toml exists in the current directory
 if [ ! -f "$TOML_FILE" ]; then
@@ -29,15 +32,11 @@ fi
 cp $TOML_FILE $TOML_FILE.backup
 
 # Use sed to replace the version line
-# The pattern looks for 'version = "x.y.z"' and replaces it with the new version
-# The -i flag means "in-place" editing
-# The -E flag enables extended regular expressions
 sed -i.tmp -E "s/^version = \"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"$VERSION\"/" $TOML_FILE
 
 # Check if the replacement was successful
 if grep -q "version = \"$VERSION\"" $TOML_FILE; then
     echo "Successfully updated version to $VERSION"
-    # Remove the temporary file created by sed
     rm $TOML_FILE.tmp
 else
     echo "Error: Failed to update version. Restoring backup..."
