@@ -116,8 +116,6 @@ jobs:
 
             - name: Extract roverctl artifacts
               run: |
-                  ls -al
-                  ls -al roverctl-bin
                   mkdir -p roverctl/bin
                   mv roverctl-bin/* roverctl/bin/
                   chmod +x roverctl/bin/*
@@ -130,8 +128,6 @@ jobs:
 
             - name: Extract roverd artifact
               run: |
-                  ls -al 
-                  ls -al roverd-bin
                   mkdir -p roverd/target/aarch64-unknown-linux-gnu/release/
                   mv roverd-bin/* roverd/target/aarch64-unknown-linux-gnu/release/
                   chmod +x roverd/target/aarch64-unknown-linux-gnu/release/roverd
@@ -139,17 +135,8 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-            # ls all files for debugging
-            - name: List all files
-              run: |
-                  ls -al
-                  ls -la roverctl/bin
-                  ls -la roverd/target/aarch64-unknown-linux-gnu/release
-
             - uses: AButler/upload-release-assets@v3.0
               with:
-                  files: |
-                      roverctl/bin/*
-                      roverd/target/aarch64-unknown-linux-gnu/release/roverd
+                  files: roverctl/bin/*; roverd/target/aarch64-unknown-linux-gnu/release/roverd
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
                   release-tag: ${{ env.VERSION }}
