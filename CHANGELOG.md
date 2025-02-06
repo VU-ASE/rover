@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.14](https://github.com/VU-ASE/rover/compare/v1.0.13...v1.0.14) (2025-02-06)
+
+
+### Bug Fixes
+
+* extract from correct location ([d4106ba](https://github.com/VU-ASE/rover/commit/d4106ba17d7e8ec4d7fea3f3827aded9d4a25d0a))
+
 ## [1.0.13](https://github.com/VU-ASE/rover/compare/v1.0.12...v1.0.13) (2025-02-06)
 
 
