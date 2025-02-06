@@ -135,8 +135,9 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
+            # Upload all binaries
             - uses: AButler/upload-release-assets@v3.0
               with:
-                  files: "roverctl/bin/*;roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+                  files: roverctl/bin/*;roverd/target/aarch64-unknown-linux-gnu/release/roverd
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
                   release-tag: ${{ env.VERSION }}
