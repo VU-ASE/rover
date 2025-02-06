@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/VU-ASE/rover/compare/v0.0.2...v0.0.3) (2025-02-06)
+
+
+### Bug Fixes
+
+* use correct file separator for asset upload ([699d913](https://github.com/VU-ASE/rover/commit/699d913477799a2e487821df38645650c3d5b7b5))
+
 ## [0.0.2](https://github.com/VU-ASE/rover/compare/v0.0.1...v0.0.2) (2025-02-06)
 
 
