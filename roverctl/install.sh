@@ -63,7 +63,14 @@ if ! curl --output /dev/null --silent --head --fail "$url"; then
   echo "Error: The specified release or binary does not exist ($url)."
   exit 1
 fi
+
+# Download the file and verify its size
 curl -Lo "/tmp/${binary_name}" "$url"
+if [ ! -s "/tmp/${binary_name}" ]; then
+  echo "Error: Downloaded binary is empty or invalid."
+  rm -f "/tmp/${binary_name}"
+  exit 1
+fi
 
 # Make it executable
 chmod +x "/tmp/${binary_name}"
