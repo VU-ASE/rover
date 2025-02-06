@@ -24,6 +24,10 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
+            - name: Fix permissions before running Docker
+              run: |
+                  sudo chown -R 1000:1000 ./roverctl ./spec
+
             - name: Generate OpenAPI files in devcontainer
               run: |
                   cd roverctl
@@ -35,7 +39,7 @@ jobs:
                     -v "$(pwd)/../spec:/home/devuser/spec" \
                     roverctl-build-container bash -ic 'ls -al /home/devuser/roverctl/; echo ====; ls -al /home/devuser/spec; echo ====; ls -al /home/devuser/roverctl/src'
 
-                  docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
+                  docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
 
             - name: Build binaries for linux and macos (amd64 and arm64)
               env:
@@ -66,9 +70,7 @@ jobs:
                   release-tag: ${{ env.VERSION }}
     build-and-release-roverd:
         name: Build and release roverd
-        runs-on:
-            - X64
-            - Linux
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
 
