@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/VU-ASE/rover/compare/v1.0.6...v1.0.7) (2025-02-06)
+
+
+### Bug Fixes
+
+* permissions on github actions ([0b7225a](https://github.com/VU-ASE/rover/commit/0b7225ae596dd3d1e1a29a46ad26b2f6e256d9dd))
+
 ## [1.0.6](https://github.com/VU-ASE/rover/compare/v1.0.5...v1.0.6) (2025-02-06)
 
 
