@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.11](https://github.com/VU-ASE/rover/compare/v1.0.10...v1.0.11) (2025-02-06)
+
+
+### Bug Fixes
+
+* release assets on all success ([4448019](https://github.com/VU-ASE/rover/commit/44480199fcac3cc9c81e317ef7b34c270641ec6a))
+
 ## [1.0.10](https://github.com/VU-ASE/rover/compare/v1.0.9...v1.0.10) (2025-02-06)
 
 
