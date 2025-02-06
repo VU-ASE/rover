@@ -9,14 +9,14 @@ permissions:
     packages: write
 
 jobs:
-    build-and-release-roverctl:
+    build-roverctl:
         #
         # This is a bit of a weird action, since we generate the OpenAPI files in a Docker container (devcontainer)
         # but the actual build is done in the github runner without Docker. This could be optimized a little by
         # creating a makefile target that generates cross-platform builds and then run everything in the Docker container
         #
 
-        name: Build and release roverctl
+        name: Build roverctl
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -61,13 +61,20 @@ jobs:
                   # Build for Linux ARM64
                   GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-linux-arm64"
 
-            - uses: AButler/upload-release-assets@v3.0
+            - name: Save roverctl artifacts
+              uses: actions/upload-artifact@v3
               with:
-                  files: "roverctl/bin/*"
-                  repo-token: ${{ secrets.GITHUB_TOKEN }}
-                  release-tag: ${{ env.VERSION }}
-    build-and-release-roverd:
-        name: Build and release roverd
+                  name: roverctl-binaries
+                  path: roverctl/bin/*
+
+            # - uses: AButler/upload-release-assets@v3.0
+            #   with:
+            #       files: "roverctl/bin/*"
+            #       repo-token: ${{ secrets.GITHUB_TOKEN }}
+            #       release-tag: ${{ env.VERSION }}
+
+    build-roverd:
+        name: Build roverd
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -81,8 +88,44 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
+            - name: Save roverd artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: roverd-binary
+                  path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+
+            # - uses: AButler/upload-release-assets@v3.0
+            #   with:
+            #       files: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+            #       repo-token: ${{ secrets.GITHUB_TOKEN }}
+            #       release-tag: ${{ env.VERSION }}
+
+    upload-release-assets:
+        name: Upload release assets
+        needs:
+            - build-roverctl
+            - build-roverd
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download roverctl artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  name: roverctl-binaries
+                  path: roverctl/bin/
+
+            - name: Download roverd artifact
+              uses: actions/download-artifact@v3
+              with:
+                  name: roverd-binary
+                  path: roverd/target/aarch64-unknown-linux-gnu/release/
+
+            - name: Set VERSION from tag
+              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
             - uses: AButler/upload-release-assets@v3.0
               with:
-                  files: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+                  files: |
+                      roverctl/bin/*
+                      roverd/target/aarch64-unknown-linux-gnu/release/roverd
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
                   release-tag: ${{ env.VERSION }}
