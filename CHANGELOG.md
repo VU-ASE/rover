@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.9](https://github.com/VU-ASE/rover/compare/v1.0.8...v1.0.9) (2025-02-06)
+
+
+### Bug Fixes
+
+* permission issues for building ([8f82d02](https://github.com/VU-ASE/rover/commit/8f82d02b4b4bcd6a5930c5faa8fd504042a69f0b))
+
 ## [1.0.8](https://github.com/VU-ASE/rover/compare/v1.0.7...v1.0.8) (2025-02-06)
 
 
