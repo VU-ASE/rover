@@ -7,7 +7,7 @@ The [rover repository](https://github.com/VU-ASE/rover) houses the software fram
 
 Additional tools are available for debugging and tuning your Rover.
 
-![Schematic of roverd and roverctl](https://github.com/user-attachments/assets/dce0e95f-f35e-47f8-9250-a53d1303edc5)
+![Schematic of roverd and roverctl](https://github.com/user-attachments/assets/8b9e1c8b-192e-48ba-9dae-d300caf61290)
 
 ## Versioning and compatibility
 
