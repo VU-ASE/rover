@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/VU-ASE/rover/compare/v0.0.5...v0.0.6) (2025-02-06)
+
+
+### Bug Fixes
+
+* point install scripts to rover repository (was roverctl) ([b139324](https://github.com/VU-ASE/rover/commit/b139324d303d27c88f2f8d91d0aaf1b78a5f714a))
+
 ## [0.0.5](https://github.com/VU-ASE/rover/compare/v0.0.1...v0.0.5) (2025-02-06)
 
 
