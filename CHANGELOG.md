@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/VU-ASE/rover/compare/v1.0.5...v1.0.6) (2025-02-06)
+
+
+### Bug Fixes
+
+* create openapi directory if it does not exist ([1f881b8](https://github.com/VU-ASE/rover/commit/1f881b8846f38ceea597ab31be031ae7c60ecf96))
+
 ## [1.0.5](https://github.com/VU-ASE/rover/compare/v1.0.4...v1.0.5) (2025-02-06)
 
 
