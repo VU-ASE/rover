@@ -1,6 +1,8 @@
 module github.com/VU-ASE/rover/roverctl
 
-go 1.21.6
+go 1.22.0
+
+toolchain go1.22.12
 
 require (
 	github.com/charmbracelet/bubbles v0.20.0
@@ -72,7 +74,7 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect

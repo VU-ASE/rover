@@ -25,9 +25,9 @@ RUN useradd -m -s /bin/bash devuser && \
 # Install Go 1.21 based on the system architecture
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "amd64" ]; then \
-    GO_ARCH="go1.21.0.linux-amd64.tar.gz"; \
+    GO_ARCH="go1.22.12.linux-amd64.tar.gz"; \
     elif [ "$ARCH" = "arm64" ]; then \
-    GO_ARCH="go1.21.0.linux-arm64.tar.gz"; \
+    GO_ARCH="go1.22.12.linux-arm64.tar.gz"; \
     else \
     echo "Unsupported architecture"; exit 1; \
     fi && \

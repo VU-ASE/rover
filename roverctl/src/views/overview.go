@@ -1,10 +1,12 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/VU-ASE/rover/roverctl/src/style"
 	"github.com/VU-ASE/rover/roverctl/src/tui"
@@ -29,7 +31,7 @@ type StartPage struct {
 
 	// Actions
 	updateAvailable tui.Action[utils.UpdateAvailable] // preserved in the model to avoid re-rendering in .View(), based on the latest service information
-	roverOnline     tui.ActionV2[any, bool]
+	roverOnline     tui.ActionV2[any, openapi.StatusGet200Response]
 }
 
 type CategoryItem struct {
@@ -54,7 +56,7 @@ func NewStartPage() StartPage {
 		listItems:   initialCategories(),
 		help:        help.New(),
 		filterInput: ti,
-		roverOnline: tui.NewActionV2[any, bool](),
+		roverOnline: tui.NewActionV2[any, openapi.StatusGet200Response](),
 		forceOnline: false,
 	}
 }
@@ -190,7 +192,16 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 	return m, cmd
 }
 
+func (m StartPage) versionMismatchView() string {
+	s := style.Warning.Bold(true).Render("Version mismatch detected") + "\n\n"
+	return s
+}
+
 func (m StartPage) View() string {
+	if m.roverOnline.HasResult() && m.roverOnline.Result().Version != version {
+		return m.versionMismatchView()
+	}
+
 	s := m.filterInput.View()[2:]
 	s += "\n\n"
 
@@ -204,7 +215,7 @@ func (m StartPage) View() string {
 			n = lipgloss.NewStyle().Bold(false).Underline(false).Render(category.name)
 		}
 		s += n + "\n"
-		if category.kind == "rover" && m.roverOnline.HasResult() && !m.roverOnline.Result() && !m.forceOnline {
+		if category.kind == "rover" && ((m.roverOnline.IsLoading() && !m.roverOnline.HasResult()) || m.roverOnline.IsError() || (m.roverOnline.HasResult() && m.roverOnline.Result().Status != openapi.OPERATIONAL && !m.forceOnline)) {
 			s += style.Warning.Render(" ! ") + style.Gray.Render("Powered off") + "\n\n"
 			continue
 		}
@@ -275,7 +286,7 @@ func (m StartPage) filterCategories() []Category {
 	newCategories := make([]Category, 0)
 	for _, category := range oldCategories {
 		// Filter out values if the rover is offline
-		if category.kind == "rover" && m.roverOnline.HasResult() && !m.roverOnline.Result() && !m.forceOnline {
+		if category.kind == "rover" && ((m.roverOnline.IsLoading() && !m.roverOnline.HasResult()) || m.roverOnline.IsError() || (m.roverOnline.HasResult() && m.roverOnline.Result().Status != openapi.OPERATIONAL && !m.forceOnline)) {
 			category.items = []CategoryItem{}
 		}
 
@@ -434,18 +445,24 @@ func (m StartPage) checkUpdate() tea.Cmd {
 }
 
 func (m StartPage) checkRoverOnline(wait bool) tea.Cmd {
-	return tui.PerformActionV2(&m.roverOnline, nil, func() (*bool, []error) {
+	return tui.PerformActionV2(&m.roverOnline, nil, func() (*openapi.StatusGet200Response, []error) {
 		if wait {
 			time.Sleep(time.Second * 1) // so that we don't poll all the time
 		}
 
-		res := false
-		rover := state.Get().RoverConnections.GetActive()
-		if rover == nil {
-			return &res, []error{fmt.Errorf("No active rover connection")}
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, []error{fmt.Errorf("No active rover connection")}
 		}
 
-		res = utils.IsHostOnline(rover.Host, "80", time.Millisecond*500)
-		return &res, nil
+		api := remote.ToApiClient()
+		res, _, err := api.HealthAPI.StatusGet(
+			context.Background(),
+		).Execute()
+
+		if err != nil {
+			return nil, []error{err}
+		}
+		return res, nil
 	})
 }

@@ -82,11 +82,9 @@ func (m InfoPage) View() string {
 				s += "\n"
 			}
 			s += style.Gray.Render("Build version: ") + m.remoteInfo.Data.Version
-			// if m.remoteInfo.Data.Version != version {
-			// 	s += style.Error.Render(" (mismatch)")
-			// } else {
-			// 	s += style.Success.Render(" (match)")
-			// }
+			if m.remoteInfo.Data.Version != version {
+				s += style.Error.Render(" (mismatch, might not be compatible)")
+			}
 			s += "\n"
 			s += style.Gray.Render("Status: ")
 			if m.remoteInfo.Data.Status == openapi.AllowedDaemonStatusEnumValues[0] {
