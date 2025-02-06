@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.12](https://github.com/VU-ASE/rover/compare/v1.0.11...v1.0.12) (2025-02-06)
+
+
+### Bug Fixes
+
+* use correct version of action/artifact ([300beda](https://github.com/VU-ASE/rover/commit/300beda2031241877d4101279e5f9ec5cf8dcd07))
+
 ## [1.0.11](https://github.com/VU-ASE/rover/compare/v1.0.10...v1.0.11) (2025-02-06)
 
 
