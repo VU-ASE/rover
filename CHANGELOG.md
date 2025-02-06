@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.1](https://github.com/VU-ASE/rover/compare/v1.0.14...v0.0.1) (2025-02-06)
+
+
+### Miscellaneous Chores
+
+* release 0.0.1 ([abd806e](https://github.com/VU-ASE/rover/commit/abd806e59353ee5ea9da82a80612ff9ece653285))
+
 ## [1.0.14](https://github.com/VU-ASE/rover/compare/v1.0.13...v1.0.14) (2025-02-06)
 
 
