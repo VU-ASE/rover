@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.1](https://github.com/VU-ASE/rover/compare/v0.0.3...v0.0.1) (2025-02-06)
+
+
+### Bug Fixes
+
+* exact match with roverd upload ([b8d38a6](https://github.com/VU-ASE/rover/commit/b8d38a6c927bc1539bece3833dff9ece119b07e6))
+
+
+### Miscellaneous Chores
+
+* release 0.0.1 ([0112285](https://github.com/VU-ASE/rover/commit/0112285b31119bb0d0262a3796a91415932d9c3e))
+
 ## [0.0.3](https://github.com/VU-ASE/rover/compare/v0.0.2...v0.0.3) (2025-02-06)
 
 
