@@ -10,6 +10,12 @@ permissions:
 
 jobs:
     build-and-release-roverctl:
+        #
+        # This is a bit of a weird action, since we generate the OpenAPI files in a Docker container (devcontainer)
+        # but the actual build is done in the github runner without Docker. This could be optimized a little by
+        # creating a makefile target that generates cross-platform builds and then run everything in the Docker container
+        #
+
         name: Build and release roverctl
         runs-on: ubuntu-latest
         steps:
@@ -31,13 +37,6 @@ jobs:
               run: |
                   cd roverctl
                   docker build --build-arg HOST_UID=$(id -u) -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
-
-                  # Debug step
-                  docker run --rm \
-                    -v "$(pwd):/home/devuser/roverctl" \
-                    -v "$(pwd)/../spec:/home/devuser/spec" \
-                    roverctl-build-container bash -ic 'ls -al /home/devuser/roverctl/; echo ====; ls -al /home/devuser/spec; echo ====; ls -al /home/devuser/roverctl/src'
-
                   docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
 
             - name: Build binaries for linux and macos (amd64 and arm64)
