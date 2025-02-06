@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8](https://github.com/VU-ASE/rover/compare/v1.0.7...v1.0.8) (2025-02-06)
+
+
+### Bug Fixes
+
+* build to ./bin ([dba0f2b](https://github.com/VU-ASE/rover/commit/dba0f2b1cfd4deaa257beb7c0bbe241b02879f5d))
+
 ## [1.0.7](https://github.com/VU-ASE/rover/compare/v1.0.6...v1.0.7) (2025-02-06)
 
 
