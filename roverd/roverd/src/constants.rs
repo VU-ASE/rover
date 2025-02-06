@@ -12,7 +12,7 @@ pub const LOG_DIR: &str = "/tmp/roverlog";
 pub const BUILD_LOG_DIR: &str = "/tmp/roverbuildlog";
 
 pub const ZIP_FILE: &str = "/tmp/incoming-service.zip";
-pub const UNZIPPED_DIR: &str = "/tmp/incoming-service";
+// pub const UNZIPPED_DIR: &str = "/tmp/incoming-service";
 
 pub const ENV_KEY: &str = "ASE_SERVICE";
 

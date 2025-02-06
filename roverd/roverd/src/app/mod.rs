@@ -11,7 +11,7 @@ use state::{Dormant, Operating, RoverState};
 use std::cmp;
 use std::collections::HashMap;
 use std::fs::File;
-use std::fs::{self, remove_dir_all, remove_file, Permissions};
+use std::fs::{self, remove_file, Permissions};
 use std::io::{BufRead, BufReader, Write};
 use std::io::{Read, Seek, SeekFrom};
 use std::marker::PhantomData;
@@ -191,7 +191,6 @@ impl App {
             // Ignore errors, since filesystem can be in any state and
             // get a clean slate of the zip file
             let _ = remove_file(ZIP_FILE);
-            let _ = remove_dir_all(UNZIPPED_DIR);
 
             // Create the zip file handle
             let mut file = fs::OpenOptions::new()
@@ -204,14 +203,14 @@ impl App {
             file.write_all(&data)
                 .with_context(|| format!("failed to write data to {}", ZIP_FILE))?;
 
-            let fq_buf = extract_fq_from_zip().await?;
+            let (fq_buf, directory) = extract_fq_from_zip(ZIP_FILE.to_string()).await?;
 
             // syncing can overwrite the current contents
             // if service_exists(&Fq::from(&fq_buf))? {
             //     return Err(Error::ServiceAlreadyExists);
             // }
 
-            install_service(&fq_buf).await?;
+            install_service(directory, &fq_buf).await?;
 
             let invalidate_pipline = self.should_invalidate(&fq_buf).await?;
 

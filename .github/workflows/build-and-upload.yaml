@@ -80,11 +80,21 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Build and run in Docker container
+            - name: Set VERSION from tag
+              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+            # This action works a bit differently than for roverctl, it builds everything inside
+            # the docker container in the exact same way that is done during development. The
+            # devcontianer mounts the entire "rover" repo and then places VSCode inside of
+            # "rover/roverd", this makes using git and having access to the spec dir easy.
+            # This means that the build container should mount the entire "rover" repo and then
+            # simply call the Makefile target into the rover/roverd directory.
+            - name: Build and run in Docker container (this includes generating from openapi spec)
+              env:
+                  VERSION: ${{ env.VERSION }}
               run: |
-                  cd roverd
-                  docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f ../.devcontainer/roverd/Dockerfile ..
-                  docker run --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work'
+                  docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f .devcontainer/roverd/Dockerfile .
+                  docker run --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work/roverd VERSION=${VERSION}'
 
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV

@@ -253,10 +253,10 @@ impl DaemonManager {
 
         tokio::select! {
             _ = sigterm.recv() => {
-                info!("received SIGTERM signal");
+                info!("graceful shutdown: received SIGTERM signal");
             }
             _ = sigint.recv() => {
-                info!("received SIGINT signal");
+                info!("graceful shutdown: received SIGINT signal");
             }
         }
 

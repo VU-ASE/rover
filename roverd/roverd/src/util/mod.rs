@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use rand::distr::{Alphanumeric, SampleString};
 use reqwest::Client;
 use std::fs::{File, OpenOptions};
 use std::os::unix::fs::chown;
@@ -95,10 +96,14 @@ fn prepare_dirs(fq: &FqBuf) -> Result<String, Error> {
     Ok(full_path_string)
 }
 
-/// Downloads the vu-ase service from the downloads page and creates a zip file
-/// /tmp/name-version.zip.
-pub async fn download_service(url: &String) -> Result<(), Error> {
+/// Downloads the vu-ase service from the downloads page and creates a zip file on disk,
+/// returns a String of the downloaded file, for example: "/tmp/some_string"
+pub async fn download_service(url: &String) -> Result<String, Error> {
     info!("Downloading: {}", url);
+
+    // generate a random string for the filename to avoid conflicts during concurrent downloads
+    let file_name = format!("/tmp/{}.zip", Alphanumeric.sample_string(&mut rand::rng(), 16));
+
     let client = Client::new();
 
     let res = client
@@ -132,16 +137,16 @@ pub async fn download_service(url: &String) -> Result<(), Error> {
                     _ => return Err(Error::Http(resp)),
                 }
             }
-            std::fs::remove_file(ZIP_FILE).ok();
+            std::fs::remove_file(&file_name).ok();
 
-            let mut file = std::fs::File::create(ZIP_FILE)
-                .with_context(|| format!("failed to create {}", ZIP_FILE))?;
+            let mut file = std::fs::File::create(&file_name)
+                .with_context(|| format!("failed to create {}", file_name))?;
 
             let bytes = res.bytes().await?;
 
             file.write_all(&bytes)
-                .with_context(|| format!("failed to failed to write to {}", ZIP_FILE))?;
-            Ok(())
+                .with_context(|| format!("failed to failed to write to {}", file_name))?;
+            Ok(file_name)
         }
         Err(err) => {
             if err.is_timeout() {
@@ -159,49 +164,51 @@ pub async fn download_service(url: &String) -> Result<(), Error> {
 /// There shouldn't be any directories or files in the unique path of the service,
 /// however if there are, they will get deleted to make space.
 pub async fn download_and_install_service(url: &String, is_daemon: bool) -> Result<FqBuf, Error> {
-    download_service(url).await?;
-    let mut fq = extract_fq_from_zip().await?;
+    let zip_file = download_service(url).await?;
+    let (mut fq, directory) = extract_fq_from_zip(zip_file).await?;
     fq.is_daemon = is_daemon;
-    install_service(&fq).await?;
+    install_service(directory, &fq).await?;
     Ok(fq)
 }
 
-/// Attempts to unzip and read out the service in the temporary directory
-/// returns the FqBuf on success.
-pub async fn extract_fq_from_zip() -> Result<FqBuf, Error> {
+/// Given a zip file, reads out the contents into a directory with the same name of the zip file
+/// since the contents of the download are a service, it will parse the service.yaml and
+/// return the resulting Fq as well as the directory where it was extracted to.
+pub async fn extract_fq_from_zip(zip_file: String) -> Result<(FqBuf, String), Error> {
+    let unzipped_dir = match zip_file.strip_suffix(".zip") {
+        Some(stripped_file_name) => stripped_file_name,
+        None => &zip_file,
+    };
+
     // Clear the destination directory, no matter if it fails
-    let _ = std::fs::remove_dir_all(UNZIPPED_DIR);
+    let _ = std::fs::remove_dir_all(&unzipped_dir);
 
     // Create directory, this must not fail
-    std::fs::create_dir_all(UNZIPPED_DIR)
-        .with_context(|| format!("failed to create {}", UNZIPPED_DIR))?;
+    std::fs::create_dir_all(&unzipped_dir)
+        .with_context(|| format!("failed to create {}", unzipped_dir))?;
 
     // Unpack the downloaded service and validate it.
-    extract_zip(ZIP_FILE, UNZIPPED_DIR)?;
+    extract_zip(&zip_file, &unzipped_dir)?;
 
     // Read contents and
-    let service_contents = std::fs::read_to_string(format!("{}/service.yaml", UNZIPPED_DIR))
+    let service_contents = std::fs::read_to_string(format!("{}/service.yaml", unzipped_dir))
         .map_err(|_| Error::ServiceYamlNotFoundInDownload)?;
     let service = serde_yaml::from_str::<Service>(&service_contents)?.validate()?;
 
     let fq = FqBuf::from(service);
-    Ok(fq)
+    Ok((fq, unzipped_dir.to_string()))
 }
 
-/// Expects a zipfile to be ready at ZIP_FILE, extract it and install it. Parses the service.yaml
+/// Expects a zipfile to be ready at src_dir, extract it and install it. Parses the service.yaml
 /// and install contents into the correct location on disk.
-pub async fn install_service(fq: &FqBuf) -> Result<(), Error> {
+pub async fn install_service(src_dir: String, fq: &FqBuf) -> Result<(), Error> {
     // Deletes any existing files/dirs that are on the /author/name/version path
     // Makes sure the directories exist.
     let full_path = prepare_dirs(fq)?;
 
     // Copy contents into place
-    copy_recursively(UNZIPPED_DIR, &full_path).with_context(|| {
-        format!(
-            "failed to copy contents from {} to {}",
-            UNZIPPED_DIR, full_path
-        )
-    })?;
+    copy_recursively(&src_dir, &full_path)
+        .with_context(|| format!("failed to copy contents from {} to {}", &src_dir, full_path))?;
 
     chown(&full_path, DEBIX_UID, DEBIX_GID)
         .with_context(|| format!("failed to set the ownership of {}", &full_path))?;
