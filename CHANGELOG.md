@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.0](https://github.com/VU-ASE/rover/compare/v0.0.6...v0.1.0) (2025-02-06)
+
+
+### Features
+
+* added manage script ([e1b1429](https://github.com/VU-ASE/rover/commit/e1b142989b1b0c0dfcaa55f0a496da56031288e4))
+
+
+### Bug Fixes
+
+* broken links ([7a4d2aa](https://github.com/VU-ASE/rover/commit/7a4d2aa8ee9bc87d5f06ea3c1f55a9f324cc57a7))
+* ci testing ([269b7a3](https://github.com/VU-ASE/rover/commit/269b7a3b9ece651b79b22145db9eccb1cf018fa9))
+* docs and install script for roverctl ([a069205](https://github.com/VU-ASE/rover/commit/a069205b726187a5ad7ad99c8f00a75f7569ce9f))
+* public link for schematic in docs ([b26decf](https://github.com/VU-ASE/rover/commit/b26decf57eb08b15e0fd4c2c04e81d1f9b3a1fdd))
+
 ## [0.0.6](https://github.com/VU-ASE/rover/compare/v0.0.5...v0.0.6) (2025-02-06)
 
 
