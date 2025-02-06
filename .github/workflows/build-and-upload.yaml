@@ -30,10 +30,11 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-            - name: Give full permissions to all users
+              # Both devcontainer (devuser) and normal user need access
+            - name: Fix permissions
               run: sudo chmod -R 777 ./roverctl ./spec
 
-            - name: Generate OpenAPI files in devcontainer
+            - name: Generate OpenAPI Go files
               run: |
                   cd roverctl
                   docker build --build-arg HOST_UID=$(id -u) -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
@@ -62,7 +63,7 @@ jobs:
                   GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-linux-arm64"
 
             - name: Save roverctl artifacts
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: roverctl-binaries
                   path: roverctl/bin/*
@@ -89,7 +90,7 @@ jobs:
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
             - name: Save roverd artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: roverd-binary
                   path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
@@ -108,13 +109,13 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download roverctl artifacts
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: roverctl-binaries
                   path: roverctl/bin/
 
             - name: Download roverd artifact
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: roverd-binary
                   path: roverd/target/aarch64-unknown-linux-gnu/release/
