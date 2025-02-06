@@ -317,7 +317,7 @@ func (action ActionV2[Req, Res]) Started() bool {
 }
 
 func (action ActionV2[Req, Res]) HasResult() bool {
-	return action.result.attempt > 0
+	return action.result.attempt > 0 && action.result.errors == nil
 }
 
 func (action ActionV2[Req, Res]) Result() Res {

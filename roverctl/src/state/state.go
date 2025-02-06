@@ -19,6 +19,8 @@ type AppState struct {
 	Interactive bool
 	// If a shell command should be executed on quit
 	QuitCommand string
+	// Should not warn on roverd<->roverctl version mismatch
+	IgnoreVersionMismatch bool
 }
 
 var state *AppState = nil
@@ -40,11 +42,12 @@ func initialize() *AppState {
 	quote := quotes[rand.Intn(len(quotes))]
 
 	return &AppState{
-		RoverConnections: connections,
-		Config:           config,
-		Quote:            quote,
-		Interactive:      true,
-		QuitCommand:      "",
+		RoverConnections:      connections,
+		Config:                config,
+		Quote:                 quote,
+		Interactive:           true,
+		QuitCommand:           "",
+		IgnoreVersionMismatch: false,
 	}
 }
 
