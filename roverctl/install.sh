@@ -58,7 +58,12 @@ fi
 
 # Download the binary
 echo "Downloading the binary for ${os}/${arch}..."
-curl -Lo "/tmp/${binary_name}" "https://github.com/${REPO}/releases/download/${VERSION}/${binary_name}"
+url="https://github.com/${REPO}/releases/download/${VERSION}/${binary_name}"
+if ! curl --output /dev/null --silent --head --fail "$url"; then
+  echo "Error: The specified release or binary does not exist ($url)."
+  exit 1
+fi
+curl -Lo "/tmp/${binary_name}" "$url"
 
 # Make it executable
 chmod +x "/tmp/${binary_name}"

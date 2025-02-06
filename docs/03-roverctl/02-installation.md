@@ -7,7 +7,10 @@ The `roverctl` utility runs on your own system. You can conveniently install it 
 Linux and macOS users (both amd64 and arm64) can install our pre-built binaries using our installation script. This script will detect your system and add `roverctl` to your `PATH` automatically:
 
 ```bash
+# Install latest
 curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash
+# Install a specific version (i.e. 1.0.0)
+curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v1.0.0
 ```
 
 Alternatively, you can download the pre-built binaries and releases [here](https://github.com/VU-ASE/rover/releases/latest).
