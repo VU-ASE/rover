@@ -118,7 +118,7 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 				case "shutdown":
 					return RootScreen(state.Get()).SwitchScreen(NewShutdownRoverPage())
 				case "update-roverctl":
-					state.Get().QuitCommand = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/roverctl/main/install.sh | bash"
+					state.Get().QuitCommand = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash"
 					return m, tea.Quit
 				case "ssh":
 					active := state.Get().RoverConnections.GetActive()
@@ -429,7 +429,7 @@ func initialCategories() []Category {
 
 func (m StartPage) checkUpdate() tea.Cmd {
 	return tui.PerformAction(&m.updateAvailable, func() (*utils.UpdateAvailable, error) {
-		return utils.CheckForGithubUpdate("roverctl", "vu-ase", version)
+		return utils.CheckForGithubUpdate("rover", "vu-ase", version)
 	})
 }
 

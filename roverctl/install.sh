@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="VU-ASE/roverctl"
+REPO="VU-ASE/rover"
 INSTALL_DIR="/usr/local/bin"
 
 # Function to detect OS
@@ -72,4 +72,4 @@ if ! command -v roverctl &> /dev/null; then
   echo "Added ${INSTALL_DIR} to PATH in $shell_profile. Please restart your shell or run 'source $shell_profile'."
 fi
 
-echo "Installation complete! You can now use 'roverctl'."
+echo "Installation complete! Run 'roverctl' to get started."
