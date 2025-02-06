@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/VU-ASE/rover/compare/v1.0.4...v1.0.5) (2025-02-06)
+
+
+### Bug Fixes
+
+* use docker buildx for builds ([aa4893b](https://github.com/VU-ASE/rover/commit/aa4893b9e97492b82198164711f7cca2e534f094))
+
 ## [1.0.4](https://github.com/VU-ASE/rover/compare/v1.0.3...v1.0.4) (2025-02-05)
 
 
