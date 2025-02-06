@@ -13,6 +13,9 @@ jobs:
         name: Build and release roverctl
         runs-on: ubuntu-latest
         steps:
+            - name: Set up Docker
+              uses: docker/setup-buildx-action@v2
+
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -27,7 +30,7 @@ jobs:
             - name: Generate OpenAPI files in devcontainer
               run: |
                   cd roverctl
-                  docker build --build-arg HOST_UID=$(id -u) -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
+                  docker build  -t roverctl-build-container -f ../.devcontainer/roverctl/Dockerfile .
 
                   # Debug step
                   docker run --rm \
@@ -35,7 +38,7 @@ jobs:
                     -v "$(pwd)/../spec:/home/devuser/spec" \
                     roverctl-build-container bash -ic 'ls -al /home/devuser/roverctl/; echo ====; ls -al /home/devuser/spec'
 
-                  docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl:z" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
+                  docker run --rm --user devuser  -v "$(pwd):/home/devuser/roverctl" -v "$(pwd)/../spec:/home/devuser/spec"  roverctl-build-container bash -ic 'cd /home/devuser/roverctl && make build-open-api'
 
             - name: Build binaries for linux and macos (amd64 and arm64)
               env:
