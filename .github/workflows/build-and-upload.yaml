@@ -24,9 +24,8 @@ jobs:
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-            - name: Fix permissions before running Docker
-              run: |
-                  sudo chown -R 1000:1000 ./roverctl ./spec
+            - name: Give full permissions to all users
+              run: sudo chmod -R 777 ./roverctl ./spec
 
             - name: Generate OpenAPI files in devcontainer
               run: |
@@ -46,7 +45,7 @@ jobs:
                   VERSION: ${{ env.VERSION }}
               working-directory: roverctl/src
               run: |
-                  BUILD_DIR=./bin/
+                  BUILD_DIR=../bin/
                   BINARY_NAME=roverctl
                   LDFLAGS="-X 'github.com/VU-ASE/rover/roverctl/src/views.version=${VERSION}'"
                   mkdir -p $BUILD_DIR
@@ -77,7 +76,7 @@ jobs:
             - name: Build and run in Docker container
               run: |
                   cd roverd
-                  docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f ../.devcontainer/roverd/Dockerfile .
+                  docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f ../.devcontainer/roverd/Dockerfile ..
                   docker run --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work'
 
             - name: Set VERSION from tag
