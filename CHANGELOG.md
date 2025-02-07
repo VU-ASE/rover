@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0](https://github.com/VU-ASE/rover/compare/v0.1.2...v0.2.0) (2025-02-07)
+
+
+### Features
+
+* api clean up and addition of alias error (BBC) ([1d685a6](https://github.com/VU-ASE/rover/commit/1d685a6578ddc0b9c3b48fa9ffeb0abecfefad22))
+* install script that allows for installing a specific version ([f5bfcaf](https://github.com/VU-ASE/rover/commit/f5bfcaf2bada29e9e8732b61d79c93a53c3331d9))
+* upgrade roverctl to go 1.22.12 ([6a19635](https://github.com/VU-ASE/rover/commit/6a1963502affb37a09328151d1c55622ffb14d0f))
+
+
+### Bug Fixes
+
+* error on roverctl install.sh if release does not exist or no binary ([1880064](https://github.com/VU-ASE/rover/commit/1880064e54514a502ae07bd21f690b8d953a7eea))
+* roverctl install.sh, verify downloaded binary is valid ([381a5ed](https://github.com/VU-ASE/rover/commit/381a5ed2e809710a882a65e4affd3fb658ecb2e2))
+
 ## [0.1.2](https://github.com/VU-ASE/rover/compare/v0.1.1...v0.1.2) (2025-02-06)
 
 
