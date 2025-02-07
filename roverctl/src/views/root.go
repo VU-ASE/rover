@@ -1,7 +1,6 @@
 package views
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -69,26 +68,24 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 func (m MainModel) View() string {
+	bg := style.AsePrimary
+	if state.Get().VersionMismatch {
+		bg = style.WarningPrimary
+	}
+
 	s := state.Get()
 	// Define the header style
 	headerStyle := lipgloss.NewStyle().
-		Width(s.WindowWidth).        // Set the width of the header to the window width
-		Align(lipgloss.Center).      // Center-align the text
-		Background(style.AsePrimary) // Set the background color
-
-	// Define the URL and the text
-	url := "https://ase.vu.nl"
-	text := "read the docs at ase.vu.nl"
-
-	// Hyperlink escape sequence
-	link := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", url, text)
+		Width(s.WindowWidth).   // Set the width of the header to the window width
+		Align(lipgloss.Center). // Center-align the text
+		Background(bg)          // Set the background color
 
 	con := ""
 	if s.RoverConnections.Active != "" {
 		con = " | " + s.RoverConnections.Active
 	}
 
-	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(style.AsePrimary).Bold(false).Padding(0, 0).Render(", "+s.Quote+" | "+link+" | roverctl v"+strings.TrimPrefix(version, "v")+con)
+	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(bg).Bold(false).Padding(0, 0).Render(", "+s.Quote+" | roverctl v"+strings.TrimPrefix(version, "v")+con)
 	fullScreen := lipgloss.NewStyle().Padding(1, 2).Width(s.WindowWidth).Height(s.WindowHeight - 3) // leave room for the header and help keys
 
 	keys := m.current.keys()

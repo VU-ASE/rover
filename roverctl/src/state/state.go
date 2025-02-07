@@ -21,6 +21,7 @@ type AppState struct {
 	QuitCommand string
 	// Should not warn on roverd<->roverctl version mismatch
 	IgnoreVersionMismatch bool
+	VersionMismatch       bool
 }
 
 var state *AppState = nil
@@ -48,6 +49,7 @@ func initialize() *AppState {
 		Interactive:           true,
 		QuitCommand:           "",
 		IgnoreVersionMismatch: false,
+		VersionMismatch:       false,
 	}
 }
 

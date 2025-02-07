@@ -74,6 +74,13 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 	case tui.ActionUpdate[any, bool]:
 		m.roverOnline.ProcessUpdate(msg)
 		m.roverctlInstallation.ProcessUpdate(msg)
+
+		if m.versionMismatch() {
+			state.Get().VersionMismatch = true
+		} else if !state.Get().IgnoreVersionMismatch {
+			state.Get().VersionMismatch = false
+		}
+
 		if m.roverOnline.IsDone() {
 			return m, m.checkRoverOnline(true) // keep checking
 		}
@@ -137,10 +144,13 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
-		case msg.String() == "u":
-			state.Get().QuitCommand = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v" + strings.TrimPrefix(m.roverOnline.Result().Version, "v")
-			return m, tea.Quit
-		case msg.String() == "i":
+		case msg.String() == "y":
+			if m.versionMismatch() {
+				state.Get().QuitCommand = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v" + strings.TrimPrefix(m.roverOnline.Result().Version, "v") + "; roverctl"
+				return m, tea.Quit
+			}
+			return m, nil
+		case msg.String() == "n", msg.String() == "i": // do not update
 			if m.versionMismatch() && !m.roverctlInstallation.IsLoading() {
 				state.Get().IgnoreVersionMismatch = true
 			}
@@ -205,14 +215,16 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 }
 
 func (m StartPage) versionMismatchView() string {
+
 	s := style.Warning.Bold(true).Render("Version mismatch detected") + "\n\n"
+	s += style.Gray.Render("Mismatch with "+state.Get().RoverConnections.Active) + "\n"
 
 	// Normalize versions
 	roverdVersion := "v" + strings.TrimPrefix(m.roverOnline.Result().Version, "v")
 	roverctlVersion := "v" + strings.TrimPrefix(version, "v")
 
-	s += "Your currently active Rover is running roverd version " + style.Primary.Render(roverdVersion) + "\n"
-	s += "While you are currently running roverctl version " + style.Primary.Render(roverctlVersion) + "\n\n"
+	// s += "Your currently active Rover is running roverd version " + style.Primary.Render(roverdVersion) + "\n"
+	// s += "While you are currently running roverctl version " + style.Primary.Render(roverctlVersion) + "\n\n"
 
 	if m.roverctlInstallation.IsLoading() {
 		s += "> " + "Installing roverctl " + m.roverctlInstallation.Request() + "..."
@@ -225,18 +237,27 @@ func (m StartPage) versionMismatchView() string {
 		s += style.Success.Render("Successfully installed roverctl "+m.roverctlInstallation.Request()) + "\n"
 	}
 
+	var operator string
+	var options string
 	if !semver.IsValid(roverctlVersion) || !semver.IsValid(roverdVersion) {
-		s += style.Gray.Render("That is all we know, sorry.") + "\n\n"
+		operator = "≠"
+		options = "[i]gnore"
 	} else if semver.Compare(roverctlVersion, roverdVersion) == 1 {
 		// Should update roverd
-		s += style.Primary.Bold(true).Render("d") + style.Gray.Render(" Downgrade roverctl to match roverd") + "\n"
+		// todo: update roverd when this endpoint is implemented
+		operator = ">"
+		options = style.Success.Render("Downgrade roverctl to match?") + "\n[y]es [n]o"
 	} else {
 		// Should update roverctl
-		s += style.Primary.Bold(true).Render("u") + style.Gray.Render(" Update roverctl to match roverd") + "\n"
+		operator = "<"
+		options = style.Success.Render("Update roverctl to match?") + "\n[y]es [n]o"
 	}
-	s += lipgloss.NewStyle().Bold(true).Render("i") + style.Gray.Render(" Ignore (not recommended)")
+	// s += lipgloss.NewStyle().Bold(true).Render("i") + style.Gray.Render(" Ignore (not recommended)")
+	s += "roverctl " + lipgloss.NewStyle().Bold(true).Render(roverctlVersion) + " " + style.Warning.Render(operator) + " roverd " + lipgloss.NewStyle().Bold(true).Render(roverdVersion) + "\n\n"
 
-	return s
+	s += options
+
+	return style.RenderDialog(s, style.WarningPrimary)
 }
 
 // Returns true if roverd and roverctl mismatch
