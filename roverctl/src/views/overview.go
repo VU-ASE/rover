@@ -3,6 +3,7 @@ package views
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rogpeppe/go-internal/semver"
 )
 
 type StartPage struct {
@@ -30,8 +32,9 @@ type StartPage struct {
 	forceOnline bool // override the rover connection state
 
 	// Actions
-	updateAvailable tui.Action[utils.UpdateAvailable] // preserved in the model to avoid re-rendering in .View(), based on the latest service information
-	roverOnline     tui.ActionV2[any, openapi.StatusGet200Response]
+	updateAvailable      tui.Action[utils.UpdateAvailable] // preserved in the model to avoid re-rendering in .View(), based on the latest service information
+	roverOnline          tui.ActionV2[any, openapi.StatusGet200Response]
+	roverctlInstallation tui.ActionV2[string, bool] // version desired, result
 }
 
 type CategoryItem struct {
@@ -70,6 +73,14 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 
 	case tui.ActionUpdate[any, bool]:
 		m.roverOnline.ProcessUpdate(msg)
+		m.roverctlInstallation.ProcessUpdate(msg)
+
+		if m.versionMismatch() {
+			state.Get().VersionMismatch = true
+		} else if !state.Get().IgnoreVersionMismatch {
+			state.Get().VersionMismatch = false
+		}
+
 		if m.roverOnline.IsDone() {
 			return m, m.checkRoverOnline(true) // keep checking
 		}
@@ -133,6 +144,17 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
+		case msg.String() == "y":
+			if m.versionMismatch() {
+				state.Get().QuitCommand = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v" + strings.TrimPrefix(m.roverOnline.Result().Version, "v") + "; roverctl"
+				return m, tea.Quit
+			}
+			return m, nil
+		case msg.String() == "n", msg.String() == "i": // do not update
+			if m.versionMismatch() && !m.roverctlInstallation.IsLoading() {
+				state.Get().IgnoreVersionMismatch = true
+			}
+			return m, nil
 		case key.Matches(msg, m.keys().Down):
 			if m.listIndex < len(m.listItems) {
 				if len(m.listItems) > 0 && m.itemIndex < len(m.listItems[m.listIndex].items)-1 {
@@ -193,12 +215,58 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 }
 
 func (m StartPage) versionMismatchView() string {
+
 	s := style.Warning.Bold(true).Render("Version mismatch detected") + "\n\n"
-	return s
+	s += style.Gray.Render("Mismatch with "+state.Get().RoverConnections.Active) + "\n"
+
+	// Normalize versions
+	roverdVersion := "v" + strings.TrimPrefix(m.roverOnline.Result().Version, "v")
+	roverctlVersion := "v" + strings.TrimPrefix(version, "v")
+
+	// s += "Your currently active Rover is running roverd version " + style.Primary.Render(roverdVersion) + "\n"
+	// s += "While you are currently running roverctl version " + style.Primary.Render(roverctlVersion) + "\n\n"
+
+	if m.roverctlInstallation.IsLoading() {
+		s += "> " + "Installing roverctl " + m.roverctlInstallation.Request() + "..."
+	} else if m.roverctlInstallation.IsError() {
+		s += style.Error.Render("Failed to install roverctl") + "\n"
+		for _, err := range m.roverctlInstallation.Errors() {
+			s += style.Error.Render(" • "+err.Error()) + "\n"
+		}
+	} else if m.roverctlInstallation.IsSuccess() {
+		s += style.Success.Render("Successfully installed roverctl "+m.roverctlInstallation.Request()) + "\n"
+	}
+
+	var operator string
+	var options string
+	if !semver.IsValid(roverctlVersion) || !semver.IsValid(roverdVersion) {
+		operator = "≠"
+		options = "[i]gnore"
+	} else if semver.Compare(roverctlVersion, roverdVersion) == 1 {
+		// Should update roverd
+		// todo: update roverd when this endpoint is implemented
+		operator = ">"
+		options = style.Success.Render("Downgrade roverctl to match?") + "\n[y]es [n]o"
+	} else {
+		// Should update roverctl
+		operator = "<"
+		options = style.Success.Render("Update roverctl to match?") + "\n[y]es [n]o"
+	}
+	// s += lipgloss.NewStyle().Bold(true).Render("i") + style.Gray.Render(" Ignore (not recommended)")
+	s += "roverctl " + lipgloss.NewStyle().Bold(true).Render(roverctlVersion) + " " + style.Warning.Render(operator) + " roverd " + lipgloss.NewStyle().Bold(true).Render(roverdVersion) + "\n\n"
+
+	s += options
+
+	return style.RenderDialog(s, style.WarningPrimary)
+}
+
+// Returns true if roverd and roverctl mismatch
+func (m StartPage) versionMismatch() bool {
+	return m.roverOnline.HasResult() && m.roverOnline.Result().Version != version && !state.Get().IgnoreVersionMismatch
 }
 
 func (m StartPage) View() string {
-	if m.roverOnline.HasResult() && m.roverOnline.Result().Version != version {
+	if m.versionMismatch() {
 		return m.versionMismatchView()
 	}
 
@@ -266,6 +334,13 @@ func (m StartPage) keys() utils.GeneralKeyMap {
 		key.WithHelp("enter", "select"),
 	)
 	kb.Back.SetEnabled(false)
+
+	if m.versionMismatch() {
+		kb.Up.SetEnabled(false)
+		kb.Down.SetEnabled(false)
+		kb.Confirm.SetEnabled(false)
+	}
+
 	return kb
 }
 
@@ -464,5 +539,19 @@ func (m StartPage) checkRoverOnline(wait bool) tea.Cmd {
 			return nil, []error{err}
 		}
 		return res, nil
+	})
+}
+
+func (m StartPage) installRoverctl(v string) tea.Cmd {
+	return tui.PerformActionV2(&m.roverctlInstallation, nil, func() (*bool, []error) {
+		version := "v" + strings.TrimPrefix(v, "v")
+
+		cmd := exec.Command("bash", "-c", "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s "+version)
+		err := cmd.Run() // No need to capture output
+		if err != nil {
+			return nil, []error{err}
+		}
+		res := true
+		return &res, nil
 	})
 }
