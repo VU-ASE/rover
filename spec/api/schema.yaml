@@ -847,7 +847,7 @@ components:
       type: object
       required:
         - errorType
-        - errorData
+        - errorValue
       properties:
         errorType:
           type: string
@@ -856,7 +856,7 @@ components:
             - generic
             - build
             - pipeline_set
-        errorData:
+        errorValue:
           oneOf:
             - $ref: "#/components/schemas/GenericError"
             - $ref: "#/components/schemas/BuildError"
