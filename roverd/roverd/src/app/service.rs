@@ -31,6 +31,15 @@ pub struct FqBuf {
 }
 
 impl FqBuf {
+    pub fn new(author: &str, name: &str, version: &str) -> FqBuf {
+        FqBuf {
+            author: author.to_string(),
+            name: name.to_string(),
+            version: version.to_string(),
+            is_daemon: false,
+        }
+    }
+
     pub fn new_daemon(author: &str, name: &str, version: &str) -> FqBuf {
         FqBuf {
             author: author.to_string(),
@@ -38,6 +47,24 @@ impl FqBuf {
             version: version.to_string(),
             is_daemon: true,
         }
+    }
+}
+
+impl From<FqBuf> for FullyQualifiedService {
+    fn from(value: FqBuf) -> Self {
+        FullyQualifiedService::new(value.author, value.name, value.version)
+    }
+}
+
+impl From<FullyQualifiedService> for FqBuf {
+    fn from(value: FullyQualifiedService) -> Self {
+        FqBuf::new(&value.author, &value.name, &value.version)
+    }
+}
+
+impl From<&FullyQualifiedService> for FqBuf {
+    fn from(value: &FullyQualifiedService) -> Self {
+        FqBuf::new(&value.author, &value.name, &value.version)
     }
 }
 
@@ -109,12 +136,7 @@ impl From<&ServicesAuthorServiceVersionGetPathParams> for FqBuf {
 
 impl From<&PipelinePostRequestInner> for FqBuf {
     fn from(service: &PipelinePostRequestInner) -> Self {
-        FqBuf {
-            name: service.name.clone(),
-            author: service.author.clone(),
-            version: service.version.clone(),
-            is_daemon: false,
-        }
+        FqBuf::from(&service.fq)
     }
 }
 
@@ -306,15 +328,6 @@ impl From<Vec<PipelinePostRequestInner>> for FqBufVec {
     }
 }
 
-// impl<'a> Fq<'a> {
-//     pub fn path(&self) -> String {
-//         format!(
-//             "{}/{}/{}/{}/service.yaml",
-//             ROVER_DIR, self.author, self.name, self.version
-//         )
-//     }
-// }
-
 impl Display for Fq<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}/{}", self.author, self.name, self.version)?;
@@ -322,13 +335,19 @@ impl Display for Fq<'_> {
     }
 }
 
+impl<'a> From<&'a FullyQualifiedService> for Fq<'a> {
+    fn from(value: &'a FullyQualifiedService) -> Self {
+        Fq {
+            author: &value.author,
+            name: &value.name,
+            version: &value.version,
+        }
+    }
+}
+
 impl<'a> From<&'a PipelinePostRequestInner> for Fq<'a> {
     fn from(p: &'a PipelinePostRequestInner) -> Self {
-        Fq {
-            name: &p.name,
-            author: &p.author,
-            version: &p.version,
-        }
+        Fq::from(&p.fq)
     }
 }
 

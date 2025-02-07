@@ -65,7 +65,7 @@ async fn check_status(client: &Client) -> Result<(), Error> {
     assert!(response.status().is_success());
 
     let response_string = response.text().await?;
-    let r: StatusGet200Response = serde_json::from_str(&response_string)?;
+    let r: Get200Response = serde_json::from_str(&response_string)?;
 
     assert_eq!(r.status, DaemonStatus::Operational);
     assert_eq!(r.error_message, None);

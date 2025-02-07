@@ -327,10 +327,13 @@ macro_rules! warn_generic {
             Ok(data) => data,
             Err(e) => {
                 warn!("{:#?}", e);
-                return Ok(<$error_type>::Status400_AnErrorOccurred(GenericError {
-                    message: Some(format!("{:?}", e)),
-                    code: Some(1),
-                }));
+                let generic_error = GenericError::new(format!("{:?}", e), 1);
+                // todo remove the unwraps and change to actual error
+                let json_string = serde_json::to_string(&generic_error).unwrap();
+                let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                return Ok(<$error_type>::Status400_ErrorOccurred(
+                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+                ));
             }
         }
     }};
@@ -343,10 +346,13 @@ macro_rules! error_generic {
             Ok(data) => data,
             Err(e) => {
                 error!("{:#?}", e);
-                return Ok(<$error_type>::Status400_AnErrorOccurred(GenericError {
-                    message: Some(format!("{:?}", e)),
-                    code: Some(1),
-                }));
+                let generic_error = GenericError::new(format!("{:?}", e), 1);
+                // todo remove the unwraps and change to actual error
+                let json_string = serde_json::to_string(&generic_error).unwrap();
+                let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                return Ok(<$error_type>::Status400_ErrorOccurred(
+                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+                ));
             }
         }
     }};
@@ -357,10 +363,15 @@ macro_rules! rover_is_dormant {
     ($error_type:ty) => {{
         let msg = "unable to perform request, rover is not running";
         warn!(msg);
-        return Ok(<$error_type>::Status400_AnErrorOccurred(GenericError {
-            message: Some(msg.to_string()),
-            code: Some(1),
-        }));
+
+        let generic_error = GenericError::new(msg.to_string(), 1);
+
+        // todo remove the unwraps and change to actual error
+        let json_string = serde_json::to_string(&generic_error).unwrap();
+        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+        Ok(<$error_type>::Status400_ErrorOccurred(
+            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+        ))
     }};
 }
 
@@ -369,10 +380,15 @@ macro_rules! rover_is_operating {
     ($error_type:ty) => {{
         let msg = "unable to perform request, rover is running";
         warn!(msg);
-        return Ok(<$error_type>::Status400_AnErrorOccurred(GenericError {
-            message: Some(msg.to_string()),
-            code: Some(1),
-        }));
+
+        let generic_error = GenericError::new(msg.to_string(), 1);
+
+        // todo remove the unwraps and change to actual error
+        let json_string = serde_json::to_string(&generic_error).unwrap();
+        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+        Ok(<$error_type>::Status400_ErrorOccurred(
+            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+        ))
     }};
 }
 
