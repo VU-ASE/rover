@@ -736,6 +736,19 @@ paths:
       tags:
         - "Health"
       summary: "Self-update the roverd daemon process"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+              properties:
+                version:
+                  type: string
+                  description: "The roverd version to update to"
+                  example: "1.0.0"
       responses:
         "200":
           $ref: "#/components/responses/Success"
