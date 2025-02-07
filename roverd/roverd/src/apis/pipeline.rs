@@ -5,7 +5,6 @@ use axum_extra::extract::CookieJar;
 
 use openapi::apis::pipeline::*;
 use openapi::models::*;
-
 use tracing::warn;
 
 use crate::constants::*;
@@ -96,7 +95,9 @@ impl Pipeline for Roverd {
 
                         let mut unmet_streams = vec![];
                         let mut unmet_services = vec![];
-                        let mut duplicate_service = vec![];
+                        let mut duplicate_services = vec![];
+                        let mut duplicate_aliases = vec![];
+                        let mut aliases_in_use = vec![];
 
                         for i in pipeline_errors {
                             match i {
@@ -105,103 +106,76 @@ impl Pipeline for Roverd {
                                             rovervalidate::error::UnmetDependencyError::UnmetStream(unmet_stream_error) => {
                                                 unmet_streams.push(
                                                     UnmetStreamError {
-                                                        source: Some(unmet_stream_error.source),
-                                                        target: Some(unmet_stream_error.target),
-                                                        stream: Some(unmet_stream_error.stream),
+                                                        source: unmet_stream_error.source,
+                                                        target: unmet_stream_error.target,
+                                                        stream: unmet_stream_error.stream,
                                                     }
                                                 );
                                             },
                                             rovervalidate::error::UnmetDependencyError::UnmetService(unmet_service_error) => {
                                                 unmet_services.push(
                                                     UnmetServiceError {
-                                                        source: Some(unmet_service_error.source),
-                                                        target: Some(unmet_service_error.target)
+                                                        source: unmet_service_error.source,
+                                                        target: unmet_service_error.target
                                                     }
                                                 )
                                             },
                                         }
                                     },
                                     rovervalidate::error::PipelineValidationError::DuplicateServiceError(s) => {
-                                        duplicate_service.push(openapi::models::DuplicateServiceError(s));
+                                        duplicate_services.push(s);
                                     },
-                                    rovervalidate::error::PipelineValidationError::DuplicateAliasError(_) => {
-                                        todo!("Implement the DuplicateAliasError in openapi");
+                                    rovervalidate::error::PipelineValidationError::DuplicateAliasError(s) => {
+                                        duplicate_aliases.push(s)
                                     },
-                                    rovervalidate::error::PipelineValidationError::AliasInUseAsNameError(_) => {
-                                        todo!("Implement the AliasInUseAsNameError in openapi");
+                                    rovervalidate::error::PipelineValidationError::AliasInUseAsNameError(s) => {
+                                        aliases_in_use.push(s)
+                                        
                                     },
                                 }
                         }
 
-                        let string_errors = if !string_errors.is_empty() {
-                            Some(string_errors.concat().to_string())
-                        } else {
-                            None
-                        };
-
-                        let unmet_streams = if !unmet_streams.is_empty() {
-                            Some(unmet_streams)
-                        } else {
-                            None
-                        };
-
-                        let unmet_services = if !unmet_services.is_empty() {
-                            Some(unmet_services)
-                        } else {
-                            None
-                        };
-
-                        let duplicate_service = if !duplicate_service.is_empty() {
-                            Some(duplicate_service)
-                        } else {
-                            None
-                        };
-
-                        return Ok(
-                            PipelinePostResponse::Status400_ThePipelineWasNotValidAndCouldNotBeSet(
-                                PipelinePost400Response {
-                                    message: string_errors,
-                                    validation_errors: PipelinePost400ResponseValidationErrors {
-                                        unmet_streams,
-                                        unmet_services,
-                                        duplicate_service,
-                                    },
-                                },
-                            ),
+                        let pipeline_error = PipelineSetError::new(
+                            PipelineSetErrorValidationErrors {
+                                unmet_streams,
+                                unmet_services,
+                                duplicate_services,
+                                duplicate_aliases,
+                                aliases_in_use
+                            }
                         );
-                    }
-                    all_other_errors => {
-                        return Ok(
-                            PipelinePostResponse::Status400_ThePipelineWasNotValidAndCouldNotBeSet(
-                                PipelinePost400Response {
-                                    message: Some(format!("{:?}", all_other_errors)),
-                                    validation_errors: PipelinePost400ResponseValidationErrors {
-                                        unmet_streams: None,
-                                        unmet_services: None,
-                                        duplicate_service: None,
-                                    },
-                                },
-                            ),
+
+                        // todo remove the unwraps and change to actual error
+                        let json_string = serde_json::to_string(&pipeline_error).unwrap();
+                        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                        return Ok(PipelinePostResponse::Status400_ErrorOccurred(
+                            RoverdError::new("pipeline_set".to_string(), RoverdErrorErrorValue(box_raw))
+                        ));
+                    },
+                    _ => {
+                        let pipeline_error = PipelineSetError::new(
+                            PipelineSetErrorValidationErrors {
+                                unmet_streams: vec![],
+                                unmet_services: vec![],
+                                duplicate_services: vec![],
+                                duplicate_aliases: vec![],
+                                aliases_in_use: vec![]
+                            }
                         );
+
+                        // todo remove the unwraps and change to actual error
+                        let json_string = serde_json::to_string(&pipeline_error).unwrap();
+                        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                        return Ok(PipelinePostResponse::Status400_ErrorOccurred(
+                            RoverdError::new("pipeline_set".to_string(), RoverdErrorErrorValue(box_raw))
+                        ));
                     }
                 },
             };
 
-            Ok(PipelinePostResponse::Status200_ThePipelineWasUpdatedSuccessfully)
-        } else {
-            Ok(
-                PipelinePostResponse::Status400_ThePipelineWasNotValidAndCouldNotBeSet(
-                    PipelinePost400Response {
-                        message: Some("".to_string()),
-                        validation_errors: PipelinePost400ResponseValidationErrors {
-                            unmet_streams: None,
-                            unmet_services: None,
-                            duplicate_service: None,
-                        },
-                    },
-                ),
-            )
+            return Ok(PipelinePostResponse::Status200_OperationWasSuccessful);
         }
+        rover_is_operating!(PipelinePostResponse)
     }
 
     /// Start the pipeline.
@@ -215,21 +189,10 @@ impl Pipeline for Roverd {
         _cookies: CookieJar,
     ) -> Result<PipelineStartPostResponse, ()> {
         if let Some(rover_state) = self.try_get_dormant().await {
-            let _ = match self.app.start(rover_state).await {
-                Ok(data) => data,
-                Err(e) => {
-                    warn!("{:#?}", e);
-                    return Ok(PipelineStartPostResponse::Status400_AnErrorOccurred(
-                        GenericError {
-                            message: Some(format!("{:?}", e)),
-                            code: Some(1),
-                        },
-                    ));
-                }
-            };
-            Ok(PipelineStartPostResponse::Status200_ThePipelineWasStartedSuccessfully)
+            warn_generic!(self.app.start(rover_state).await, PipelineStartPostResponse);
+            Ok(PipelineStartPostResponse::Status200_OperationWasSuccessful)
         } else {
-            rover_is_operating!(PipelineStartPostResponse);
+            rover_is_operating!(PipelineStartPostResponse)
         }
     }
 
@@ -244,19 +207,8 @@ impl Pipeline for Roverd {
         _cookies: CookieJar,
     ) -> Result<PipelineStopPostResponse, ()> {
         if let Some(rover_state) = self.try_get_operating().await {
-            let _ = match self.app.stop(rover_state).await {
-                Ok(data) => data,
-                Err(e) => {
-                    warn!("{:#?}", e);
-                    return Ok(PipelineStopPostResponse::Status400_AnErrorOccurred(
-                        GenericError {
-                            message: Some(format!("{:?}", e)),
-                            code: Some(1),
-                        },
-                    ));
-                }
-            };
-            Ok(PipelineStopPostResponse::Status200_ThePipelineWasStoppedSuccessfully)
+            warn_generic!(self.app.stop(rover_state).await, PipelineStopPostResponse);
+            Ok(PipelineStopPostResponse::Status200_OperationWasSuccessful)
         } else {
             rover_is_dormant!(PipelineStopPostResponse)
         }

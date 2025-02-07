@@ -40,9 +40,7 @@ impl Services for Roverd {
             Ok(
                 FetchPostResponse::Status200_TheServiceWasUploadedSuccessfully(
                     FetchPost200Response {
-                        name: fq_buf.name,
-                        author: fq_buf.author,
-                        version: fq_buf.version,
+                        fq: FullyQualifiedService::from(fq_buf),
                         invalidated_pipeline,
                     },
                 ),
@@ -72,9 +70,7 @@ impl Services for Roverd {
             Ok(
                 UploadPostResponse::Status200_TheServiceWasUploadedSuccessfully(
                     FetchPost200Response {
-                        name: fq_buf.name,
-                        author: fq_buf.author,
-                        version: fq_buf.version,
+                        fq: FullyQualifiedService::from(fq_buf),
                         invalidated_pipeline,
                     },
                 ),
@@ -204,41 +200,42 @@ impl Services for Roverd {
                 warn!("{:#?}", &e);
                 match e {
                     Error::BuildLog(build_log) => {
+                        let build_error = BuildError::new(build_log);
+
+                        // todo remove the unwraps and change to actual error
+                        let json_string = serde_json::to_string(&build_error).unwrap();
+                        let box_raw =
+                            serde_json::value::RawValue::from_string(json_string).unwrap();
                         return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                                ServicesAuthorServiceVersionPost400Response {
-                                    build_log,
-                                    message: "A build error occured".to_string(),
-                                },
+                            ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
+                                RoverdError::new(
+                                    "build".to_string(),
+                                    RoverdErrorErrorValue(box_raw),
+                                ),
                             ),
                         );
                     }
                     _ => {
+                        let build_error = BuildError::new(vec![]);
+                        // todo remove the unwraps and change to actual error
+                        let json_string = serde_json::to_string(&build_error).unwrap();
+                        let box_raw =
+                            serde_json::value::RawValue::from_string(json_string).unwrap();
                         return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                                ServicesAuthorServiceVersionPost400Response {
-                                    build_log: vec![],
-                                    message: format!("{:?}", e),
-                                },
+                            ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
+                                RoverdError::new(
+                                    "build".to_string(),
+                                    RoverdErrorErrorValue(box_raw),
+                                ),
                             ),
                         );
                     }
                 }
             };
 
-            Ok(ServicesAuthorServiceVersionPostResponse::Status200_TheServiceWasBuiltSuccessfully)
-        } else {
-            let msg = "unable to perform request, rover is running";
-            warn!(msg);
-            return Ok(
-                ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                    ServicesAuthorServiceVersionPost400Response {
-                        build_log: vec![],
-                        message: msg.to_string(),
-                    },
-                ),
-            );
+            return Ok(ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful);
         }
+        rover_is_operating!(ServicesAuthorServiceVersionPostResponse)
     }
 
     /// Retrieve the list of all authors that have parsable services. With these authors you can query further for services.
@@ -252,7 +249,6 @@ impl Services for Roverd {
         _cookies: CookieJar,
     ) -> Result<ServicesGetResponse, ()> {
         let authors = warn_generic!(self.app.get_authors().await, ServicesGetResponse);
-
         Ok(ServicesGetResponse::Status200_TheListOfAuthors(authors))
     }
 
@@ -271,7 +267,6 @@ impl Services for Roverd {
             self.app.get_services(path_params).await,
             ServicesAuthorGetResponse
         );
-
         Ok(ServicesAuthorGetResponse::Status200_TheListOfServicesForTheAuthor(services))
     }
 

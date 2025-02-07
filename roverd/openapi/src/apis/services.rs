@@ -13,9 +13,9 @@ use crate::{models, types::*};
 pub enum FetchPostResponse {
     /// The service was uploaded successfully
     Status200_TheServiceWasUploadedSuccessfully(models::FetchPost200Response),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -24,10 +24,10 @@ pub enum FetchPostResponse {
 #[allow(clippy::large_enum_variant)]
 pub enum FqnsGetResponse {
     /// Fully qualified services
-    Status200_FullyQualifiedServices(Vec<models::FqnsGet200ResponseInner>),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    Status200_FullyQualifiedServices(Vec<models::FullyQualifiedService>),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -37,12 +37,12 @@ pub enum FqnsGetResponse {
 pub enum ServicesAuthorGetResponse {
     /// The list of services for the author
     Status200_TheListOfServicesForTheAuthor(Vec<String>),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -51,12 +51,12 @@ pub enum ServicesAuthorGetResponse {
 pub enum ServicesAuthorServiceGetResponse {
     /// The list of versions for this author and service name
     Status200_TheListOfVersionsForThisAuthorAndServiceName(Vec<String>),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -67,12 +67,12 @@ pub enum ServicesAuthorServiceVersionDeleteResponse {
     Status200_TheServiceVersionWasDeletedSuccessfully(
         models::ServicesAuthorServiceVersionDelete200Response,
     ),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -83,26 +83,26 @@ pub enum ServicesAuthorServiceVersionGetResponse {
     Status200_AFullDescriptionOfTheServiceAtThisVersion(
         models::ServicesAuthorServiceVersionGet200Response,
     ),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum ServicesAuthorServiceVersionPostResponse {
-    /// The service was built successfully
-    Status200_TheServiceWasBuiltSuccessfully,
-    /// The build failed
-    Status400_TheBuildFailed(models::ServicesAuthorServiceVersionPost400Response),
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -111,9 +111,9 @@ pub enum ServicesAuthorServiceVersionPostResponse {
 pub enum ServicesGetResponse {
     /// The list of authors
     Status200_TheListOfAuthors(Vec<String>),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -123,9 +123,9 @@ pub enum ServicesGetResponse {
 pub enum UploadPostResponse {
     /// The service was uploaded successfully
     Status200_TheServiceWasUploadedSuccessfully(models::FetchPost200Response),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
