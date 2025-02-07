@@ -162,6 +162,6 @@ async fn main() -> Result<(), error::Error> {
         }
     }
 
-    info!("roverd exiting");
+    info!("roverd main exiting");
     Ok(())
 }
