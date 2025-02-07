@@ -69,21 +69,12 @@ paths:
                           type: object
                           description: "The fully qualified service that is enabled"
                           required:
-                            - "name"
-                            - "version"
-                            - "author"
+                            - "fq"
                             - "faults"
                             - "exit"
                           properties:
-                            name:
-                              type: string
-                              description: "The name of the service"
-                            version:
-                              type: string
-                              description: "The version of the service"
-                            author:
-                              type: string
-                              description: "The author of the service"
+                            fq:
+                              $ref: "#/components/schemas/FullyQualifiedService"
                             faults:
                               type: integer
                               description: "The number of faults that have occurred (causing the pipeline to restart) since pipeline.last_start"
@@ -141,53 +132,15 @@ paths:
               items:
                 type: object
                 required:
-                  - "name"
-                  - "version"
-                  - "author"
+                  - "fq"
                 properties:
-                  name:
-                    type: string
-                    description: "The name of the service"
-                    example: "imaging"
-                  version:
-                    type: string
-                    description: "The version of the service"
-                    example: "1.0.0"
-                  author:
-                    type: string
-                    description: "The author of the service"
-                    example: "vu-ase"
+                  fq:
+                    $ref: "#/components/schemas/FullyQualifiedService"
       responses:
         "200":
-          description: "The pipeline was updated successfully"
+          $ref: "#/components/responses/Success"
         "400":
-          description: "The pipeline was not valid and could not be set"
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - "validation_errors"
-                properties:
-                  message:
-                    type: string
-                    description: "Additional information"
-                  validation_errors:
-                    type: object
-                    description: "The validation errors that prevent the pipeline from being set"
-                    properties:
-                      unmet_streams:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/UnmetStreamError"
-                      unmet_services:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/UnmetServiceError"
-                      duplicate_service:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/DuplicateServiceError"
+          $ref: "#/components/responses/Error"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
 
@@ -198,7 +151,7 @@ paths:
       summary: "Start the pipeline"
       responses:
         "200":
-          description: "The pipeline was started successfully. You can view its information with GET /pipeline"
+          $ref: "#/components/responses/Success"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -211,7 +164,7 @@ paths:
       summary: "Stop the pipeline"
       responses:
         "200":
-          description: "The pipeline was stopped successfully. You can view its information with GET /pipeline"
+          $ref: "#/components/responses/Success"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -271,10 +224,10 @@ paths:
                   ]
         "400":
           $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   #
   # Upload ZIP endpoint
@@ -305,23 +258,11 @@ paths:
               schema:
                 type: object
                 required:
-                  - "name"
-                  - "version"
-                  - "author"
                   - "invalidated_pipeline"
+                  - "fq"
                 properties:
-                  name:
-                    type: string
-                    description: "The name of the service"
-                    example: "imaging"
-                  version:
-                    type: string
-                    description: "The version of the service"
-                    example: "1.0.0"
-                  author:
-                    type: string
-                    description: "The author of the service"
-                    example: "vu-ase"
+                  fq:
+                    $ref: "#/components/schemas/FullyQualifiedService"
                   invalidated_pipeline:
                     type: boolean
                     description: "Whether the pipeline was invalidated by this service upload"
@@ -358,23 +299,11 @@ paths:
               schema:
                 type: object
                 required:
-                  - "name"
-                  - "version"
-                  - "author"
                   - "invalidated_pipeline"
+                  - "fq"
                 properties:
-                  name:
-                    type: string
-                    description: "The name of the service"
-                    example: "imaging"
-                  version:
-                    type: string
-                    description: "The version of the service"
-                    example: "1.0.0"
-                  author:
-                    type: string
-                    description: "The author of the service"
-                    example: "vu-ase"
+                  fq:
+                    $ref: "#/components/schemas/FullyQualifiedService"
                   invalidated_pipeline:
                     type: boolean
                     description: "Whether the pipeline was invalidated by this service upload"
@@ -400,21 +329,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  required:
-                    - "author"
-                    - "version"
-                    - "name"
-                  properties:
-                    author:
-                      type: string
-                      example: "vu-ase"
-                    name:
-                      type: string
-                      example: "imaging"
-                    version:
-                      type: string
-                      example: "1.0.0"
+                  $ref: "#/components/schemas/FullyQualifiedService"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -468,10 +383,10 @@ paths:
                   - "actuator"
         "400":
           $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /services/{author}/{service}:
     get:
@@ -508,10 +423,10 @@ paths:
                   - "1.0.1"
         "400":
           $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
   /services/{author}/{service}/{version}:
     get:
@@ -626,10 +541,10 @@ paths:
                       ]
         "400":
           $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
     post:
       tags:
@@ -659,29 +574,13 @@ paths:
           example: "1.0.0"
       responses:
         "200":
-          description: "The service was built successfully"
+          $ref: "#/components/responses/Success"
         "400":
-          description: "The build failed"
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - "message"
-                  - "build_log"
-                properties:
-                  message:
-                    type: string
-                    description: "The error message"
-                  build_log:
-                    type: array
-                    description: "The build log (one log line per item)"
-                    items:
-                      type: string
-        "404":
-          $ref: "#/components/responses/NotFoundError"
+          $ref: "#/components/responses/Error"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
     delete:
       tags:
@@ -725,14 +624,20 @@ paths:
                     example: true
         "400":
           $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
 
+  #
   #
   # Health
   #
+  #
+
+  /:
+    $ref: "#/paths/~1status"
+
   /status:
     get:
       tags:
@@ -831,15 +736,27 @@ paths:
       tags:
         - "Health"
       summary: "Self-update the roverd daemon process"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+              properties:
+                version:
+                  type: string
+                  description: "The roverd version to update to"
+                  example: "1.0.0"
       responses:
         "200":
-          description: "The roverd daemon process initiated a self-update successfully. You should expect the process to terminate and restart soon."
+          $ref: "#/components/responses/Success"
         "400":
           $ref: "#/components/responses/Error"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
-  /:
-    $ref: "#/paths/~1status"
+
   /shutdown:
     post:
       tags:
@@ -847,7 +764,7 @@ paths:
       summary: "Shutdown the rover."
       responses:
         "200":
-          description: "Rover shutdown successfully."
+          $ref: "#/components/responses/Success"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -864,6 +781,33 @@ components:
       type: http
       scheme: basic
   schemas:
+    FullyQualifiedService:
+      type: object
+      description: FullyQualifiedService
+      required:
+        - author
+        - name
+        - version
+      properties:
+        author:
+          type: string
+          description: "The author of the service"
+          example: "vu-ase"
+        name:
+          type: string
+          description: "The name of the service"
+          example: "imaging"
+        version:
+          type: string
+          description: "The version of the service"
+          example: "1.0.0"
+
+    #
+    #
+    # Status Schemas
+    #
+    #
+
     PipelineStatus:
       type: string
       description: The status of the entire pipeline corresponding to a state machine
@@ -871,42 +815,6 @@ components:
         - empty
         - startable
         - started
-
-    # PipelineValidationError:
-    #   type: object
-    #   description: In the case of an invalid pipeline, this object returns useful information
-    #   oneOf:
-    #     - $ref: "#/components/schemas/UnmetDependencyError"
-    #     - $ref: "#/components/schemas/DuplicateServiceError"
-
-    # UnmetDependencyError:
-    #   type: object
-    #   description: UnmetDependencyError
-    #   oneOf:
-    #     - $ref: "#/components/schemas/UnmetServiceError"
-    #     - $ref: "#/components/schemas/UnmetStreamError"
-    UnmetStreamError:
-      type: object
-      description: UnmetStreamError
-      properties:
-        source:
-          type: string
-        target:
-          type: string
-        stream:
-          type: string
-    UnmetServiceError:
-      type: object
-      description: UnmetServiceError
-      properties:
-        source:
-          type: string
-        target:
-          type: string
-
-    DuplicateServiceError:
-      type: string
-      description: DuplicateServiceError
 
     ProcessStatus:
       type: string
@@ -916,12 +824,14 @@ components:
         - terminated
         - killed
       description: "The status of a process in the pipeline"
+
     ServiceStatus:
       type: string
       description: The status of any given service is either enabled or disabled
       enum:
         - enabled
         - disabled
+
     DaemonStatus:
       type: string
       enum:
@@ -929,16 +839,53 @@ components:
         - recoverable
         - unrecoverable
       description: "The status of the roverd process"
+
     ReferencedService:
       type: object
+      required:
+        - url
       properties:
         url:
           type: string
           description: "Fully qualified download url."
           example: "https://downloads.ase.vu.nl/api/imaging/v1.0.0"
 
+    #
+    #
+    # Error Schemas
+    #
+    #
+
+    RoverdError:
+      type: object
+      required:
+        - errorType
+        - errorValue
+      properties:
+        errorType:
+          type: string
+          description: "Type of error"
+          enum:
+            - generic
+            - build
+            - pipeline_set
+        errorValue:
+          oneOf:
+            - $ref: "#/components/schemas/GenericError"
+            - $ref: "#/components/schemas/BuildError"
+            - $ref: "#/components/schemas/PipelineSetError"
+      discriminator:
+        propertyName: "errorType"
+        mapping:
+          generic: "#/components/schemas/GenericError"
+          build: "#/components/schemas/BuildError"
+          pipeline_set: "#/components/schemas/PipelineSetError"
+
     GenericError:
       type: object
+      required:
+        - "message"
+        - "code"
       properties:
         message:
           type: string
@@ -946,14 +893,96 @@ components:
         code:
           type: integer
           description: "A code describing the error (this is not an HTTP status code)"
+
+    BuildError:
+      type: object
+      required:
+        - "message"
+        - "build_log"
+      properties:
+        build_log:
+          type: array
+          description: "The build log (one log line per item)"
+          items:
+            type: string
+
+    PipelineSetError:
+      type: object
+      required:
+        - "validation_errors"
+      properties:
+        validation_errors:
+          type: object
+          description: "The validation errors that prevent the pipeline from being set"
+          properties:
+            unmet_streams:
+              type: array
+              items:
+                $ref: "#/components/schemas/UnmetStreamError"
+            unmet_services:
+              type: array
+              items:
+                $ref: "#/components/schemas/UnmetServiceError"
+            duplicate_services:
+              type: array
+              description: "List of duplicate services"
+              items:
+                type: string
+            duplicate_aliases:
+              type: array
+              description: "List of duplicate aliases"
+              items:
+                type: string
+            aliases_in_use:
+              type: array
+              description: "List of aliases that are already used as a name of another service"
+              items:
+                type: string
+
+    UnmetStreamError:
+      type: object
+      description: UnmetStreamError
+      required:
+        - "source"
+        - "target"
+        - "stream"
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        stream:
+          type: string
+
+    UnmetServiceError:
+      type: object
+      description: UnmetServiceError
+      required:
+        - "source"
+        - "target"
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+
   responses:
+    # This is the generic case where the operation was successful
+    Success:
+      description: "Operation was successful"
+
+    # This is returned with a 400 and includes a custom, typed error schema
     Error:
-      description: "An error occurred"
+      description: "Error occurred"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/GenericError"
+            $ref: "#/components/schemas/RoverdError"
+
+    # This is returned with a 401 error code
     UnauthorizedError:
-      description: "Unauthorized access (you need to set the Authorization header with a valid username and password)"
+      description: "Unauthorized Access"
+
+    # This is returned with a 404 error code
     NotFoundError:
       description: "Entity not found"
