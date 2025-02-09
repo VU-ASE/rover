@@ -42,6 +42,7 @@ type PipelineManagerPage struct {
 	filterEnabled bool
 	selectedIndex int
 	dirty         bool // whether the pipeline has been edited
+	ignoreUpdates bool
 
 	// Actions to install the basic pipeline
 	defaultPipelineServices     tui.ActionV2[any, []utils.UpdateAvailable]                           // all latest services in the default autonomous driving pipeline
@@ -93,11 +94,62 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		return m, cmd
 	case tea.KeyMsg:
 		switch {
-		// case msg.String() == "y" && len(m.officialServicesMissing) > 0:
-		// 	return m, tea.Batch(m.installBasicPipeline())
-		// case msg.String() == "n" && len(m.officialServicesMissing) > 0:
-		// 	m.officialServicesMissing = make([]string, 0)
-		// 	return m, nil
+		// Install/update the basic pipeline
+		case msg.String() == "y" && m.defaultPipelineServicesMissing() && len(m.missingServicesInstallation) == 0:
+			for _, service := range m.defaultPipelineServices.Result() {
+				// Find the installed counterpart
+				var installed *utils.ServiceFqn
+				for _, i := range *m.availableServices.Data {
+					if i.Name == service.Name && i.Author == service.Author {
+						installed = &i
+					}
+				}
+
+				if installed == nil || installed.Version != service.LatestVersion {
+					// Create a new action and start it
+					action := tui.NewActionV2[utils.UpdateAvailable, openapi.FetchPost200Response]()
+					m.missingServicesInstallation = append(m.missingServicesInstallation, &action)
+					cmd = tea.Batch(cmd, m.installService(&action, service))
+				}
+			}
+			return m, cmd
+		case msg.String() == "r" && m.defaultPipelineServicesMissing() && len(m.missingServicesInstallation) > 0:
+			// All actions need to be done
+			for _, action := range m.missingServicesInstallation {
+				if !action.IsDone() {
+					return m, nil
+				}
+			}
+
+			// Reset the actions
+			m.missingServicesInstallation = make([]*tui.ActionV2[utils.UpdateAvailable, openapi.FetchPost200Response], 0)
+			for _, service := range m.defaultPipelineServices.Result() {
+				// Find the installed counterpart
+				var installed *utils.ServiceFqn
+				for _, i := range *m.availableServices.Data {
+					if i.Name == service.Name && i.Author == service.Author {
+						installed = &i
+					}
+				}
+
+				if installed == nil || installed.Version != service.LatestVersion {
+					// Create a new action and start it
+					action := tui.NewActionV2[utils.UpdateAvailable, openapi.FetchPost200Response]()
+					m.missingServicesInstallation = append(m.missingServicesInstallation, &action)
+					cmd = tea.Batch(cmd, m.installService(&action, service))
+				}
+			}
+			return m, cmd
+		case msg.String() == "n", msg.String() == "i":
+			// All actions need to be done
+			for _, action := range m.missingServicesInstallation {
+				if !action.IsDone() {
+					return m, nil
+				}
+			}
+
+			m.ignoreUpdates = true
+			return m, nil
 
 		case key.Matches(msg, m.keys().Back):
 			return m, tea.Quit
@@ -210,7 +262,6 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 	case tui.ActionInit[[]openapi.FetchPost200Response]:
 		return m, nil
 	case tui.ActionResult[[]openapi.FetchPost200Response]:
-
 		return m, tea.Batch(m.fetchRemoteServices(), m.fetchRemotePipeline())
 	}
 
@@ -230,42 +281,66 @@ func (m PipelineManagerPage) Init() tea.Cmd {
 func (m PipelineManagerPage) View() string {
 	// Ask to install basic pipeline
 	if m.defaultPipelineServicesMissing() {
-		dialog := lipgloss.NewStyle().Bold(false).Render("The standard ASE pipeline is not installed on this Rover. \nInstall it now?") + "\n\n"
+		dialog := style.Primary.Bold(true).Render("Updates available") + "\n\n" + "The ASE autonomous driving pipeline has updates available. \nInstall them now?\n\n"
 
 		// Align to the left
 		leftAligned := ""
-
-		for _, service := range m.defaultPipelineServices.Result() {
-			// Find the installed counterpart
-			var installed *utils.ServiceFqn
-			for _, i := range *m.availableServices.Data {
-				if i.Name == service.Name && i.Author == service.Author {
-					installed = &i
+		if len(m.missingServicesInstallation) > 0 {
+			for _, install := range m.missingServicesInstallation {
+				if install.IsLoading() {
+					leftAligned += m.spinner.View() + " Installing '" + install.Request().Name + "' v" + install.Request().LatestVersion
+				} else if install.IsError() {
+					leftAligned += style.Error.Render("✗ Could not install '"+install.Request().Name+"'") + ":\n"
+					for _, e := range install.Errors() {
+						leftAligned += "  > " + e.Error() + "\n"
+					}
+				} else {
+					leftAligned += style.Success.Render("✓ Installed '" + install.Request().Name + "' v" + install.Request().LatestVersion)
 				}
+				leftAligned += "\n"
 			}
+		} else {
+			for _, service := range m.defaultPipelineServices.Result() {
+				// Find the installed counterpart
+				var installed *utils.ServiceFqn
+				for _, i := range *m.availableServices.Data {
+					if i.Name == service.Name && i.Author == service.Author {
+						installed = &i
+					}
+				}
 
-			desc := style.Gray.Render(service.Author+"/") + lipgloss.NewStyle().Bold(true).Render(service.Name) + style.Gray.Render(" v"+service.LatestVersion)
+				desc := style.Gray.Render(service.Author+"/") + lipgloss.NewStyle().Bold(true).Render(service.Name) + style.Gray.Render(" v"+service.LatestVersion)
 
-			if installed == nil {
-				leftAligned += style.Primary.Render("Install ") + desc
-			} else if installed.Version != service.LatestVersion {
-				leftAligned += style.Primary.Render("Update ") + desc + style.Gray.Render(" (currently: v"+installed.Version+")")
-			} else {
-				leftAligned += style.Success.Render("Installed ") + desc
+				if installed == nil {
+					leftAligned += style.Primary.Render("Install ") + desc
+				} else if installed.Version != service.LatestVersion {
+					leftAligned += style.Primary.Render("Update ") + desc
+				}
+				leftAligned += "\n"
 			}
-			leftAligned += "\n"
-
 		}
+		dialog += lipgloss.NewStyle().AlignHorizontal(lipgloss.Left).Render(leftAligned)
 
-		dialog += lipgloss.NewStyle().AlignHorizontal(lipgloss.Left).Render(leftAligned) + "\n"
+		//
+		// The code below (and the structure of checking if actions are done)
+		// needs some majore DRY and cleanup. Just so you know.
+		//
 
-		// if m.installed.IsLoading() {
-		// 	dialog += m.spinner.View() + " Installing (may take while)..."
-		// } else if m.installed.IsError() {
-		// 	dialog += style.Error.Render("✗ Could not install pipeline") + style.Gray.Render(" ("+m.installed.Error.Error()+")")
-		// } else {
-		// 	dialog += "[" + style.Title.Bold(true).Render("y") + "]es [" + style.Title.Bold(true).Render("n") + "]o"
-		// }
+		// Are all actions done?
+		allDone := true
+		hasError := false
+		for _, action := range m.missingServicesInstallation {
+			if !action.IsDone() {
+				allDone = false
+			}
+			hasError = hasError || action.IsError()
+		}
+		if allDone && hasError {
+			dialog += "\n[r]etry failed [i]gnore"
+		}
+		if len(m.missingServicesInstallation) == 0 {
+			dialog += "\n[y]es [n]o"
+		}
 
 		return style.RenderDialog(dialog, style.AsePrimary)
 	}
@@ -725,7 +800,7 @@ func (m PipelineManagerPage) renderPipelineGraph() tea.Cmd {
 
 // Compares the installed services to the available services for the default pipeline, and reports missing services
 func (m PipelineManagerPage) defaultPipelineServicesMissing() bool {
-	if !m.availableServices.IsSuccess() || !m.defaultPipelineServices.IsSuccess() {
+	if !m.availableServices.IsSuccess() || !m.defaultPipelineServices.IsSuccess() || m.ignoreUpdates {
 		return false
 	}
 
@@ -794,15 +869,33 @@ func (m PipelineManagerPage) fetchDefaultServiceReleases() tea.Cmd {
 	return tui.PerformActionV2(&m.defaultPipelineServices, nil, func() (*[]utils.UpdateAvailable, []error) {
 		releases := make([]utils.UpdateAvailable, 0)
 
-		for _, official := range defaultPipeline {
-			service, err := utils.CheckForGithubUpdate(official, "VU-ASE", "none")
-			if err != nil {
-				return nil, []error{err}
-			} else if service == nil {
-				return nil, []error{fmt.Errorf("Service %s not found", official)}
-			}
-			releases = append(releases, *service)
+		releases = []utils.UpdateAvailable{
+			{
+				Name:          "imaging",
+				Author:        "VU-ASE",
+				LatestVersion: "0.0.1",
+			},
+			{
+				Name:          "controller",
+				Author:        "VU-ASE",
+				LatestVersion: "0.0.1",
+			},
+			{
+				Name:          "actuator",
+				Author:        "VU-ASE",
+				LatestVersion: "0.0.1",
+			},
 		}
+
+		// for _, official := range defaultPipeline {
+		// 	service, err := utils.CheckForGithubUpdate(official, "VU-ASE", "none")
+		// 	if err != nil {
+		// 		return nil, []error{err}
+		// 	} else if service == nil {
+		// 		return nil, []error{fmt.Errorf("Service %s not found", official)}
+		// 	}
+		// 	releases = append(releases, *service)
+		// }
 
 		return &releases, nil
 	})

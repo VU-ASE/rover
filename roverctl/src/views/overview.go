@@ -246,11 +246,11 @@ func (m StartPage) versionMismatchView() string {
 		// Should update roverd
 		// todo: update roverd when this endpoint is implemented
 		operator = ">"
-		options = style.Success.Render("Downgrade roverctl to match?") + "\n[y]es [n]o"
+		options = "Downgrade roverctl now?\n[y]es [n]o"
 	} else {
 		// Should update roverctl
 		operator = "<"
-		options = style.Success.Render("Update roverctl to match?") + "\n[y]es [n]o"
+		options = "Update roverctl now?\n[y]es [n]o"
 	}
 	// s += lipgloss.NewStyle().Bold(true).Render("i") + style.Gray.Render(" Ignore (not recommended)")
 	s += "roverctl " + lipgloss.NewStyle().Bold(true).Render(roverctlVersion) + " " + style.Warning.Render(operator) + " roverd " + lipgloss.NewStyle().Bold(true).Render(roverdVersion) + "\n\n"
