@@ -940,7 +940,7 @@ func (m PipelineManagerPage) installService(action *tui.ActionV2[utils.UpdateAva
 			return nil, []error{utils.ParseHTTPError(err, htt)}
 		}
 
-		fqn := openapi.FqnsGet200ResponseInner{
+		fqn := openapi.FullyQualifiedService{
 			Name:    res.Fq.Name,
 			Author:  res.Fq.Author,
 			Version: res.Fq.Version,

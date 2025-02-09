@@ -30,7 +30,7 @@ type RoverCalibrationPage struct {
 	// All services that should make the calibration pipeline as available on Github
 	calibrationReleases tui.ActionV2[any, []utils.UpdateAvailable]
 	// Action to install a missing service
-	serviceInstallations []*tui.ActionV2[utils.UpdateAvailable, openapi.FqnsGet200ResponseInner]
+	serviceInstallations []*tui.ActionV2[utils.UpdateAvailable, openapi.FullyQualifiedService]
 }
 
 func NewRoverCalibrationPage() RoverCalibrationPage {
@@ -42,7 +42,7 @@ func NewRoverCalibrationPage() RoverCalibrationPage {
 		previousPipeline:     tui.NewActionV2[any, openapi.PipelineGet200Response](),
 		installedServices:    tui.NewActionV2[any, []openapi.FullyQualifiedService](),
 		calibrationReleases:  tui.NewActionV2[any, []utils.UpdateAvailable](),
-		serviceInstallations: []*tui.ActionV2[utils.UpdateAvailable, openapi.FqnsGet200ResponseInner]{},
+		serviceInstallations: []*tui.ActionV2[utils.UpdateAvailable, openapi.FullyQualifiedService]{},
 	}
 }
 
@@ -81,7 +81,7 @@ func (m RoverCalibrationPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 			var cmds tea.Cmd
 			for _, service := range missing {
 				// Create a new action and start it
-				action := tui.NewActionV2[utils.UpdateAvailable, openapi.FqnsGet200ResponseInner]()
+				action := tui.NewActionV2[utils.UpdateAvailable, openapi.FullyQualifiedService]()
 				m.serviceInstallations = append(m.serviceInstallations, &action)
 				cmds = tea.Batch(cmds, m.installService(&action, service))
 			}
@@ -259,8 +259,8 @@ func (m RoverCalibrationPage) fetchCalibrationReleases() tea.Cmd {
 	})
 }
 
-func (m RoverCalibrationPage) installService(action *tui.ActionV2[utils.UpdateAvailable, openapi.FqnsGet200ResponseInner], service utils.UpdateAvailable) tea.Cmd {
-	return tui.PerformActionV2(action, &service, func() (*openapi.FqnsGet200ResponseInner, []error) {
+func (m RoverCalibrationPage) installService(action *tui.ActionV2[utils.UpdateAvailable, openapi.FullyQualifiedService], service utils.UpdateAvailable) tea.Cmd {
+	return tui.PerformActionV2(action, &service, func() (*openapi.FullyQualifiedService, []error) {
 		remote := state.Get().RoverConnections.GetActive()
 		if remote == nil {
 			return nil, []error{fmt.Errorf("No active rover connection")}
@@ -298,7 +298,7 @@ func (m RoverCalibrationPage) installService(action *tui.ActionV2[utils.UpdateAv
 			return nil, []error{utils.ParseHTTPError(err, htt)}
 		}
 
-		fqn := openapi.FqnsGet200ResponseInner{
+		fqn := openapi.FullyQualifiedService{
 			Name:    res.Fq.Name,
 			Author:  res.Fq.Author,
 			Version: res.Fq.Version,
