@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/VU-ASE/rover/compare/v0.2.0...v0.3.0) (2025-02-09)
+
+
+### Features
+
+* api adaptation ([d36262f](https://github.com/VU-ASE/rover/commit/d36262f0e0d336e08cc1a3a6e2484ad4e52c2431))
+* default ASE pipeline updates and installs ([0abcdb0](https://github.com/VU-ASE/rover/commit/0abcdb0021d0c2c4158a52e479684615864518af))
+
+
+### Bug Fixes
+
+* make roverctl compatible with new API spec ([6eb675c](https://github.com/VU-ASE/rover/commit/6eb675c87be7b49d31ca3405906767df359405f3))
+
 ## [0.2.0](https://github.com/VU-ASE/rover/compare/v0.1.2...v0.2.0) (2025-02-07)
 
 
