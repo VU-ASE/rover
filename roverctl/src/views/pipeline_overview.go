@@ -57,7 +57,7 @@ type PipelineOverviewSummary struct {
 	// Information about services specifically
 	Services []PipelineOverviewServiceInfo
 	// Status from roverd (for CPU and memory usage)
-	Status openapi.StatusGet200Response
+	Status openapi.Get200Response
 }
 
 //
@@ -201,14 +201,14 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 			nodes := make([]core.NodeInput, 0)
 			for _, service := range m.pipeline.Data.Pipeline.Enabled {
 				nodes = append(nodes, core.NodeInput{
-					Id: service.Service.Name,
+					Id: service.Service.Fq.Name,
 					Next: func() []string {
 						// Find services that depend on an output of this service
 						found := make([]string, 0)
 						for _, s := range m.pipeline.Data.Services {
-							if s.Name != service.Service.Name {
+							if s.Name != service.Service.Fq.Name {
 								for _, input := range s.Configuration.Inputs {
-									if input.Service == service.Service.Name {
+									if input.Service == service.Service.Fq.Name {
 										found = append(found, s.Name)
 									}
 								}
@@ -388,9 +388,9 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 		for _, enabled := range pipeline.Enabled {
 			configuration, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionGet(
 				context.Background(),
-				enabled.Service.Author,
-				enabled.Service.Name,
-				enabled.Service.Version,
+				enabled.Service.Fq.Author,
+				enabled.Service.Fq.Name,
+				enabled.Service.Fq.Version,
 			).Execute()
 
 			if err != nil {
@@ -398,9 +398,9 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 			}
 
 			services = append(services, PipelineOverviewServiceInfo{
-				Name:          enabled.Service.Name,
-				Version:       enabled.Service.Version,
-				Author:        enabled.Service.Author,
+				Name:          enabled.Service.Fq.Name,
+				Version:       enabled.Service.Fq.Version,
+				Author:        enabled.Service.Fq.Author,
 				Configuration: *configuration,
 			})
 		}
@@ -478,9 +478,9 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 
 		for _, e := range res.Pipeline.Enabled {
 			row := []string{
-				e.Service.Name,
-				e.Service.Version,
-				e.Service.Author,
+				e.Service.Fq.Name,
+				e.Service.Fq.Version,
+				e.Service.Fq.Author,
 				"-", // fmt.Sprintf("%d", *e.Service.Faults),
 			}
 
@@ -518,9 +518,9 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 
 		for _, e := range res.Pipeline.Enabled {
 			row := []string{
-				e.Service.Name,
-				e.Service.Version,
-				e.Service.Author,
+				e.Service.Fq.Name,
+				e.Service.Fq.Version,
+				e.Service.Fq.Author,
 			}
 
 			rows = append(rows, row)
@@ -542,9 +542,9 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 
 		for _, e := range res.Pipeline.Enabled {
 			row := []string{
-				e.Service.Name,
-				e.Service.Version,
-				e.Service.Author,
+				e.Service.Fq.Name,
+				e.Service.Fq.Version,
+				e.Service.Fq.Author,
 				fmt.Sprintf("%d", e.Service.Faults),
 			}
 

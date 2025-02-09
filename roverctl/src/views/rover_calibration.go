@@ -26,7 +26,7 @@ type RoverCalibrationPage struct {
 	// The pipeline that should be restored after calibration
 	previousPipeline tui.ActionV2[any, openapi.PipelineGet200Response]
 	// All installed services on the Rover
-	installedServices tui.ActionV2[any, []openapi.FqnsGet200ResponseInner]
+	installedServices tui.ActionV2[any, []openapi.FullyQualifiedService]
 	// All services that should make the calibration pipeline as available on Github
 	calibrationReleases tui.ActionV2[any, []utils.UpdateAvailable]
 	// Action to install a missing service
@@ -40,7 +40,7 @@ func NewRoverCalibrationPage() RoverCalibrationPage {
 		spinner: spinner.New(),
 		// Actions
 		previousPipeline:     tui.NewActionV2[any, openapi.PipelineGet200Response](),
-		installedServices:    tui.NewActionV2[any, []openapi.FqnsGet200ResponseInner](),
+		installedServices:    tui.NewActionV2[any, []openapi.FullyQualifiedService](),
 		calibrationReleases:  tui.NewActionV2[any, []utils.UpdateAvailable](),
 		serviceInstallations: []*tui.ActionV2[utils.UpdateAvailable, openapi.FqnsGet200ResponseInner]{},
 	}
@@ -218,7 +218,7 @@ func (m RoverCalibrationPage) fetchPreviousPipeline() tea.Cmd {
 }
 
 func (m RoverCalibrationPage) fetchInstalledServices() tea.Cmd {
-	return tui.PerformActionV2(&m.installedServices, nil, func() (*[]openapi.FqnsGet200ResponseInner, []error) {
+	return tui.PerformActionV2(&m.installedServices, nil, func() (*[]openapi.FullyQualifiedService, []error) {
 		remote := state.Get().RoverConnections.GetActive()
 		if remote == nil {
 			return nil, []error{fmt.Errorf("No active rover connection")}
@@ -300,9 +300,9 @@ func (m RoverCalibrationPage) installService(action *tui.ActionV2[utils.UpdateAv
 		}
 
 		fqn := openapi.FqnsGet200ResponseInner{
-			Name:    res.Name,
-			Author:  res.Author,
-			Version: res.Version,
+			Name:    res.Fq.Name,
+			Author:  res.Fq.Author,
+			Version: res.Fq.Version,
 		}
 		if fqn.Name != service.Name {
 			return nil, []error{fmt.Errorf("Roverd failed to install service %s. It installed %s instead", fqn.Name, service.Name)}

@@ -244,7 +244,7 @@ func (m PipelineManagerPage) View() string {
 		} else if m.installed.IsError() {
 			dialog += style.Error.Render("✗ Could not install pipeline") + style.Gray.Render(" ("+m.installed.Error.Error()+")")
 		} else {
-			dialog += "[" + style.Title.Bold(true).Render("y") + "]es / [" + style.Title.Bold(true).Render("n") + "]o"
+			dialog += "[" + style.Title.Bold(true).Render("y") + "]es [" + style.Title.Bold(true).Render("n") + "]o"
 		}
 
 		return style.RenderDialog(dialog, style.AsePrimary)
@@ -422,9 +422,9 @@ func (m PipelineManagerPage) fetchRemotePipeline() tea.Cmd {
 		enabled := make([]utils.ServiceFqn, 0)
 		for _, e := range pipeline.Enabled {
 			enabled = append(enabled, utils.ServiceFqn{
-				Name:    e.Service.Name,
-				Author:  e.Service.Author,
-				Version: e.Service.Version,
+				Name:    e.Service.Fq.Name,
+				Author:  e.Service.Fq.Author,
+				Version: e.Service.Fq.Version,
 			})
 		}
 		return &enabled, nil
@@ -498,9 +498,11 @@ func (m PipelineManagerPage) togglePipelineExecution() tea.Cmd {
 			if m.pipeline.HasData() {
 				for _, service := range *m.pipeline.Data {
 					pipelineReq = append(pipelineReq, openapi.PipelinePostRequestInner{
-						Name:    service.Name,
-						Version: service.Version,
-						Author:  service.Author,
+						Fq: openapi.FullyQualifiedService{
+							Name:    service.Name,
+							Version: service.Version,
+							Author:  service.Author,
+						},
 					})
 				}
 			}

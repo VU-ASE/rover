@@ -33,7 +33,7 @@ type StartPage struct {
 
 	// Actions
 	updateAvailable      tui.Action[utils.UpdateAvailable] // preserved in the model to avoid re-rendering in .View(), based on the latest service information
-	roverOnline          tui.ActionV2[any, openapi.StatusGet200Response]
+	roverOnline          tui.ActionV2[any, openapi.Get200Response]
 	roverctlInstallation tui.ActionV2[string, bool] // version desired, result
 }
 
@@ -59,7 +59,7 @@ func NewStartPage() StartPage {
 		listItems:   initialCategories(),
 		help:        help.New(),
 		filterInput: ti,
-		roverOnline: tui.NewActionV2[any, openapi.StatusGet200Response](),
+		roverOnline: tui.NewActionV2[any, openapi.Get200Response](),
 		forceOnline: false,
 	}
 }
@@ -520,7 +520,7 @@ func (m StartPage) checkUpdate() tea.Cmd {
 }
 
 func (m StartPage) checkRoverOnline(wait bool) tea.Cmd {
-	return tui.PerformActionV2(&m.roverOnline, nil, func() (*openapi.StatusGet200Response, []error) {
+	return tui.PerformActionV2(&m.roverOnline, nil, func() (*openapi.Get200Response, []error) {
 		if wait {
 			time.Sleep(time.Second * 1) // so that we don't poll all the time
 		}
