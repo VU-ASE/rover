@@ -19,13 +19,7 @@ import (
 	"github.com/lempiy/dgraph/core"
 )
 
-type updateAvailable struct {
-	service          string
-	installedVersion string
-	availableVersion string
-}
-
-var officialServices = []string{
+var defaultPipeline = []string{
 	"imaging", "controller", "actuator",
 }
 
@@ -47,15 +41,11 @@ type PipelineManagerPage struct {
 	filterValue   textinput.Model
 	filterEnabled bool
 	selectedIndex int
+	dirty         bool // whether the pipeline has been edited
 
-	dirty bool // whether the pipeline has been edited
-
-	// Various booleans for popups
-	officialServicesMissing []string          // "install the official ASE pipeline?"
-	officialServicesUpdates []updateAvailable // ""update the official ASE pipeline?"
-
-	// Action to download updates/official services to the Rover
-	installed tui.Action[[]openapi.FetchPost200Response]
+	// Actions to install the basic pipeline
+	defaultPipelineServices     tui.ActionV2[any, []utils.UpdateAvailable]                           // all latest services in the default autonomous driving pipeline
+	missingServicesInstallation []*tui.ActionV2[utils.UpdateAvailable, openapi.FetchPost200Response] // installation if missing services (if started)
 }
 
 type PipelineService struct {
@@ -103,11 +93,12 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		return m, cmd
 	case tea.KeyMsg:
 		switch {
-		case msg.String() == "y" && len(m.officialServicesMissing) > 0:
-			return m, tea.Batch(m.installBasicPipeline())
-		case msg.String() == "n" && len(m.officialServicesMissing) > 0:
-			m.officialServicesMissing = make([]string, 0)
-			return m, nil
+		// case msg.String() == "y" && len(m.officialServicesMissing) > 0:
+		// 	return m, tea.Batch(m.installBasicPipeline())
+		// case msg.String() == "n" && len(m.officialServicesMissing) > 0:
+		// 	m.officialServicesMissing = make([]string, 0)
+		// 	return m, nil
+
 		case key.Matches(msg, m.keys().Back):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys().Up):
@@ -166,6 +157,12 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		}
 
 	// Action catchers
+	case tui.ActionUpdate[any, any]:
+		m.defaultPipelineServices.ProcessUpdate(msg)
+		for _, action := range m.missingServicesInstallation {
+			action.ProcessUpdate(msg)
+		}
+		return m, nil
 	case tui.ActionInit[[]utils.ServiceFqn]:
 		m.pipeline.ProcessInit(msg)
 		m.availableServices.ProcessInit(msg)
@@ -176,8 +173,9 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		m.processAvailableServices()
 
 		// We don't want to keep asking to install the basic pipeline the entire time
-		if m.availableServices.HasData() && !m.installed.IsDone() {
-			for _, official := range officialServices {
+		if m.availableServices.HasData() && len(m.missingServicesInstallation) == 0 {
+			missingServices := make([]openapi.FullyQualifiedService, 0)
+			for _, official := range defaultPipeline {
 				found := false
 				for _, installed := range *m.availableServices.Data {
 					if installed.Name == official && installed.Author == "vu-ase" {
@@ -186,12 +184,12 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 				}
 
 				if !found {
-					m.officialServicesMissing = append(m.officialServicesMissing, official)
+					missingServices = append(missingServices, openapi.FullyQualifiedService{
+						Name:   official,
+						Author: "vu-ase",
+					})
 				}
 			}
-		} else {
-			m.officialServicesMissing = make([]string, 0)
-			m.officialServicesUpdates = make([]updateAvailable, 0)
 		}
 		return m, m.renderPipelineGraph()
 	case tui.ActionInit[string]:
@@ -210,14 +208,9 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		}
 		return m, nil
 	case tui.ActionInit[[]openapi.FetchPost200Response]:
-		m.installed.ProcessInit(msg)
 		return m, nil
 	case tui.ActionResult[[]openapi.FetchPost200Response]:
-		m.installed.ProcessResult(msg)
-		if m.installed.IsSuccess() {
-			m.officialServicesMissing = make([]string, 0)
-			m.officialServicesUpdates = make([]updateAvailable, 0)
-		}
+
 		return m, tea.Batch(m.fetchRemoteServices(), m.fetchRemotePipeline())
 	}
 
@@ -231,21 +224,48 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 }
 
 func (m PipelineManagerPage) Init() tea.Cmd {
-	return tea.Batch(m.spinner.Tick, m.fetchRemotePipeline(), m.fetchRemoteServices(), m.fetchExecutionStatus(), textinput.Blink)
+	return tea.Batch(m.spinner.Tick, m.fetchRemotePipeline(), m.fetchRemoteServices(), m.fetchExecutionStatus(), m.fetchDefaultServiceReleases(), textinput.Blink)
 }
 
 func (m PipelineManagerPage) View() string {
 	// Ask to install basic pipeline
-	if len(m.officialServicesMissing) > 0 {
-		dialog := lipgloss.NewStyle().Bold(false).Render("The standard ASE pipeline is not installed on this Rover. Install it now?") + "\n\n"
+	if m.defaultPipelineServicesMissing() {
+		dialog := lipgloss.NewStyle().Bold(false).Render("The standard ASE pipeline is not installed on this Rover. \nInstall it now?") + "\n\n"
 
-		if m.installed.IsLoading() {
-			dialog += m.spinner.View() + " Installing (may take while)..."
-		} else if m.installed.IsError() {
-			dialog += style.Error.Render("✗ Could not install pipeline") + style.Gray.Render(" ("+m.installed.Error.Error()+")")
-		} else {
-			dialog += "[" + style.Title.Bold(true).Render("y") + "]es [" + style.Title.Bold(true).Render("n") + "]o"
+		// Align to the left
+		leftAligned := ""
+
+		for _, service := range m.defaultPipelineServices.Result() {
+			// Find the installed counterpart
+			var installed *utils.ServiceFqn
+			for _, i := range *m.availableServices.Data {
+				if i.Name == service.Name && i.Author == service.Author {
+					installed = &i
+				}
+			}
+
+			desc := style.Gray.Render(service.Author+"/") + lipgloss.NewStyle().Bold(true).Render(service.Name) + style.Gray.Render(" v"+service.LatestVersion)
+
+			if installed == nil {
+				leftAligned += style.Primary.Render("Install ") + desc
+			} else if installed.Version != service.LatestVersion {
+				leftAligned += style.Primary.Render("Update ") + desc + style.Gray.Render(" (currently: v"+installed.Version+")")
+			} else {
+				leftAligned += style.Success.Render("Installed ") + desc
+			}
+			leftAligned += "\n"
+
 		}
+
+		dialog += lipgloss.NewStyle().AlignHorizontal(lipgloss.Left).Render(leftAligned) + "\n"
+
+		// if m.installed.IsLoading() {
+		// 	dialog += m.spinner.View() + " Installing (may take while)..."
+		// } else if m.installed.IsError() {
+		// 	dialog += style.Error.Render("✗ Could not install pipeline") + style.Gray.Render(" ("+m.installed.Error.Error()+")")
+		// } else {
+		// 	dialog += "[" + style.Title.Bold(true).Render("y") + "]es [" + style.Title.Bold(true).Render("n") + "]o"
+		// }
 
 		return style.RenderDialog(dialog, style.AsePrimary)
 	}
@@ -305,8 +325,8 @@ func (m PipelineManagerPage) View() string {
 		status = statusStyle.Background(style.ErrorPrimary).Bold(true).Render("could not execute")
 	} else if m.pipelineExecution.IsLoading() {
 		status = statusStyle.Background(style.GrayPrimary).Bold(true).Render(m.spinner.View() + " loading...")
-
 	}
+
 	subStatus := ""
 	if m.pipelineExecution.IsError() {
 		subStatus += style.Error.Render("! "+m.pipelineExecution.Error.Error()) + "\n\n"
@@ -339,7 +359,7 @@ func (m PipelineManagerPage) keys() utils.GeneralKeyMap {
 	)
 
 	// Disable keys if a dialog is shown
-	if len(m.officialServicesMissing) > 0 || len(m.officialServicesUpdates) > 0 {
+	if m.defaultPipelineServicesMissing() {
 		return kb
 	}
 
@@ -703,6 +723,29 @@ func (m PipelineManagerPage) renderPipelineGraph() tea.Cmd {
 	})
 }
 
+// Compares the installed services to the available services for the default pipeline, and reports missing services
+func (m PipelineManagerPage) defaultPipelineServicesMissing() bool {
+	if !m.availableServices.IsSuccess() || !m.defaultPipelineServices.IsSuccess() {
+		return false
+	}
+
+	for _, official := range m.defaultPipelineServices.Result() {
+		found := false
+		for _, installed := range *m.availableServices.Data {
+			if installed.Name == official.Name && installed.Author != official.Author && installed.Version == official.LatestVersion {
+				found = true
+			}
+		}
+
+		if !found {
+			return true
+		}
+	}
+
+	return false
+
+}
+
 // Filters the available services based on the filter value and adds the enabled services
 func (m *PipelineManagerPage) processAvailableServices() {
 	if !m.availableServices.HasData() || !m.pipeline.HasData() {
@@ -747,47 +790,76 @@ func (m *PipelineManagerPage) processAvailableServices() {
 	}
 }
 
-func (m PipelineManagerPage) installBasicPipeline() tea.Cmd {
-	return tui.PerformAction(&m.installed, func() (*[]openapi.FetchPost200Response, error) {
-		remote := state.Get().RoverConnections.GetActive()
-		if remote == nil {
-			return nil, fmt.Errorf("No active rover connection")
+func (m PipelineManagerPage) fetchDefaultServiceReleases() tea.Cmd {
+	return tui.PerformActionV2(&m.defaultPipelineServices, nil, func() (*[]utils.UpdateAvailable, []error) {
+		releases := make([]utils.UpdateAvailable, 0)
+
+		for _, official := range defaultPipeline {
+			service, err := utils.CheckForGithubUpdate(official, "VU-ASE", "none")
+			if err != nil {
+				return nil, []error{err}
+			} else if service == nil {
+				return nil, []error{fmt.Errorf("Service %s not found", official)}
+			}
+			releases = append(releases, *service)
 		}
 
-		// First, save the pipeline
+		return &releases, nil
+	})
+}
+
+func (m PipelineManagerPage) installService(action *tui.ActionV2[utils.UpdateAvailable, openapi.FetchPost200Response], service utils.UpdateAvailable) tea.Cmd {
+	return tui.PerformActionV2(action, &service, func() (*openapi.FetchPost200Response, []error) {
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, []error{fmt.Errorf("No active rover connection")}
+		}
+
 		api := remote.ToApiClient()
+
+		// Find the URL to install
+		url := ""
+		if len(service.Assets) > 1 {
+			// Pick the first zip file asset
+			for _, asset := range service.Assets {
+				if asset.ContentType == "application/zip" {
+					url = asset.Url
+					break
+				}
+			}
+		} else if len(service.Assets) == 1 {
+			url = service.Assets[0].Url
+		}
+		if url == "" {
+			return nil, []error{fmt.Errorf("No install candidate (zip file asset) found for service %s", service.Name)}
+		}
+
+		// Fetch the pipeline
 		req := api.ServicesAPI.FetchPost(
 			context.Background(),
 		)
-
-		services := []string{
-			"imaging", "controller", "actuator",
+		body := openapi.FetchPostRequest{
+			Url: service.Assets[0].Url,
+		}
+		req = req.FetchPostRequest(body)
+		res, htt, err := req.Execute()
+		if err != nil {
+			return nil, []error{utils.ParseHTTPError(err, htt)}
 		}
 
-		ress := make([]openapi.FetchPost200Response, 0)
-		for _, service := range services {
-
-			baseUrl := "https://github.com/VU-ASE/" + service + "/releases/latest"
-
-			// Visit the URL and follow the redirect
-			releaseUrl, err := utils.FollowRedirects(baseUrl)
-			if err != nil {
-				return nil, err
-			}
-
-			// Download url is in the form .../<service>.zip
-			url := releaseUrl + "/" + service + ".zip"
-			url = strings.Replace(url, "tag", "download", 1)
-			pipelineReq := openapi.FetchPostRequest{
-				Url: url,
-			}
-			req = req.FetchPostRequest(pipelineReq)
-			res, htt, err := req.Execute()
-			if err != nil {
-				return nil, utils.ParseHTTPError(err, htt)
-			}
-			ress = append(ress, *res)
+		fqn := openapi.FqnsGet200ResponseInner{
+			Name:    res.Fq.Name,
+			Author:  res.Fq.Author,
+			Version: res.Fq.Version,
 		}
-		return &ress, nil
+		if fqn.Name != service.Name {
+			return nil, []error{fmt.Errorf("Roverd failed to install service %s. It installed %s instead", fqn.Name, service.Name)}
+		} else if fqn.Version != service.LatestVersion {
+			return nil, []error{fmt.Errorf("Roverd failed to install service %s@%s. It installed %s@%s instead", fqn.Name, service.LatestVersion, service.Name, fqn.Version)}
+		} else if !strings.EqualFold(fqn.Author, service.Author) {
+			return nil, []error{fmt.Errorf("Roverd failed to install service %s@%s by %s. It installed %s@%s by %s instead", fqn.Name, service.LatestVersion, service.Author, service.Name, fqn.Version, fqn.Author)}
+		}
+
+		return res, nil
 	})
 }

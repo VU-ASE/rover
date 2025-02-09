@@ -253,7 +253,6 @@ func (m RoverCalibrationPage) fetchCalibrationReleases() tea.Cmd {
 		if err != nil {
 			return nil, []error{err}
 		}
-
 		releases = append(releases, *controller)
 
 		return &releases, nil
