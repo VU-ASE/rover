@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/VU-ASE/rover/compare/v0.3.0...v0.3.1) (2025-02-09)
+
+
+### Bug Fixes
+
+* roverctl replace FQN types ([f6a9c44](https://github.com/VU-ASE/rover/commit/f6a9c44dee576b4ba63f3e44ca5a07704ead245b))
+
 ## [0.3.0](https://github.com/VU-ASE/rover/compare/v0.2.0...v0.3.0) (2025-02-09)
 
 
