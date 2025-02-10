@@ -215,7 +215,6 @@ func (m StartPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 }
 
 func (m StartPage) versionMismatchView() string {
-
 	s := style.Warning.Bold(true).Render("Version mismatch detected") + "\n\n"
 	s += style.Gray.Render("Mismatch with "+state.Get().RoverConnections.Active) + "\n"
 
@@ -262,7 +261,8 @@ func (m StartPage) versionMismatchView() string {
 
 // Returns true if roverd and roverctl mismatch
 func (m StartPage) versionMismatch() bool {
-	return m.roverOnline.HasResult() && m.roverOnline.Result().Version != version && !state.Get().IgnoreVersionMismatch
+	return m.roverOnline.HasResult() &&
+		strings.TrimPrefix(m.roverOnline.Result().Version, "v") != strings.TrimPrefix(version, "v") && !state.Get().IgnoreVersionMismatch
 }
 
 func (m StartPage) View() string {
