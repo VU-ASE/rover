@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/VU-ASE/rover/compare/v0.3.1...v0.3.2) (2025-02-10)
+
+
+### Bug Fixes
+
+* version mismatch checking ([4ba63b9](https://github.com/VU-ASE/rover/commit/4ba63b901f88055e68db2a7234ca17659588798c))
+
 ## [0.3.1](https://github.com/VU-ASE/rover/compare/v0.3.0...v0.3.1) (2025-02-09)
 
 
