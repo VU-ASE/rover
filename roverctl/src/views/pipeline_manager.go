@@ -214,6 +214,11 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		for _, action := range m.missingServicesInstallation {
 			action.ProcessUpdate(msg)
 		}
+
+		if m.defaultPipelineServices.IsDone() {
+			return m, m.fetchRemoteServices()
+		}
+
 		return m, nil
 	case tui.ActionInit[[]utils.ServiceFqn]:
 		m.pipeline.ProcessInit(msg)
@@ -605,15 +610,6 @@ func (m PipelineManagerPage) togglePipelineExecution() tea.Cmd {
 			htt, err = req.Execute()
 
 			if err != nil {
-				if htt != nil {
-					// Try to parse as a unmet stream error:
-					httpRes := make([]byte, htt.ContentLength)
-					_, err = htt.Body.Read(httpRes)
-					deps, err := utils.TransformValidationError(string(httpRes))
-					if err == nil {
-						return nil, fmt.Errorf("Some services have unmet inputs:\n - %s", strings.Join(deps, "\n - "))
-					}
-				}
 				return nil, utils.ParseHTTPError(err, htt)
 			}
 
@@ -800,7 +796,7 @@ func (m PipelineManagerPage) renderPipelineGraph() tea.Cmd {
 
 // Compares the installed services to the available services for the default pipeline, and reports missing services
 func (m PipelineManagerPage) defaultPipelineServicesMissing() bool {
-	if !m.availableServices.IsSuccess() || !m.defaultPipelineServices.IsSuccess() || m.ignoreUpdates {
+	if !m.availableServices.HasData() || !m.defaultPipelineServices.HasResult() || m.ignoreUpdates {
 		return false
 	}
 
