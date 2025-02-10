@@ -869,33 +869,15 @@ func (m PipelineManagerPage) fetchDefaultServiceReleases() tea.Cmd {
 	return tui.PerformActionV2(&m.defaultPipelineServices, nil, func() (*[]utils.UpdateAvailable, []error) {
 		releases := make([]utils.UpdateAvailable, 0)
 
-		releases = []utils.UpdateAvailable{
-			{
-				Name:          "imaging",
-				Author:        "VU-ASE",
-				LatestVersion: "0.0.1",
-			},
-			{
-				Name:          "controller",
-				Author:        "VU-ASE",
-				LatestVersion: "0.0.1",
-			},
-			{
-				Name:          "actuator",
-				Author:        "VU-ASE",
-				LatestVersion: "0.0.1",
-			},
+		for _, official := range defaultPipeline {
+			service, err := utils.CheckForGithubUpdate(official, "VU-ASE", "none")
+			if err != nil {
+				return nil, []error{err}
+			} else if service == nil {
+				return nil, []error{fmt.Errorf("Service %s not found", official)}
+			}
+			releases = append(releases, *service)
 		}
-
-		// for _, official := range defaultPipeline {
-		// 	service, err := utils.CheckForGithubUpdate(official, "VU-ASE", "none")
-		// 	if err != nil {
-		// 		return nil, []error{err}
-		// 	} else if service == nil {
-		// 		return nil, []error{fmt.Errorf("Service %s not found", official)}
-		// 	}
-		// 	releases = append(releases, *service)
-		// }
 
 		return &releases, nil
 	})
