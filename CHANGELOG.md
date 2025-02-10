@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/VU-ASE/rover/compare/v0.3.2...v0.3.3) (2025-02-10)
+
+
+### Bug Fixes
+
+* update checking for default pipeline ([3f67220](https://github.com/VU-ASE/rover/commit/3f672204d7faaeae6ec4a3d2ec141ab52af4dc55))
+
 ## [0.3.2](https://github.com/VU-ASE/rover/compare/v0.3.1...v0.3.2) (2025-02-10)
 
 
