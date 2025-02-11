@@ -13,12 +13,12 @@ use crate::{models, types::*};
 pub enum LogsAuthorNameVersionGetResponse {
     /// The collection of logs
     Status200_TheCollectionOfLogs(Vec<String>),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
     /// Entity not found
     Status404_EntityNotFound,
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
-    Status401_UnauthorizedAccess,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -27,9 +27,9 @@ pub enum LogsAuthorNameVersionGetResponse {
 pub enum PipelineGetResponse {
     /// Pipeline status and an array of processes
     Status200_PipelineStatusAndAnArrayOfProcesses(models::PipelineGet200Response),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -37,11 +37,11 @@ pub enum PipelineGetResponse {
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum PipelinePostResponse {
-    /// The pipeline was updated successfully
-    Status200_ThePipelineWasUpdatedSuccessfully,
-    /// The pipeline was not valid and could not be set
-    Status400_ThePipelineWasNotValidAndCouldNotBeSet(models::PipelinePost400Response),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -49,11 +49,11 @@ pub enum PipelinePostResponse {
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum PipelineStartPostResponse {
-    /// The pipeline was started successfully. You can view its information with GET /pipeline
-    Status200_ThePipelineWasStartedSuccessfully,
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -61,11 +61,11 @@ pub enum PipelineStartPostResponse {
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum PipelineStopPostResponse {
-    /// The pipeline was stopped successfully. You can view its information with GET /pipeline
-    Status200_ThePipelineWasStoppedSuccessfully,
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 

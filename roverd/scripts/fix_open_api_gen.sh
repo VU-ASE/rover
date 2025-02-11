@@ -18,4 +18,8 @@ function edit_line_in_file() {
 }
 
 edit_line_in_file "openapi/src/models.rs" "pub struct DuplicateServiceError(String);" "pub struct DuplicateServiceError(pub String);"
+
 edit_line_in_file "openapi/src/models.rs" "    Box<serde_json::value::RawValue>," "    pub Box<serde_json::value::RawValue>,"
+
+edit_line_in_file "openapi/src/models.rs" "pub struct RoverdErrorErrorValue(Box<serde_json::value::RawValue>);" "pub struct RoverdErrorErrorValue(pub Box<serde_json::value::RawValue>);"
+

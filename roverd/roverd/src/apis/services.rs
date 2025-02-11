@@ -40,9 +40,7 @@ impl Services for Roverd {
             Ok(
                 FetchPostResponse::Status200_TheServiceWasUploadedSuccessfully(
                     FetchPost200Response {
-                        name: fq_buf.name,
-                        author: fq_buf.author,
-                        version: fq_buf.version,
+                        fq: FullyQualifiedService::from(fq_buf),
                         invalidated_pipeline,
                     },
                 ),
@@ -72,9 +70,7 @@ impl Services for Roverd {
             Ok(
                 UploadPostResponse::Status200_TheServiceWasUploadedSuccessfully(
                     FetchPost200Response {
-                        name: fq_buf.name,
-                        author: fq_buf.author,
-                        version: fq_buf.version,
+                        fq: FullyQualifiedService::from(fq_buf),
                         invalidated_pipeline,
                     },
                 ),
@@ -202,40 +198,40 @@ impl Services for Roverd {
         if let Some(rover_state) = self.try_get_dormant().await {
             let _ = if let Err(e) = self.app.build_service(path_params, rover_state).await {
                 warn!("{:#?}", &e);
+                let mut build_error_strings = vec![];
                 match e {
-                    Error::BuildLog(build_log) => {
-                        return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                                ServicesAuthorServiceVersionPost400Response {
-                                    build_log,
-                                    message: "A build error occured".to_string(),
-                                },
-                            ),
-                        );
+                    Error::BuildLog(mut build_log) => {
+                        build_error_strings.append(&mut build_log);
                     }
-                    _ => {
-                        return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                                ServicesAuthorServiceVersionPost400Response {
-                                    build_log: vec![],
-                                    message: format!("{:?}", e),
-                                },
-                            ),
-                        );
+                    other_error => {
+                        build_error_strings.push(format!("{:?}", other_error));
                     }
                 }
+
+                let build_error = BuildError::new(build_error_strings);
+
+                // todo remove the unwraps and change to actual error
+                let json_string = serde_json::to_string(&build_error).unwrap();
+                let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                return Ok(
+                    ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
+                        RoverdError::new("build".to_string(), RoverdErrorErrorValue(box_raw)),
+                    ),
+                );
             };
 
-            Ok(ServicesAuthorServiceVersionPostResponse::Status200_TheServiceWasBuiltSuccessfully)
+            Ok(ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful)
         } else {
             let msg = "unable to perform request, rover is running";
             warn!(msg);
+
+            // todo remove the unwraps and change to actual error
+            let json_string =
+                serde_json::to_string(&GenericError::new(msg.to_string(), 1)).unwrap();
+            let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
             return Ok(
-                ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed(
-                    ServicesAuthorServiceVersionPost400Response {
-                        build_log: vec![],
-                        message: msg.to_string(),
-                    },
+                ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
+                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw)),
                 ),
             );
         }

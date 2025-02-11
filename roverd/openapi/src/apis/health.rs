@@ -12,20 +12,20 @@ use crate::{models, types::*};
 #[allow(clippy::large_enum_variant)]
 pub enum RootGetResponse {
     /// The health and versioning information
-    Status200_TheHealthAndVersioningInformation(models::StatusGet200Response),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    Status200_TheHealthAndVersioningInformation(models::Get200Response),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum ShutdownPostResponse {
-    /// Rover shutdown successfully.
-    Status200_RoverShutdownSuccessfully,
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -34,20 +34,20 @@ pub enum ShutdownPostResponse {
 #[allow(clippy::large_enum_variant)]
 pub enum StatusGetResponse {
     /// The health and versioning information
-    Status200_TheHealthAndVersioningInformation(models::StatusGet200Response),
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
+    Status200_TheHealthAndVersioningInformation(models::Get200Response),
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum UpdatePostResponse {
-    /// The roverd daemon process initiated a self-update successfully. You should expect the process to terminate and restart soon.
-    Status200_TheRoverdDaemonProcessInitiatedASelf,
-    /// An error occurred
-    Status400_AnErrorOccurred(models::GenericError),
-    /// Unauthorized access (you need to set the Authorization header with a valid username and password)
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
     Status401_UnauthorizedAccess,
 }
 
@@ -93,5 +93,6 @@ pub trait Health {
         method: Method,
         host: Host,
         cookies: CookieJar,
+        body: models::UpdatePostRequest,
     ) -> Result<UpdatePostResponse, ()>;
 }

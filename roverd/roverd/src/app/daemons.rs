@@ -112,11 +112,14 @@ impl DaemonManager {
             address: format!("{}:{}", DATA_ADDRESS, BATTERY_PORT),
         };
 
+        let display_name = display_service.0.get_pipeline_name();
+        let battery_name = battery_service.0.get_pipeline_name();
+
         let display_bootspec = BootSpec {
-            name: display_service.0.name.clone(),
+            name: display_name.clone(),
             version: display_service.0.version.clone(),
             inputs: vec![Input {
-                service: battery_service.0.name.clone(),
+                service: battery_name.clone(),
                 streams: vec![voltage_stream.clone()],
             }],
             outputs: vec![],
@@ -128,7 +131,7 @@ impl DaemonManager {
         };
 
         let battery_bootspec = BootSpec {
-            name: battery_service.0.name.clone(),
+            name: battery_name.clone(),
             version: battery_service.0.version.clone(),
             inputs: vec![],
             outputs: vec![voltage_stream],
@@ -148,7 +151,7 @@ impl DaemonManager {
                 command: display_service.0.commands.run.clone(),
                 last_pid: None,
                 last_exit_code: 0,
-                name: display_service.0.name.clone(),
+                name: display_name,
                 status: ProcessStatus::Stopped,
                 log_file: PathBuf::from(display_fq.log_file()),
                 injected_env: display_injected_env.clone(),
@@ -160,7 +163,7 @@ impl DaemonManager {
                 command: battery_service.0.commands.run.clone(),
                 last_pid: None,
                 last_exit_code: 0,
-                name: battery_service.0.name.clone(),
+                name: battery_name,
                 status: ProcessStatus::Stopped,
                 log_file: PathBuf::from(battery_fq.log_file()),
                 injected_env: battery_injected_env.clone(),
@@ -241,6 +244,7 @@ impl DaemonManager {
                         }
                     }
                 }
+                info!("no longer attempting to start {}", proc.name);
             });
         }
 

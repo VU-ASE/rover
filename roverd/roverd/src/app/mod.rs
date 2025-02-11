@@ -451,9 +451,7 @@ impl App {
                                 status,
                             }),
                             service: PipelineGet200ResponseEnabledInnerService {
-                                author: fq.author,
-                                name: fq.name,
-                                version: fq.version,
+                                fq: FullyQualifiedService::from(fq),
                                 faults: p.faults as i32,
                                 exit: p.last_exit_code,
                             },
@@ -462,9 +460,7 @@ impl App {
                         PipelineGet200ResponseEnabledInner {
                             process: None,
                             service: PipelineGet200ResponseEnabledInnerService {
-                                author: fq.author,
-                                name: fq.name,
-                                version: fq.version,
+                                fq: FullyQualifiedService::from(fq),
                                 faults: p.faults as i32,
                                 exit: p.last_exit_code,
                             },
@@ -474,9 +470,7 @@ impl App {
                 Err(_) => PipelineGet200ResponseEnabledInner {
                     process: None,
                     service: PipelineGet200ResponseEnabledInnerService {
-                        author: fq.author,
-                        name: fq.name,
-                        version: fq.version,
+                        fq: FullyQualifiedService::from(fq),
                         faults: 0,
                         exit: 0,
                     },
@@ -535,7 +529,7 @@ impl App {
                     command: service.0.commands.run.clone(),
                     last_pid: None,
                     last_exit_code: 0,
-                    name: service.0.name.clone(),
+                    name: service.0.get_original_name(),
                     status: ProcessStatus::Stopped,
                     log_file: PathBuf::from(fq.log_file()),
                     injected_env: injected_env.clone(),
@@ -851,11 +845,12 @@ impl App {
     }
 
     /// Spawns a separate shell to run the update script
-    pub async fn update_rover(&self, _: RoverState<Dormant>) -> Result<(), Error> {
+    pub async fn update_rover(&self, version: String, _: RoverState<Dormant>) -> Result<(), Error> {
         let mut update_cmd = Command::new("sh");
         update_cmd
             .arg("-c")
-            .arg("/home/debix/ase/bin/update-roverd");
+            .arg("/home/debix/ase/bin/update-roverd")
+            .arg(version);
 
         match update_cmd.spawn() {
             Ok(_) => (),
@@ -876,7 +871,7 @@ impl App {
         Ok(())
     }
 
-    pub async fn get_fqns(&self) -> Result<Vec<FqnsGet200ResponseInner>, Error> {
+    pub async fn get_fqns(&self) -> Result<Vec<FullyQualifiedService>, Error> {
         let mut fqns = Vec::new();
         let rover_dir = Path::new(ROVER_DIR);
 
@@ -953,10 +948,11 @@ impl App {
                     }
                     let version = version_entry.file_name().to_string_lossy().into_owned();
 
-                    fqns.push(FqnsGet200ResponseInner {
+                    fqns.push(FullyQualifiedService {
                         author: author_name.to_string(),
                         name: service_name.to_string(),
                         version,
+                        r#as: None,
                     });
                 }
             }

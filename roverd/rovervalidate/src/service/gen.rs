@@ -11,7 +11,7 @@
 //     let model: Service = serde_json::from_str(&json).unwrap();
 // }
 
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Configuration file for a service in the ASE Rover platform, defining service identity,
 /// commands, data streams, and runtime options.
@@ -28,7 +28,8 @@ pub struct Service {
     pub configuration: Vec<Configuration>,
     /// List of input streams this service consumes from other services.
     pub inputs: Vec<Input>,
-    /// The name of the service.
+    /// The name of the service. Private, because getter method checks for the service_as.
+    /// Only correct use is from a ValidatedService(Service)
     pub name: String,
     /// Names of the streams that this service produces.
     pub outputs: Vec<String>,
@@ -36,6 +37,31 @@ pub struct Service {
     pub source: String,
     /// The version of the service.
     pub version: String,
+}
+
+/// The following methods are only there to make it easier for developers, since
+/// using the different names in various contexts can be confusing, we have specifc
+/// getters for each use case.
+impl Service {
+    /// When performing any kind of pipeline validation or bootspec creation
+    /// this is the method to use.
+    pub fn get_pipeline_name(&self) -> String {
+        if let Some(alias) = &self.service_as {
+            alias.clone()
+        } else {
+            self.name.clone()
+        }
+    }
+
+    /// This name returns the original name of the service as uploaded by the user.
+    pub fn get_original_name(&self) -> String {
+        self.name.clone()
+    }
+
+    /// Returns the optional "as" alias from the service.yaml.
+    pub fn get_alias_name(&self) -> Option<String> {
+        self.service_as.clone()
+    }
 }
 
 /// Commands to build and run the service. Executed from the service folder.

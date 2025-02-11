@@ -801,6 +801,10 @@ components:
           type: string
           description: "The version of the service"
           example: "1.0.0"
+        as:
+          type: string
+          description: "The (optional) alias of the name to be used in the pipeline"
+          example: "controller"
 
     #
     #
@@ -914,6 +918,12 @@ components:
         validation_errors:
           type: object
           description: "The validation errors that prevent the pipeline from being set"
+          required:
+            - "unmet_streams"
+            - "unmet_services"
+            - "duplicate_services"
+            - "duplicate_aliases"
+            - "aliases_in_use"
           properties:
             unmet_streams:
               type: array

@@ -4,7 +4,8 @@
 # cd imaging
 # zip -r ../imaging.zip bin/imaging service.yaml
 
-DIR=normal
+DIR=valid_alias
+ADDRESS=192.168.0.112
 
 sudo rm -rf /home/debix/.rover/vu-ase
 
@@ -12,27 +13,67 @@ sudo rm -rf /home/debix/.rover/vu-ase
 curl -u debix:debix \
   -X POST \
   -H "Content-Type: multipart/form-data" \
-  -F "content=@/workspaces/roverd/roverd/example-pipelines/$DIR/actuator.zip" \
-  http://localhost/upload
+  -F "content=@/workspace/rover/roverd/roverd/example-pipelines/$DIR/actuator.zip" \
+  http://$ADDRESS/upload
+
+echo ""
 
 curl -u debix:debix \
   -X POST \
   -H "Content-Type: multipart/form-data" \
-  -F "content=@/workspaces/roverd/roverd/example-pipelines/$DIR/controller.zip" \
-  http://localhost/upload
+  -F "content=@/workspace/rover/roverd/roverd/example-pipelines/$DIR/funny.zip" \
+  http://$ADDRESS/upload
+
+echo ""
 
 curl -u debix:debix \
   -X POST \
   -H "Content-Type: multipart/form-data" \
-  -F "content=@/workspaces/roverd/roverd/example-pipelines/$DIR/imaging.zip" \
-  http://localhost/upload
+  -F "content=@/workspace/rover/roverd/roverd/example-pipelines/$DIR/controller.zip" \
+  http://$ADDRESS/upload
+
+echo ""
 
 curl -u debix:debix \
   -X POST \
   -H "Content-Type: multipart/form-data" \
-  -F "content=@/workspaces/roverd/roverd/example-pipelines/$DIR/transceiver.zip" \
-  http://localhost/upload
+  -F "content=@/workspace/rover/roverd/roverd/example-pipelines/$DIR/imaging.zip" \
+  http://$ADDRESS/upload
+
+
+echo ""
+
+echo Done
 
 
 
-echo
+# curl http://192.168.0.112/pipeline \
+#   -u debix:debix \
+#   -X POST \
+#   -H "Content-Type: application/json" \
+#   -d '
+#   [
+#     {
+#       "fq": {
+#         "author": "vu-ase",
+#         "name": "imaging",
+#         "version": "1.0.0"
+#       }
+#     },
+#     {
+#       "fq": {
+#         "author": "vu-ase",
+#         "name": "actuator",
+#         "version": "1.0.0"
+#       }
+#     },
+#     {
+#       "fq": {
+#         "author": "vu-ase",
+#         "name": "funny",
+#         "version": "1.0.0"
+#       }
+#     }
+#   ]'
+
+

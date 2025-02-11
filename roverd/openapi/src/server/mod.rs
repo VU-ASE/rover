@@ -109,7 +109,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::health::RootGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::health::RootGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -180,11 +180,11 @@ where
 
     let resp = match result {
         Ok(rsp) => match rsp {
-            apis::health::ShutdownPostResponse::Status200_RoverShutdownSuccessfully => {
+            apis::health::ShutdownPostResponse::Status200_OperationWasSuccessful => {
                 let mut response = response.status(200);
                 response.body(Body::empty())
             }
-            apis::health::ShutdownPostResponse::Status400_AnErrorOccurred(body) => {
+            apis::health::ShutdownPostResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -282,7 +282,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::health::StatusGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::health::StatusGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -319,9 +319,21 @@ where
     })
 }
 
+#[derive(validator::Validate)]
+#[allow(dead_code)]
+struct UpdatePostBodyValidator<'a> {
+    #[validate(nested)]
+    body: &'a models::UpdatePostRequest,
+}
+
 #[tracing::instrument(skip_all)]
-fn update_post_validation() -> std::result::Result<(), ValidationErrors> {
-    Ok(())
+fn update_post_validation(
+    body: models::UpdatePostRequest,
+) -> std::result::Result<(models::UpdatePostRequest,), ValidationErrors> {
+    let b = UpdatePostBodyValidator { body: &body };
+    b.validate()?;
+
+    Ok((body,))
 }
 /// UpdatePost - POST /update
 #[tracing::instrument(skip_all)]
@@ -330,34 +342,38 @@ async fn update_post<I, A>(
     host: Host,
     cookies: CookieJar,
     State(api_impl): State<I>,
+    Json(body): Json<models::UpdatePostRequest>,
 ) -> Result<Response, StatusCode>
 where
     I: AsRef<A> + Send + Sync,
     A: apis::health::Health,
 {
     #[allow(clippy::redundant_closure)]
-    let validation = tokio::task::spawn_blocking(move || update_post_validation())
+    let validation = tokio::task::spawn_blocking(move || update_post_validation(body))
         .await
         .unwrap();
 
-    let Ok(()) = validation else {
+    let Ok((body,)) = validation else {
         return Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body(Body::from(validation.unwrap_err().to_string()))
             .map_err(|_| StatusCode::BAD_REQUEST);
     };
 
-    let result = api_impl.as_ref().update_post(method, host, cookies).await;
+    let result = api_impl
+        .as_ref()
+        .update_post(method, host, cookies, body)
+        .await;
 
     let mut response = Response::builder();
 
     let resp = match result {
         Ok(rsp) => match rsp {
-            apis::health::UpdatePostResponse::Status200_TheRoverdDaemonProcessInitiatedASelf => {
+            apis::health::UpdatePostResponse::Status200_OperationWasSuccessful => {
                 let mut response = response.status(200);
                 response.body(Body::empty())
             }
-            apis::health::UpdatePostResponse::Status400_AnErrorOccurred(body) => {
+            apis::health::UpdatePostResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -476,7 +492,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::pipeline::LogsAuthorNameVersionGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::pipeline::LogsAuthorNameVersionGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -499,12 +515,12 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::pipeline::LogsAuthorNameVersionGetResponse::Status404_EntityNotFound => {
-                let mut response = response.status(404);
-                response.body(Body::empty())
-            }
             apis::pipeline::LogsAuthorNameVersionGetResponse::Status401_UnauthorizedAccess => {
                 let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+            apis::pipeline::LogsAuthorNameVersionGetResponse::Status404_EntityNotFound => {
+                let mut response = response.status(404);
                 response.body(Body::empty())
             }
         },
@@ -580,7 +596,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::pipeline::PipelineGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::pipeline::PipelineGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -670,42 +686,45 @@ where
     let mut response = Response::builder();
 
     let resp = match result {
-                                            Ok(rsp) => match rsp {
-                                                apis::pipeline::PipelinePostResponse::Status200_ThePipelineWasUpdatedSuccessfully
-                                                => {
-                                                  let mut response = response.status(200);
-                                                  response.body(Body::empty())
-                                                },
-                                                apis::pipeline::PipelinePostResponse::Status400_ThePipelineWasNotValidAndCouldNotBeSet
-                                                    (body)
-                                                => {
-                                                  let mut response = response.status(400);
-                                                  {
-                                                    let mut response_headers = response.headers_mut().unwrap();
-                                                    response_headers.insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json").map_err(|e| { error!(error = ?e); StatusCode::INTERNAL_SERVER_ERROR })?);
-                                                  }
+        Ok(rsp) => match rsp {
+            apis::pipeline::PipelinePostResponse::Status200_OperationWasSuccessful => {
+                let mut response = response.status(200);
+                response.body(Body::empty())
+            }
+            apis::pipeline::PipelinePostResponse::Status400_ErrorOccurred(body) => {
+                let mut response = response.status(400);
+                {
+                    let mut response_headers = response.headers_mut().unwrap();
+                    response_headers.insert(
+                        CONTENT_TYPE,
+                        HeaderValue::from_str("application/json").map_err(|e| {
+                            error!(error = ?e);
+                            StatusCode::INTERNAL_SERVER_ERROR
+                        })?,
+                    );
+                }
 
-                                                  let body_content =  tokio::task::spawn_blocking(move ||
-                                                      serde_json::to_vec(&body).map_err(|e| {
-                                                        error!(error = ?e);
-                                                        StatusCode::INTERNAL_SERVER_ERROR
-                                                      })).await.unwrap()?;
-                                                  response.body(Body::from(body_content))
-                                                },
-                                                apis::pipeline::PipelinePostResponse::Status401_UnauthorizedAccess
-                                                => {
-                                                  let mut response = response.status(401);
-                                                  response.body(Body::empty())
-                                                },
-                                            },
-                                            Err(_) => {
-                                                // Application code returned an error. This should not happen, as the implementation should
-                                                // return a valid response.
-                                                response.status(500).body(Body::empty())
-                                            },
-                                        };
+                let body_content = tokio::task::spawn_blocking(move || {
+                    serde_json::to_vec(&body).map_err(|e| {
+                        error!(error = ?e);
+                        StatusCode::INTERNAL_SERVER_ERROR
+                    })
+                })
+                .await
+                .unwrap()?;
+                response.body(Body::from(body_content))
+            }
+            apis::pipeline::PipelinePostResponse::Status401_UnauthorizedAccess => {
+                let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+        },
+        Err(_) => {
+            // Application code returned an error. This should not happen, as the implementation should
+            // return a valid response.
+            response.status(500).body(Body::empty())
+        }
+    };
 
     resp.map_err(|e| {
         error!(error = ?e);
@@ -749,42 +768,45 @@ where
     let mut response = Response::builder();
 
     let resp = match result {
-                                            Ok(rsp) => match rsp {
-                                                apis::pipeline::PipelineStartPostResponse::Status200_ThePipelineWasStartedSuccessfully
-                                                => {
-                                                  let mut response = response.status(200);
-                                                  response.body(Body::empty())
-                                                },
-                                                apis::pipeline::PipelineStartPostResponse::Status400_AnErrorOccurred
-                                                    (body)
-                                                => {
-                                                  let mut response = response.status(400);
-                                                  {
-                                                    let mut response_headers = response.headers_mut().unwrap();
-                                                    response_headers.insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json").map_err(|e| { error!(error = ?e); StatusCode::INTERNAL_SERVER_ERROR })?);
-                                                  }
+        Ok(rsp) => match rsp {
+            apis::pipeline::PipelineStartPostResponse::Status200_OperationWasSuccessful => {
+                let mut response = response.status(200);
+                response.body(Body::empty())
+            }
+            apis::pipeline::PipelineStartPostResponse::Status400_ErrorOccurred(body) => {
+                let mut response = response.status(400);
+                {
+                    let mut response_headers = response.headers_mut().unwrap();
+                    response_headers.insert(
+                        CONTENT_TYPE,
+                        HeaderValue::from_str("application/json").map_err(|e| {
+                            error!(error = ?e);
+                            StatusCode::INTERNAL_SERVER_ERROR
+                        })?,
+                    );
+                }
 
-                                                  let body_content =  tokio::task::spawn_blocking(move ||
-                                                      serde_json::to_vec(&body).map_err(|e| {
-                                                        error!(error = ?e);
-                                                        StatusCode::INTERNAL_SERVER_ERROR
-                                                      })).await.unwrap()?;
-                                                  response.body(Body::from(body_content))
-                                                },
-                                                apis::pipeline::PipelineStartPostResponse::Status401_UnauthorizedAccess
-                                                => {
-                                                  let mut response = response.status(401);
-                                                  response.body(Body::empty())
-                                                },
-                                            },
-                                            Err(_) => {
-                                                // Application code returned an error. This should not happen, as the implementation should
-                                                // return a valid response.
-                                                response.status(500).body(Body::empty())
-                                            },
-                                        };
+                let body_content = tokio::task::spawn_blocking(move || {
+                    serde_json::to_vec(&body).map_err(|e| {
+                        error!(error = ?e);
+                        StatusCode::INTERNAL_SERVER_ERROR
+                    })
+                })
+                .await
+                .unwrap()?;
+                response.body(Body::from(body_content))
+            }
+            apis::pipeline::PipelineStartPostResponse::Status401_UnauthorizedAccess => {
+                let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+        },
+        Err(_) => {
+            // Application code returned an error. This should not happen, as the implementation should
+            // return a valid response.
+            response.status(500).body(Body::empty())
+        }
+    };
 
     resp.map_err(|e| {
         error!(error = ?e);
@@ -828,42 +850,45 @@ where
     let mut response = Response::builder();
 
     let resp = match result {
-                                            Ok(rsp) => match rsp {
-                                                apis::pipeline::PipelineStopPostResponse::Status200_ThePipelineWasStoppedSuccessfully
-                                                => {
-                                                  let mut response = response.status(200);
-                                                  response.body(Body::empty())
-                                                },
-                                                apis::pipeline::PipelineStopPostResponse::Status400_AnErrorOccurred
-                                                    (body)
-                                                => {
-                                                  let mut response = response.status(400);
-                                                  {
-                                                    let mut response_headers = response.headers_mut().unwrap();
-                                                    response_headers.insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json").map_err(|e| { error!(error = ?e); StatusCode::INTERNAL_SERVER_ERROR })?);
-                                                  }
+        Ok(rsp) => match rsp {
+            apis::pipeline::PipelineStopPostResponse::Status200_OperationWasSuccessful => {
+                let mut response = response.status(200);
+                response.body(Body::empty())
+            }
+            apis::pipeline::PipelineStopPostResponse::Status400_ErrorOccurred(body) => {
+                let mut response = response.status(400);
+                {
+                    let mut response_headers = response.headers_mut().unwrap();
+                    response_headers.insert(
+                        CONTENT_TYPE,
+                        HeaderValue::from_str("application/json").map_err(|e| {
+                            error!(error = ?e);
+                            StatusCode::INTERNAL_SERVER_ERROR
+                        })?,
+                    );
+                }
 
-                                                  let body_content =  tokio::task::spawn_blocking(move ||
-                                                      serde_json::to_vec(&body).map_err(|e| {
-                                                        error!(error = ?e);
-                                                        StatusCode::INTERNAL_SERVER_ERROR
-                                                      })).await.unwrap()?;
-                                                  response.body(Body::from(body_content))
-                                                },
-                                                apis::pipeline::PipelineStopPostResponse::Status401_UnauthorizedAccess
-                                                => {
-                                                  let mut response = response.status(401);
-                                                  response.body(Body::empty())
-                                                },
-                                            },
-                                            Err(_) => {
-                                                // Application code returned an error. This should not happen, as the implementation should
-                                                // return a valid response.
-                                                response.status(500).body(Body::empty())
-                                            },
-                                        };
+                let body_content = tokio::task::spawn_blocking(move || {
+                    serde_json::to_vec(&body).map_err(|e| {
+                        error!(error = ?e);
+                        StatusCode::INTERNAL_SERVER_ERROR
+                    })
+                })
+                .await
+                .unwrap()?;
+                response.body(Body::from(body_content))
+            }
+            apis::pipeline::PipelineStopPostResponse::Status401_UnauthorizedAccess => {
+                let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+        },
+        Err(_) => {
+            // Application code returned an error. This should not happen, as the implementation should
+            // return a valid response.
+            response.status(500).body(Body::empty())
+        }
+    };
 
     resp.map_err(|e| {
         error!(error = ?e);
@@ -946,7 +971,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::FetchPostResponse::Status400_AnErrorOccurred(body) => {
+            apis::services::FetchPostResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -1044,7 +1069,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::FqnsGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::services::FqnsGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -1153,7 +1178,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::ServicesAuthorGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::services::ServicesAuthorGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -1176,12 +1201,12 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::ServicesAuthorGetResponse::Status404_EntityNotFound => {
-                let mut response = response.status(404);
-                response.body(Body::empty())
-            }
             apis::services::ServicesAuthorGetResponse::Status401_UnauthorizedAccess => {
                 let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+            apis::services::ServicesAuthorGetResponse::Status404_EntityNotFound => {
+                let mut response = response.status(404);
                 response.body(Body::empty())
             }
         },
@@ -1259,7 +1284,7 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceGetResponse::Status400_AnErrorOccurred
+                                                apis::services::ServicesAuthorServiceGetResponse::Status400_ErrorOccurred
                                                     (body)
                                                 => {
                                                   let mut response = response.status(400);
@@ -1277,14 +1302,14 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceGetResponse::Status404_EntityNotFound
-                                                => {
-                                                  let mut response = response.status(404);
-                                                  response.body(Body::empty())
-                                                },
                                                 apis::services::ServicesAuthorServiceGetResponse::Status401_UnauthorizedAccess
                                                 => {
                                                   let mut response = response.status(401);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceGetResponse::Status404_EntityNotFound
+                                                => {
+                                                  let mut response = response.status(404);
                                                   response.body(Body::empty())
                                                 },
                                             },
@@ -1364,7 +1389,7 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionDeleteResponse::Status400_AnErrorOccurred
+                                                apis::services::ServicesAuthorServiceVersionDeleteResponse::Status400_ErrorOccurred
                                                     (body)
                                                 => {
                                                   let mut response = response.status(400);
@@ -1382,14 +1407,14 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionDeleteResponse::Status404_EntityNotFound
-                                                => {
-                                                  let mut response = response.status(404);
-                                                  response.body(Body::empty())
-                                                },
                                                 apis::services::ServicesAuthorServiceVersionDeleteResponse::Status401_UnauthorizedAccess
                                                 => {
                                                   let mut response = response.status(401);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionDeleteResponse::Status404_EntityNotFound
+                                                => {
+                                                  let mut response = response.status(404);
                                                   response.body(Body::empty())
                                                 },
                                             },
@@ -1468,7 +1493,7 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionGetResponse::Status400_AnErrorOccurred
+                                                apis::services::ServicesAuthorServiceVersionGetResponse::Status400_ErrorOccurred
                                                     (body)
                                                 => {
                                                   let mut response = response.status(400);
@@ -1486,14 +1511,14 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionGetResponse::Status404_EntityNotFound
-                                                => {
-                                                  let mut response = response.status(404);
-                                                  response.body(Body::empty())
-                                                },
                                                 apis::services::ServicesAuthorServiceVersionGetResponse::Status401_UnauthorizedAccess
                                                 => {
                                                   let mut response = response.status(401);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionGetResponse::Status404_EntityNotFound
+                                                => {
+                                                  let mut response = response.status(404);
                                                   response.body(Body::empty())
                                                 },
                                             },
@@ -1554,12 +1579,12 @@ where
 
     let resp = match result {
                                             Ok(rsp) => match rsp {
-                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status200_TheServiceWasBuiltSuccessfully
+                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful
                                                 => {
                                                   let mut response = response.status(200);
                                                   response.body(Body::empty())
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status400_TheBuildFailed
+                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred
                                                     (body)
                                                 => {
                                                   let mut response = response.status(400);
@@ -1577,14 +1602,14 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status404_EntityNotFound
-                                                => {
-                                                  let mut response = response.status(404);
-                                                  response.body(Body::empty())
-                                                },
                                                 apis::services::ServicesAuthorServiceVersionPostResponse::Status401_UnauthorizedAccess
                                                 => {
                                                   let mut response = response.status(401);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionPostResponse::Status404_EntityNotFound
+                                                => {
+                                                  let mut response = response.status(404);
                                                   response.body(Body::empty())
                                                 },
                                             },
@@ -1658,7 +1683,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::ServicesGetResponse::Status400_AnErrorOccurred(body) => {
+            apis::services::ServicesGetResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();
@@ -1762,7 +1787,7 @@ where
                 .unwrap()?;
                 response.body(Body::from(body_content))
             }
-            apis::services::UploadPostResponse::Status400_AnErrorOccurred(body) => {
+            apis::services::UploadPostResponse::Status400_ErrorOccurred(body) => {
                 let mut response = response.status(400);
                 {
                     let mut response_headers = response.headers_mut().unwrap();

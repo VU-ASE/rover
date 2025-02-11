@@ -1,8 +1,9 @@
 use axum::async_trait;
 
+use openapi::models::{
+    Get200Response, Get200ResponseCpuInner, Get200ResponseMemory, UpdatePostRequest,
+};
 use openapi::{apis::health::*, models::DaemonStatus, models::GenericError};
-
-use openapi::models::{self, StatusGet200ResponseCpuInner, StatusGet200ResponseMemory};
 
 use axum::extract::Host;
 use axum::http::Method;
@@ -36,8 +37,8 @@ impl Health for Roverd {
                         status_get200_response,
                     ),
                 ),
-                StatusGetResponse::Status400_AnErrorOccurred(generic_error) => {
-                    Ok(RootGetResponse::Status400_AnErrorOccurred(generic_error))
+                StatusGetResponse::Status400_ErrorOccurred(generic_error) => {
+                    Ok(RootGetResponse::Status400_ErrorOccurred(generic_error))
                 }
             },
             Err(_) => Err(()),
@@ -81,33 +82,31 @@ impl Health for Roverd {
         let mut cpus = vec![];
 
         for (i, c) in sysinfo.cpus().iter().enumerate() {
-            cpus.push(StatusGet200ResponseCpuInner {
+            cpus.push(Get200ResponseCpuInner {
                 core: i as i32,
                 total: 100,
                 used: c.cpu_usage() as i32,
             });
         }
 
-        let memory = StatusGet200ResponseMemory {
+        let memory = Get200ResponseMemory {
             total: (sysinfo.total_memory() / (1000_u64)) as i32,
             used: (sysinfo.used_memory() / (1000_u64)) as i32,
         };
 
         Ok(
-            StatusGetResponse::Status200_TheHealthAndVersioningInformation(
-                models::StatusGet200Response {
-                    status: self.info.status,
-                    error_message,
-                    os: self.info.os.clone(),
-                    rover_id: self.info.rover_id,
-                    rover_name: self.info.rover_name.clone(),
-                    uptime,
-                    version: self.info.version.clone(),
-                    systime: time_now,
-                    cpu: cpus,
-                    memory,
-                },
-            ),
+            StatusGetResponse::Status200_TheHealthAndVersioningInformation(Get200Response {
+                status: self.info.status,
+                error_message,
+                os: self.info.os.clone(),
+                rover_id: self.info.rover_id,
+                rover_name: self.info.rover_name.clone(),
+                uptime,
+                version: self.info.version.clone(),
+                systime: time_now,
+                cpu: cpus,
+                memory,
+            }),
         )
     }
 
@@ -120,10 +119,14 @@ impl Health for Roverd {
         _method: Method,
         _host: Host,
         _cookies: CookieJar,
+        body: UpdatePostRequest,
     ) -> Result<UpdatePostResponse, ()> {
         if let Some(rover_state) = self.try_get_dormant().await {
-            let _ = warn_generic!(self.app.update_rover(rover_state).await, UpdatePostResponse);
-            Ok(UpdatePostResponse::Status200_TheRoverdDaemonProcessInitiatedASelf)
+            let _ = warn_generic!(
+                self.app.update_rover(body.version, rover_state).await,
+                UpdatePostResponse
+            );
+            Ok(UpdatePostResponse::Status200_OperationWasSuccessful)
         } else {
             rover_is_operating!(UpdatePostResponse)
         }
@@ -144,7 +147,7 @@ impl Health for Roverd {
                 self.app.shutdown_rover(rover_state).await,
                 ShutdownPostResponse
             );
-            Ok(ShutdownPostResponse::Status200_RoverShutdownSuccessfully)
+            Ok(ShutdownPostResponse::Status200_OperationWasSuccessful)
         } else {
             rover_is_operating!(ShutdownPostResponse)
         }
