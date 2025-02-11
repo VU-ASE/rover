@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/VU-ASE/rover/compare/v0.3.3...v0.4.0) (2025-02-11)
+
+
+### Features
+
+* service_as feature ([782ab78](https://github.com/VU-ASE/rover/commit/782ab7874c1eb6eec0e58ac73283f2f9ab940a5b))
+
+
+### Bug Fixes
+
+* hide updater screen when all services are installed ([f4dce16](https://github.com/VU-ASE/rover/commit/f4dce16e2ae91666336fa361d6c2d15db813c380))
+
 ## [0.3.3](https://github.com/VU-ASE/rover/compare/v0.3.2...v0.3.3) (2025-02-10)
 
 
