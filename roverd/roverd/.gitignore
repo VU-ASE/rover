@@ -1,3 +1,6 @@
 .devbox
 target
 .DS_Store
+
+
+example-pipelines/*/*.zip

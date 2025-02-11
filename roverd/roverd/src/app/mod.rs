@@ -451,7 +451,7 @@ impl App {
                                 status,
                             }),
                             service: PipelineGet200ResponseEnabledInnerService {
-                                fq: FullyQualifiedService::new(fq.author, fq.name, fq.version),
+                                fq: FullyQualifiedService::from(fq),
                                 faults: p.faults as i32,
                                 exit: p.last_exit_code,
                             },
@@ -460,7 +460,7 @@ impl App {
                         PipelineGet200ResponseEnabledInner {
                             process: None,
                             service: PipelineGet200ResponseEnabledInnerService {
-                                fq: FullyQualifiedService::new(fq.author, fq.name, fq.version),
+                                fq: FullyQualifiedService::from(fq),
                                 faults: p.faults as i32,
                                 exit: p.last_exit_code,
                             },
@@ -470,7 +470,7 @@ impl App {
                 Err(_) => PipelineGet200ResponseEnabledInner {
                     process: None,
                     service: PipelineGet200ResponseEnabledInnerService {
-                        fq: FullyQualifiedService::new(fq.author, fq.name, fq.version),
+                        fq: FullyQualifiedService::from(fq),
                         faults: 0,
                         exit: 0,
                     },
@@ -529,7 +529,7 @@ impl App {
                     command: service.0.commands.run.clone(),
                     last_pid: None,
                     last_exit_code: 0,
-                    name: service.0.name.clone(),
+                    name: service.0.get_original_name(),
                     status: ProcessStatus::Stopped,
                     log_file: PathBuf::from(fq.log_file()),
                     injected_env: injected_env.clone(),
@@ -948,11 +948,12 @@ impl App {
                     }
                     let version = version_entry.file_name().to_string_lossy().into_owned();
 
-                    fqns.push(FullyQualifiedService::new(
-                        author_name.to_string(),
-                        service_name.to_string(),
+                    fqns.push(FullyQualifiedService {
+                        author: author_name.to_string(),
+                        name: service_name.to_string(),
                         version,
-                    ))
+                        r#as: None,
+                    });
                 }
             }
         }

@@ -65,20 +65,12 @@ impl Validate<RunnablePipeline> for Pipeline {
         for service in self.services.iter() {
             for input in service.0.inputs.iter() {
                 for stream in input.streams.iter() {
-                    let current_service = if let Some(alias) = &service.0.service_as {
-                        alias
-                    } else {
-                        &service.0.name
-                    };
+                    let current_service = service.0.get_pipeline_name();
 
                     if !self.services.iter().any(|s| {
-                        let another_service = if let Some(alias) = &s.0.service_as {
-                            alias
-                        } else {
-                            &s.0.name
-                        };
+                        let another_service = s.0.get_pipeline_name();
 
-                        another_service == &input.service
+                        another_service == input.service
                             && another_service != current_service
                             && s.0.outputs.iter().any(|o| o == stream)
                     }) {

@@ -28,14 +28,16 @@ pub struct FqBuf {
     pub name: String,
     pub version: String,
     pub is_daemon: bool,
+    pub service_as: Option<String>,
 }
 
 impl FqBuf {
-    pub fn new(author: &str, name: &str, version: &str) -> FqBuf {
+    pub fn new(author: &str, name: &str, version: &str, service_as: &Option<String>) -> FqBuf {
         FqBuf {
             author: author.to_string(),
             name: name.to_string(),
             version: version.to_string(),
+            service_as: service_as.clone(),
             is_daemon: false,
         }
     }
@@ -45,6 +47,7 @@ impl FqBuf {
             author: author.to_string(),
             name: name.to_string(),
             version: version.to_string(),
+            service_as: None,
             is_daemon: true,
         }
     }
@@ -52,19 +55,24 @@ impl FqBuf {
 
 impl From<FqBuf> for FullyQualifiedService {
     fn from(value: FqBuf) -> Self {
-        FullyQualifiedService::new(value.author, value.name, value.version)
+        FullyQualifiedService {
+            author: value.author,
+            name: value.name,
+            version: value.version,
+            r#as: value.service_as,
+        }
     }
 }
 
 impl From<FullyQualifiedService> for FqBuf {
     fn from(value: FullyQualifiedService) -> Self {
-        FqBuf::new(&value.author, &value.name, &value.version)
+        FqBuf::new(&value.author, &value.name, &value.version, &value.r#as)
     }
 }
 
 impl From<&FullyQualifiedService> for FqBuf {
     fn from(value: &FullyQualifiedService) -> Self {
-        FqBuf::new(&value.author, &value.name, &value.version)
+        FqBuf::new(&value.author, &value.name, &value.version, &value.r#as)
     }
 }
 
@@ -74,6 +82,7 @@ impl Clone for FqBuf {
             author: self.author.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
+            service_as: self.service_as.clone(),
             is_daemon: self.is_daemon,
         }
     }
@@ -85,6 +94,7 @@ impl From<ValidatedService> for FqBuf {
             name: service.0.name,
             author: service.0.author,
             version: service.0.version,
+            service_as: service.0.service_as,
             is_daemon: false,
         }
     }
@@ -96,6 +106,7 @@ impl From<&ValidatedService> for FqBuf {
             name: service.0.name.clone(),
             author: service.0.author.clone(),
             version: service.0.version.clone(),
+            service_as: service.0.service_as.clone(),
             is_daemon: false,
         }
     }
@@ -107,6 +118,7 @@ impl From<&ServicesAuthorServiceVersionPostPathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
+            service_as: None,
             is_daemon: false,
         }
     }
@@ -118,6 +130,7 @@ impl From<&ServicesAuthorServiceVersionDeletePathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
+            service_as: None,
             is_daemon: false,
         }
     }
@@ -129,6 +142,7 @@ impl From<&ServicesAuthorServiceVersionGetPathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
+            service_as: None,
             is_daemon: false,
         }
     }
@@ -136,7 +150,13 @@ impl From<&ServicesAuthorServiceVersionGetPathParams> for FqBuf {
 
 impl From<&PipelinePostRequestInner> for FqBuf {
     fn from(service: &PipelinePostRequestInner) -> Self {
-        FqBuf::from(&service.fq)
+        FqBuf {
+            name: service.fq.name.clone(),
+            author: service.fq.author.clone(),
+            version: service.fq.version.clone(),
+            service_as: None,
+            is_daemon: false,
+        }
     }
 }
 
@@ -146,6 +166,7 @@ impl From<&LogsAuthorNameVersionGetPathParams> for FqBuf {
             name: value.name.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
+            service_as: None,
             is_daemon: false,
         }
     }
@@ -251,6 +272,7 @@ impl TryFrom<String> for FqBuf {
             author: values.first().ok_or(Error::StringToFqConversion)?.clone(),
             name: values.get(1).ok_or(Error::StringToFqConversion)?.clone(),
             version: values.get(2).ok_or(Error::StringToFqConversion)?.clone(),
+            service_as: None,
             is_daemon: false,
         })
     }
@@ -276,6 +298,7 @@ impl TryFrom<&String> for FqBuf {
             author: values.first().ok_or(Error::StringToFqConversion)?.clone(),
             name: values.get(1).ok_or(Error::StringToFqConversion)?.clone(),
             version: values.get(2).ok_or(Error::StringToFqConversion)?.clone(),
+            service_as: None,
             is_daemon: false,
         })
     }
@@ -347,7 +370,11 @@ impl<'a> From<&'a FullyQualifiedService> for Fq<'a> {
 
 impl<'a> From<&'a PipelinePostRequestInner> for Fq<'a> {
     fn from(p: &'a PipelinePostRequestInner) -> Self {
-        Fq::from(&p.fq)
+        Fq {
+            name: &p.fq.name,
+            author: &p.fq.author,
+            version: &p.fq.version,
+        }
     }
 }
 

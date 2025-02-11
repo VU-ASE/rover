@@ -198,44 +198,32 @@ impl Services for Roverd {
         if let Some(rover_state) = self.try_get_dormant().await {
             let _ = if let Err(e) = self.app.build_service(path_params, rover_state).await {
                 warn!("{:#?}", &e);
+                let mut build_error_strings = vec![];
                 match e {
-                    Error::BuildLog(build_log) => {
-                        let build_error = BuildError::new(build_log);
-
-                        // todo remove the unwraps and change to actual error
-                        let json_string = serde_json::to_string(&build_error).unwrap();
-                        let box_raw =
-                            serde_json::value::RawValue::from_string(json_string).unwrap();
-                        return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
-                                RoverdError::new(
-                                    "build".to_string(),
-                                    RoverdErrorErrorValue(box_raw),
-                                ),
-                            ),
-                        );
+                    Error::BuildLog(mut build_log) => {
+                        build_error_strings.append(&mut build_log);
                     }
-                    _ => {
-                        let build_error = BuildError::new(vec![]);
-                        // todo remove the unwraps and change to actual error
-                        let json_string = serde_json::to_string(&build_error).unwrap();
-                        let box_raw =
-                            serde_json::value::RawValue::from_string(json_string).unwrap();
-                        return Ok(
-                            ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
-                                RoverdError::new(
-                                    "build".to_string(),
-                                    RoverdErrorErrorValue(box_raw),
-                                ),
-                            ),
-                        );
+                    other_error => {
+                        build_error_strings.push(format!("{:?}", other_error));
                     }
                 }
-            };
 
-            return Ok(ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful);
+                let build_error = BuildError::new(build_error_strings);
+
+                warn!("{:#?}", &build_error);
+                // todo remove the unwraps and change to actual error
+                let json_string = serde_json::to_string(&build_error).unwrap();
+                let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                return Ok(
+                    ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
+                        RoverdError::new("build".to_string(), RoverdErrorErrorValue(box_raw)),
+                    ),
+                );
+            };
+            Ok(ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful)
+        } else {
+            rover_is_operating!(ServicesAuthorServiceVersionPostResponse)
         }
-        rover_is_operating!(ServicesAuthorServiceVersionPostResponse)
     }
 
     /// Retrieve the list of all authors that have parsable services. With these authors you can query further for services.

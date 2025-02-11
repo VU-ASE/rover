@@ -49,7 +49,7 @@ gen-open-api:
 
 	@./scripts/fix_open_api_gen.sh
 
-build: dev-setup version-update gen-open-api
+build: lint dev-setup version-update gen-open-api
 	@echo ">>> "
 	@echo ">>> STEP 3. Build roverd"
 	@echo ">>> "
@@ -62,7 +62,7 @@ setup:
 dev: build
 	sudo ./target/release/roverd
 
-build-arm: version-update gen-open-api
+build-arm: lint version-update gen-open-api
 	@echo ">>> "
 	@echo ">>> STEP 3. Build roverd"
 	@echo ">>> "

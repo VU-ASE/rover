@@ -1,0 +1,34 @@
+name: imaging
+author: vu-ase
+source: github.com/vu-ase/imaging
+version: 1.0.0
+description: Reads an image from a video source (v4l2/sim), processes it and sends it to the controller
+
+commands:
+  build: make build
+  run: ./bin/imaging
+
+inputs: []
+
+outputs:
+  - path
+
+configuration:
+  - name: threshold-value
+    tunable: true
+    # if this value is > 0, the image will be thresholded. Otherwise it will be sent as is
+    # the thresholding value does not do anything else.
+    value: 1
+  - name: gstreamer-pipeline
+    type: string
+    tunable: false
+    value: "v4l2src device=/dev/video2 ! image/jpeg, width=%d, height=%d, framerate=%d/1 ! jpegdec ! videoconvert n-threads=4 ! appsink caps=video/x-raw,format=GRAY8 name=appsink"
+  # options for the gstreamer pipeline
+  - name: img-width
+    tunable: false
+    value: 640
+  - name: img-height
+    tunable: false
+    value: 480
+  - name: img-fps
+    value: 30

@@ -53,7 +53,7 @@ impl BootSpecs {
         };
 
         let transeiver_service = (0..services.len()).find_map(|i| {
-            if services[i].0.name == "transceiver" {
+            if services[i].0.get_original_name() == "transceiver" {
                 tuning.enabled = true;
                 Some(services.swap_remove(i))
             } else {
@@ -77,17 +77,18 @@ impl BootSpecs {
             // save the resulting address in the mapping.
             for out_stream in &s.outputs {
                 let address = format!("{}:{}", DATA_ADDRESS, start_port);
-                let stream_name = out_stream.clone();
-                mappings.insert((s.name.clone(), stream_name.clone()), address.clone());
+                let service_name = s.get_pipeline_name();
+                mappings.insert((service_name, out_stream.clone()), address.clone());
                 start_port += 1;
             }
         }
 
-        // Now that we know the mappings we can iterate over all service again
-        // and set each output and input field
+        // Now that we know the mappings we can iterate over all services again and set
+        // each output and input field by looking up the address from the previous step
         for validated in &services {
             let s = &validated.0;
-            let service_name = &s.name;
+            let service_name = s.get_pipeline_name();
+
             let fq = FqBuf::from(validated);
 
             let mut outputs = vec![];
@@ -138,7 +139,7 @@ impl BootSpecs {
             }
 
             let b = BootSpec {
-                name: s.name.clone(),
+                name: s.get_pipeline_name(),
                 version: s.version.clone(),
                 inputs,
                 outputs,
@@ -162,12 +163,15 @@ impl BootSpecs {
 
         if let Some(s) = transeiver_service {
             let fq = FqBuf::from(s.clone());
+
+            let service_name = s.0.get_pipeline_name();
+
             let b = BootSpec {
-                name: s.0.name.clone(),
+                name: service_name.clone(),
                 version: s.0.version.clone(),
                 inputs: transceiver_inputs,
                 outputs: vec![Stream {
-                    name: s.0.name.clone(),
+                    name: service_name,
                     address: tuning.address.clone(),
                 }],
                 configuration: s.0.configuration.clone(),

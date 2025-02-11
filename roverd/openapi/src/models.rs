@@ -576,6 +576,11 @@ pub struct FullyQualifiedService {
     /// The version of the service
     #[serde(rename = "version")]
     pub version: String,
+
+    /// The (optional) alias of the name to be used in the pipeline
+    #[serde(rename = "as")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#as: Option<String>,
 }
 
 impl FullyQualifiedService {
@@ -585,6 +590,7 @@ impl FullyQualifiedService {
             author,
             name,
             version,
+            r#as: None,
         }
     }
 }
@@ -601,6 +607,9 @@ impl std::fmt::Display for FullyQualifiedService {
             Some(self.name.to_string()),
             Some("version".to_string()),
             Some(self.version.to_string()),
+            self.r#as
+                .as_ref()
+                .map(|r#as| ["as".to_string(), r#as.to_string()].join(",")),
         ];
 
         write!(
@@ -625,6 +634,7 @@ impl std::str::FromStr for FullyQualifiedService {
             pub author: Vec<String>,
             pub name: Vec<String>,
             pub version: Vec<String>,
+            pub r#as: Vec<String>,
         }
 
         let mut intermediate_rep = IntermediateRep::default();
@@ -658,6 +668,10 @@ impl std::str::FromStr for FullyQualifiedService {
                     "version" => intermediate_rep.version.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
+                    #[allow(clippy::redundant_clone)]
+                    "as" => intermediate_rep.r#as.push(
+                        <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                    ),
                     _ => {
                         return std::result::Result::Err(
                             "Unexpected key while parsing FullyQualifiedService".to_string(),
@@ -687,6 +701,7 @@ impl std::str::FromStr for FullyQualifiedService {
                 .into_iter()
                 .next()
                 .ok_or_else(|| "version missing in FullyQualifiedService".to_string())?,
+            r#as: intermediate_rep.r#as.into_iter().next(),
         })
     }
 }

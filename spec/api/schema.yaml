@@ -801,6 +801,10 @@ components:
           type: string
           description: "The version of the service"
           example: "1.0.0"
+        as:
+          type: string
+          description: "The (optional) alias of the name to be used in the pipeline"
+          example: "controller"
 
     #
     #

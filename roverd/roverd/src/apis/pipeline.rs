@@ -116,7 +116,7 @@ impl Pipeline for Roverd {
                                                 unmet_services.push(
                                                     UnmetServiceError {
                                                         source: unmet_service_error.source,
-                                                        target: unmet_service_error.target
+                                                        target: unmet_service_error.target,
                                                     }
                                                 )
                                             },
@@ -130,52 +130,49 @@ impl Pipeline for Roverd {
                                     },
                                     rovervalidate::error::PipelineValidationError::AliasInUseAsNameError(s) => {
                                         aliases_in_use.push(s)
-                                        
                                     },
                                 }
                         }
 
-                        let pipeline_error = PipelineSetError::new(
-                            PipelineSetErrorValidationErrors {
+                        let pipeline_error =
+                            PipelineSetError::new(PipelineSetErrorValidationErrors {
                                 unmet_streams,
                                 unmet_services,
                                 duplicate_services,
                                 duplicate_aliases,
-                                aliases_in_use
-                            }
-                        );
+                                aliases_in_use,
+                            });
 
                         // todo remove the unwraps and change to actual error
+                        warn!("{:#?}", &pipeline_error);
                         let json_string = serde_json::to_string(&pipeline_error).unwrap();
-                        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                        let box_raw =
+                            serde_json::value::RawValue::from_string(json_string).unwrap();
                         return Ok(PipelinePostResponse::Status400_ErrorOccurred(
-                            RoverdError::new("pipeline_set".to_string(), RoverdErrorErrorValue(box_raw))
+                            RoverdError::new(
+                                "pipeline_set".to_string(),
+                                RoverdErrorErrorValue(box_raw),
+                            ),
                         ));
-                    },
-                    _ => {
-                        let pipeline_error = PipelineSetError::new(
-                            PipelineSetErrorValidationErrors {
-                                unmet_streams: vec![],
-                                unmet_services: vec![],
-                                duplicate_services: vec![],
-                                duplicate_aliases: vec![],
-                                aliases_in_use: vec![]
-                            }
-                        );
-
+                    }
+                    some_error => {
+                        let some_generic_error = GenericError::new(format!("{:?}", some_error), 1);
                         // todo remove the unwraps and change to actual error
-                        let json_string = serde_json::to_string(&pipeline_error).unwrap();
-                        let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                        warn!("{:#?}", &some_generic_error);
+                        let json_string = serde_json::to_string(&some_generic_error).unwrap();
+                        let box_raw =
+                            serde_json::value::RawValue::from_string(json_string).unwrap();
                         return Ok(PipelinePostResponse::Status400_ErrorOccurred(
-                            RoverdError::new("pipeline_set".to_string(), RoverdErrorErrorValue(box_raw))
+                            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw)),
                         ));
                     }
                 },
             };
 
-            return Ok(PipelinePostResponse::Status200_OperationWasSuccessful);
+            Ok(PipelinePostResponse::Status200_OperationWasSuccessful)
+        } else {
+            rover_is_operating!(PipelinePostResponse)
         }
-        rover_is_operating!(PipelinePostResponse)
     }
 
     /// Start the pipeline.
@@ -189,7 +186,7 @@ impl Pipeline for Roverd {
         _cookies: CookieJar,
     ) -> Result<PipelineStartPostResponse, ()> {
         if let Some(rover_state) = self.try_get_dormant().await {
-            warn_generic!(self.app.start(rover_state).await, PipelineStartPostResponse);
+            let _ = warn_generic!(self.app.start(rover_state).await, PipelineStartPostResponse);
             Ok(PipelineStartPostResponse::Status200_OperationWasSuccessful)
         } else {
             rover_is_operating!(PipelineStartPostResponse)
@@ -207,7 +204,7 @@ impl Pipeline for Roverd {
         _cookies: CookieJar,
     ) -> Result<PipelineStopPostResponse, ()> {
         if let Some(rover_state) = self.try_get_operating().await {
-            warn_generic!(self.app.stop(rover_state).await, PipelineStopPostResponse);
+            let _ = warn_generic!(self.app.stop(rover_state).await, PipelineStopPostResponse);
             Ok(PipelineStopPostResponse::Status200_OperationWasSuccessful)
         } else {
             rover_is_dormant!(PipelineStopPostResponse)

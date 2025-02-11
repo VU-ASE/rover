@@ -102,7 +102,10 @@ pub async fn download_service(url: &String) -> Result<String, Error> {
     info!("Downloading: {}", url);
 
     // generate a random string for the filename to avoid conflicts during concurrent downloads
-    let file_name = format!("/tmp/{}.zip", Alphanumeric.sample_string(&mut rand::rng(), 16));
+    let file_name = format!(
+        "/tmp/{}.zip",
+        Alphanumeric.sample_string(&mut rand::rng(), 16)
+    );
 
     let client = Client::new();
 
@@ -181,14 +184,14 @@ pub async fn extract_fq_from_zip(zip_file: String) -> Result<(FqBuf, String), Er
     };
 
     // Clear the destination directory, no matter if it fails
-    let _ = std::fs::remove_dir_all(&unzipped_dir);
+    let _ = std::fs::remove_dir_all(unzipped_dir);
 
     // Create directory, this must not fail
-    std::fs::create_dir_all(&unzipped_dir)
+    std::fs::create_dir_all(unzipped_dir)
         .with_context(|| format!("failed to create {}", unzipped_dir))?;
 
     // Unpack the downloaded service and validate it.
-    extract_zip(&zip_file, &unzipped_dir)?;
+    extract_zip(&zip_file, unzipped_dir)?;
 
     // Read contents and
     let service_contents = std::fs::read_to_string(format!("{}/service.yaml", unzipped_dir))
@@ -332,7 +335,10 @@ macro_rules! warn_generic {
                 let json_string = serde_json::to_string(&generic_error).unwrap();
                 let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
                 return Ok(<$error_type>::Status400_ErrorOccurred(
-                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+                    openapi::models::RoverdError::new(
+                        "generic".to_string(),
+                        openapi::models::RoverdErrorErrorValue(box_raw),
+                    ),
                 ));
             }
         }
@@ -350,9 +356,10 @@ macro_rules! error_generic {
                 // todo remove the unwraps and change to actual error
                 let json_string = serde_json::to_string(&generic_error).unwrap();
                 let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
-                return Ok(<$error_type>::Status400_ErrorOccurred(
-                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
-                ));
+                return Ok(<$error_type>::Status400_ErrorOccurred(RoverdError::new(
+                    "generic".to_string(),
+                    RoverdErrorErrorValue(box_raw),
+                )));
             }
         }
     }};
@@ -369,9 +376,10 @@ macro_rules! rover_is_dormant {
         // todo remove the unwraps and change to actual error
         let json_string = serde_json::to_string(&generic_error).unwrap();
         let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
-        Ok(<$error_type>::Status400_ErrorOccurred(
-            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
-        ))
+        Ok(<$error_type>::Status400_ErrorOccurred(RoverdError::new(
+            "generic".to_string(),
+            RoverdErrorErrorValue(box_raw),
+        )))
     }};
 }
 
@@ -387,7 +395,10 @@ macro_rules! rover_is_operating {
         let json_string = serde_json::to_string(&generic_error).unwrap();
         let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
         Ok(<$error_type>::Status400_ErrorOccurred(
-            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw))
+            openapi::models::RoverdError::new(
+                "generic".to_string(),
+                openapi::models::RoverdErrorErrorValue(box_raw),
+            ),
         ))
     }};
 }
