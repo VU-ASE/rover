@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.3.3](https://github.com/VU-ASE/rover/compare/v0.3.2...v0.3.3) (2025-02-10)
+
+
+### Bug Fixes
+
+* update checking for default pipeline ([3f67220](https://github.com/VU-ASE/rover/commit/3f672204d7faaeae6ec4a3d2ec141ab52af4dc55))
+
+## [0.3.2](https://github.com/VU-ASE/rover/compare/v0.3.1...v0.3.2) (2025-02-10)
+
+
+### Bug Fixes
+
+* version mismatch checking ([4ba63b9](https://github.com/VU-ASE/rover/commit/4ba63b901f88055e68db2a7234ca17659588798c))
+
+## [0.3.1](https://github.com/VU-ASE/rover/compare/v0.3.0...v0.3.1) (2025-02-09)
+
+
+### Bug Fixes
+
+* roverctl replace FQN types ([f6a9c44](https://github.com/VU-ASE/rover/commit/f6a9c44dee576b4ba63f3e44ca5a07704ead245b))
+
+## [0.3.0](https://github.com/VU-ASE/rover/compare/v0.2.0...v0.3.0) (2025-02-09)
+
+
+### Features
+
+* api adaptation ([d36262f](https://github.com/VU-ASE/rover/commit/d36262f0e0d336e08cc1a3a6e2484ad4e52c2431))
+* default ASE pipeline updates and installs ([0abcdb0](https://github.com/VU-ASE/rover/commit/0abcdb0021d0c2c4158a52e479684615864518af))
+
+
+### Bug Fixes
+
+* make roverctl compatible with new API spec ([6eb675c](https://github.com/VU-ASE/rover/commit/6eb675c87be7b49d31ca3405906767df359405f3))
+
+## [0.2.0](https://github.com/VU-ASE/rover/compare/v0.1.2...v0.2.0) (2025-02-07)
+
+
+### Features
+
+* api clean up and addition of alias error (BBC) ([1d685a6](https://github.com/VU-ASE/rover/commit/1d685a6578ddc0b9c3b48fa9ffeb0abecfefad22))
+* install script that allows for installing a specific version ([f5bfcaf](https://github.com/VU-ASE/rover/commit/f5bfcaf2bada29e9e8732b61d79c93a53c3331d9))
+* upgrade roverctl to go 1.22.12 ([6a19635](https://github.com/VU-ASE/rover/commit/6a1963502affb37a09328151d1c55622ffb14d0f))
+
+
+### Bug Fixes
+
+* error on roverctl install.sh if release does not exist or no binary ([1880064](https://github.com/VU-ASE/rover/commit/1880064e54514a502ae07bd21f690b8d953a7eea))
+* roverctl install.sh, verify downloaded binary is valid ([381a5ed](https://github.com/VU-ASE/rover/commit/381a5ed2e809710a882a65e4affd3fb658ecb2e2))
+
 ## [0.1.2](https://github.com/VU-ASE/rover/compare/v0.1.1...v0.1.2) (2025-02-06)
 
 

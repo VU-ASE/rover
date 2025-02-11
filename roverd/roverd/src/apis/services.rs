@@ -210,6 +210,7 @@ impl Services for Roverd {
 
                 let build_error = BuildError::new(build_error_strings);
 
+                warn!("{:#?}", &build_error);
                 // todo remove the unwraps and change to actual error
                 let json_string = serde_json::to_string(&build_error).unwrap();
                 let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
@@ -219,21 +220,9 @@ impl Services for Roverd {
                     ),
                 );
             };
-
             Ok(ServicesAuthorServiceVersionPostResponse::Status200_OperationWasSuccessful)
         } else {
-            let msg = "unable to perform request, rover is running";
-            warn!(msg);
-
-            // todo remove the unwraps and change to actual error
-            let json_string =
-                serde_json::to_string(&GenericError::new(msg.to_string(), 1)).unwrap();
-            let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
-            return Ok(
-                ServicesAuthorServiceVersionPostResponse::Status400_ErrorOccurred(
-                    RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw)),
-                ),
-            );
+            rover_is_operating!(ServicesAuthorServiceVersionPostResponse)
         }
     }
 
@@ -248,7 +237,6 @@ impl Services for Roverd {
         _cookies: CookieJar,
     ) -> Result<ServicesGetResponse, ()> {
         let authors = warn_generic!(self.app.get_authors().await, ServicesGetResponse);
-
         Ok(ServicesGetResponse::Status200_TheListOfAuthors(authors))
     }
 
@@ -267,7 +255,6 @@ impl Services for Roverd {
             self.app.get_services(path_params).await,
             ServicesAuthorGetResponse
         );
-
         Ok(ServicesAuthorGetResponse::Status200_TheListOfServicesForTheAuthor(services))
     }
 

@@ -20,12 +20,12 @@ var version = "UNSET"
 
 type InfoPage struct {
 	// Fetch information about roverd and the rover
-	remoteInfo tui.Action[openapi.StatusGet200Response]
+	remoteInfo tui.Action[openapi.Get200Response]
 	spinner    spinner.Model
 }
 
 func NewInfoPage() InfoPage {
-	ri := tui.NewAction[openapi.StatusGet200Response]("remoteInfo")
+	ri := tui.NewAction[openapi.Get200Response]("remoteInfo")
 	sp := spinner.New()
 	return InfoPage{
 		remoteInfo: ri,
@@ -39,10 +39,10 @@ func (m InfoPage) Init() tea.Cmd {
 
 func (m InfoPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tui.ActionInit[openapi.StatusGet200Response]:
+	case tui.ActionInit[openapi.Get200Response]:
 		m.remoteInfo.ProcessInit(msg)
 		return m, nil
-	case tui.ActionResult[openapi.StatusGet200Response]:
+	case tui.ActionResult[openapi.Get200Response]:
 		m.remoteInfo.ProcessResult(msg)
 		return m, nil
 	case spinner.TickMsg:
@@ -122,7 +122,7 @@ func (m InfoPage) View() string {
 }
 
 func (m InfoPage) fetchInfo() tea.Cmd {
-	return tui.PerformAction(&m.remoteInfo, func() (*openapi.StatusGet200Response, error) {
+	return tui.PerformAction(&m.remoteInfo, func() (*openapi.Get200Response, error) {
 		remote := state.Get().RoverConnections.GetActive()
 		if remote == nil {
 			return nil, fmt.Errorf("No active rover connection")

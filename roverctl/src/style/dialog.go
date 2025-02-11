@@ -6,7 +6,7 @@ import (
 )
 
 func RenderDialog(dialog string, theme lipgloss.Color) string {
-	s := lipgloss.NewStyle().Width(50).Align(lipgloss.Center).Padding(1, 4).Render(dialog)
+	s := lipgloss.NewStyle().Width(75).Align(lipgloss.Center).Padding(1, 4).Render(dialog)
 	s = lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(theme).

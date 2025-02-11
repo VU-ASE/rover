@@ -9,8 +9,15 @@ ifeq ($(VERSION),)
 $(error Missing VERSION variable please pass it in as an argument)
 endif
 
-hello-version:
-	@echo "Hello $(VERSION)"
+
+# The docker container has to be setup such that it is identical to the filesystem of
+# the rovers. This script creates the necessary files to pretend it is a rover.
+dev-setup:
+	@echo ">>> "
+	@echo ">>> STEP -1. Make sure that devcontainer has proper files in place"
+	@echo ">>> "
+	
+	sudo ./scripts/setup_dev_files.sh
 
 # This sets the version of roverd's Cargo.toml so that it is baked into the binary
 # throug an additional build time Rust script.

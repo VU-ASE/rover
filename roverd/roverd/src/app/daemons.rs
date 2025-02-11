@@ -1,10 +1,10 @@
 use anyhow::Context;
 use std::{
-    fs,
-    fs::Permissions,
+    fs::{self, Permissions},
     os::unix::fs::PermissionsExt,
     path::PathBuf,
     process::Stdio,
+    sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -13,7 +13,7 @@ use rovervalidate::{config::Validate, service::Service};
 use tokio::{
     process::Command,
     signal::unix::{signal, SignalKind},
-    sync::broadcast,
+    sync::{broadcast, RwLock},
     time::sleep,
 };
 use tracing::{error, info, warn};
@@ -31,6 +31,7 @@ use super::{
 #[derive(Debug, Clone)]
 pub struct DaemonManager {
     shutdown_tx: broadcast::Sender<()>,
+    restart_coutner: Arc<RwLock<usize>>,
 }
 
 /// Here are two hard coded daemons, ideally we make this extensible by specifying
@@ -56,11 +57,9 @@ impl DaemonManager {
                 }
             }
 
-            info!("sending shutdown");
+            info!("sending shutdown and waiting 1 seconds...");
             let _ = shutdown_tx_clone.send(()).ok();
-            // info!("waiting");
-            // sleep(Duration::from_secs(2)).await;
-            // info!("exiting");
+            sleep(Duration::from_secs(1)).await;
         });
 
         // First make sure the daemons are installed, this can fail which will
@@ -172,7 +171,10 @@ impl DaemonManager {
             },
         ];
 
-        let daemon_manager = DaemonManager { shutdown_tx };
+        let daemon_manager = DaemonManager {
+            shutdown_tx,
+            restart_coutner: Arc::new(RwLock::new(0)),
+        };
         daemon_manager.start_daemons(procs).await?;
 
         Ok(daemon_manager)
@@ -183,6 +185,8 @@ impl DaemonManager {
         for proc in procs {
             let parsed_command = ParsedCommand::try_from(&proc.command)?;
             let mut shutdown_rx = self.shutdown_tx.subscribe();
+
+            let restart_counter_clone = self.restart_coutner.clone();
 
             let log_file = create_log_file(&proc.log_file)?;
             let stdout = Stdio::from(
@@ -239,8 +243,17 @@ impl DaemonManager {
                                 break;
                             }
 
-                            info!("restarting daemon '{}'", proc.name);
+                            // Sleep so that we don't retry immediately
                             sleep(Duration::from_secs(3)).await;
+
+                            // Introduce a scope here so that we give up the
+                            let mut counter = restart_counter_clone.write().await;
+                            if *counter > 20 {
+                                info!("restarted daemons {} times, giving up", *counter);
+                                break;
+                            }
+                            info!("restarting daemon '{}' ({})", proc.name, *counter);
+                            *counter += 1;
                         }
                     }
                 }

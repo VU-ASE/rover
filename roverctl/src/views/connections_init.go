@@ -34,7 +34,7 @@ type ConnectionsInitPage struct {
 	routeExists   tui.Action[bool]
 	authValid     tui.Action[bool]
 	roverdVersion tui.Action[string]
-	roverStatus   tui.Action[openapi.StatusGet200Response]
+	roverStatus   tui.Action[openapi.Get200Response]
 	isChecking    bool
 	formValues    *ConnectionInitFormValues
 	host          string // the ip or hostname of the rover to connect to
@@ -112,7 +112,7 @@ func NewConnectionsInitPage(val *ConnectionInitFormValues) ConnectionsInitPage {
 	routeExistsAction := tui.NewAction[bool]("routeExists")
 	authValidAction := tui.NewAction[bool]("authValid")
 	roverdVersionAction := tui.NewAction[string]("roverdVersion")
-	roverStatusAction := tui.NewAction[openapi.StatusGet200Response]("roverStatus")
+	roverStatusAction := tui.NewAction[openapi.Get200Response]("roverStatus")
 
 	return ConnectionsInitPage{
 		spinner:       s,
@@ -174,7 +174,7 @@ func (m ConnectionsInitPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 	case tui.ActionInit[string]:
 		m.roverdVersion.ProcessInit(msg)
 		return m, nil
-	case tui.ActionInit[openapi.StatusGet200Response]:
+	case tui.ActionInit[openapi.Get200Response]:
 		m.roverStatus.ProcessInit(msg)
 		return m, nil
 	case tui.ActionResult[bool]:
@@ -190,7 +190,7 @@ func (m ConnectionsInitPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 			m.saveConnection()
 		}
 		return m, nil
-	case tui.ActionResult[openapi.StatusGet200Response]:
+	case tui.ActionResult[openapi.Get200Response]:
 		m.roverStatus.ProcessResult(msg)
 		if m.allChecksSuccessful() {
 			m.saveConnection()
@@ -389,7 +389,7 @@ func (m ConnectionsInitPage) checkRoverdVersion() tea.Cmd {
 }
 
 func (m ConnectionsInitPage) checkRoverStatus() tea.Cmd {
-	return tui.PerformAction(&m.roverStatus, func() (*openapi.StatusGet200Response, error) {
+	return tui.PerformAction(&m.roverStatus, func() (*openapi.Get200Response, error) {
 		c := configuration.RoverConnection{
 			Host:     m.host,
 			Username: m.formValues.username,

@@ -247,19 +247,19 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 			nodes := make([]core.NodeInput, 0)
 			for _, service := range m.pipeline.Data.Pipeline.Enabled {
 				// Check if the service is selected, in this case unselect it
-				if m.remoteService == service.Service.Name {
+				if m.remoteService == service.Service.Fq.Name {
 					m.remoteService = ""
 				}
 
 				nodes = append(nodes, core.NodeInput{
-					Id: service.Service.Name,
+					Id: service.Service.Fq.Name,
 					Next: func() []string {
 						// Find services that depend on an output of this service
 						found := make([]string, 0)
 						for _, s := range m.pipeline.Data.Services {
-							if s.Name != service.Service.Name {
+							if s.Name != service.Service.Fq.Name {
 								for _, input := range s.Configuration.Inputs {
-									if input.Service == service.Service.Name {
+									if input.Service == service.Service.Fq.Name {
 										found = append(found, s.Name)
 									}
 								}
@@ -516,9 +516,9 @@ func (m PipelineConfiguratorPage) fetchPipeline() tea.Cmd {
 		for _, enabled := range pipeline.Enabled {
 			configuration, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionGet(
 				context.Background(),
-				enabled.Service.Author,
-				enabled.Service.Name,
-				enabled.Service.Version,
+				enabled.Service.Fq.Author,
+				enabled.Service.Fq.Name,
+				enabled.Service.Fq.Version,
 			).Execute()
 
 			if err != nil && htt != nil {
@@ -526,9 +526,9 @@ func (m PipelineConfiguratorPage) fetchPipeline() tea.Cmd {
 			}
 
 			services = append(services, PipelineOverviewServiceInfo{
-				Name:          enabled.Service.Name,
-				Version:       enabled.Service.Version,
-				Author:        enabled.Service.Author,
+				Name:          enabled.Service.Fq.Name,
+				Version:       enabled.Service.Fq.Version,
+				Author:        enabled.Service.Fq.Author,
 				Configuration: *configuration,
 			})
 		}
@@ -640,7 +640,7 @@ func (m PipelineConfiguratorPage) createRemoteTable() table.Model {
 				exists := false
 				if m.pipeline.HasData() {
 					for _, enabled := range m.pipeline.Data.Pipeline.Enabled {
-						if enabled.Service.Name == m.remoteService && enabled.Service.Version == version {
+						if enabled.Service.Fq.Name == m.remoteService && enabled.Service.Fq.Version == version {
 							exists = true
 							break
 						}
@@ -664,7 +664,7 @@ func (m PipelineConfiguratorPage) createRemoteTable() table.Model {
 				exists := false
 				if m.pipeline.HasData() {
 					for _, enabled := range m.pipeline.Data.Pipeline.Enabled {
-						if enabled.Service.Name == service {
+						if enabled.Service.Fq.Name == service {
 							exists = true
 							break
 						}
@@ -893,7 +893,7 @@ func (m PipelineConfiguratorPage) addServiceToPipeline(author string, service st
 
 		// Check if the service is already in the pipeline
 		for _, enabled := range pipeline.Pipeline.Enabled {
-			if enabled.Service.Name == service {
+			if enabled.Service.Fq.Name == service {
 				return &pipeline, nil
 			}
 		}
@@ -906,9 +906,11 @@ func (m PipelineConfiguratorPage) addServiceToPipeline(author string, service st
 		})
 		pipeline.Pipeline.Enabled = append(pipeline.Pipeline.Enabled, openapi.PipelineGet200ResponseEnabledInner{
 			Service: openapi.PipelineGet200ResponseEnabledInnerService{
-				Name:    service,
-				Version: version,
-				Author:  author,
+				Fq: openapi.FullyQualifiedService{
+					Name:    service,
+					Version: version,
+					Author:  author,
+				},
 			},
 		})
 
@@ -993,9 +995,11 @@ func (m PipelineConfiguratorPage) savePipelineRemote() tea.Cmd {
 		if m.pipeline.HasData() {
 			for _, service := range m.pipeline.Data.Services {
 				pipelineReq = append(pipelineReq, openapi.PipelinePostRequestInner{
-					Name:    service.Name,
-					Version: service.Version,
-					Author:  service.Author,
+					Fq: openapi.FullyQualifiedService{
+						Name:    service.Name,
+						Version: service.Version,
+						Author:  service.Author,
+					},
 				})
 			}
 		}

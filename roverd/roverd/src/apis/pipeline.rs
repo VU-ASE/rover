@@ -5,7 +5,6 @@ use axum_extra::extract::CookieJar;
 
 use openapi::apis::pipeline::*;
 use openapi::models::*;
-
 use tracing::warn;
 
 use crate::constants::*;
@@ -145,8 +144,8 @@ impl Pipeline for Roverd {
                             });
 
                         // todo remove the unwraps and change to actual error
+                        warn!("{:#?}", &pipeline_error);
                         let json_string = serde_json::to_string(&pipeline_error).unwrap();
-                        dbg!(pipeline_error);
                         let box_raw =
                             serde_json::value::RawValue::from_string(json_string).unwrap();
                         return Ok(PipelinePostResponse::Status400_ErrorOccurred(
@@ -159,6 +158,7 @@ impl Pipeline for Roverd {
                     some_error => {
                         let some_generic_error = GenericError::new(format!("{:?}", some_error), 1);
                         // todo remove the unwraps and change to actual error
+                        warn!("{:#?}", &some_generic_error);
                         let json_string = serde_json::to_string(&some_generic_error).unwrap();
                         let box_raw =
                             serde_json::value::RawValue::from_string(json_string).unwrap();

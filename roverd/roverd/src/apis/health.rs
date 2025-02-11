@@ -143,7 +143,7 @@ impl Health for Roverd {
         _cookies: CookieJar,
     ) -> Result<ShutdownPostResponse, ()> {
         if let Some(rover_state) = self.try_get_dormant().await {
-            let _ = warn_generic!(
+            warn_generic!(
                 self.app.shutdown_rover(rover_state).await,
                 ShutdownPostResponse
             );
