@@ -6,7 +6,39 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
 )
+
+func ParseRoverdError(json []byte) *openapi.RoverdError {
+	// Try to parse as error first
+	roverdErr := &openapi.RoverdError{}
+	err := roverdErr.UnmarshalJSON([]byte(json))
+	if err != nil {
+		return nil
+	}
+
+	return roverdErr
+}
+
+// Convert a roverd error to a colored string that can be used in the TUI
+// If not a valid error, its string representation is returned
+func RoverdErrorToString(rd openapi.RoverdError) string {
+	switch {
+	case rd.ErrorValue.PipelineSetError != nil:
+		rdps := rd.ErrorValue.PipelineSetError
+		s := "Setting pipeline failed"
+		for _, v := range rdps.ValidationErrors.UnmetStreams {
+			s += fmt.Sprintf("\nService %s depends on stream %s from service %s, but this stream was not published.", v.Source, v.Stream, v.Target)
+		}
+		return s
+
+	case rd.ErrorValue.GenericError != nil:
+		return fmt.Sprintf("Generic error: (%d) %v\n", rd.ErrorValue.GenericError.Code, rd.ErrorValue.GenericError.Message)
+	default:
+		return fmt.Sprintf("Unknown error: %v\n", rd)
+	}
+}
 
 func ParseHTTPError(err error, htt *http.Response) error {
 	if err != nil && htt != nil {
@@ -21,7 +53,12 @@ func ParseHTTPError(err error, htt *http.Response) error {
 		if err != nil {
 			return fmt.Errorf("Failed to read http response body: %v", err)
 		} else {
-			return fmt.Errorf("%s", PrettyJSON(httpRes))
+			rd := ParseRoverdError(httpRes)
+			if rd != nil {
+				return fmt.Errorf("%s", RoverdErrorToString(*rd))
+			} else {
+				return fmt.Errorf("Unknown error: %s\n", string(httpRes))
+			}
 		}
 	} else {
 		return fmt.Errorf("Operation failed: %v", err)

@@ -2,7 +2,6 @@ package views
 
 import (
 	"os"
-	"strings"
 
 	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/VU-ASE/rover/roverctl/src/style"
@@ -85,7 +84,7 @@ func (m MainModel) View() string {
 		con = " | " + s.RoverConnections.Active
 	}
 
-	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(bg).Bold(false).Padding(0, 0).Render(", "+s.Quote+" | roverctl v"+strings.TrimPrefix(version, "v")+con)
+	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(bg).Bold(false).Padding(0, 0).Render(", "+s.Quote+" | "+utils.Version(version)+con)
 	fullScreen := lipgloss.NewStyle().Padding(1, 2).Width(s.WindowWidth).Height(s.WindowHeight - 3) // leave room for the header and help keys
 
 	keys := m.current.keys()

@@ -251,14 +251,14 @@ func (a *ActionV2[Req, Res]) finish(attempt uint, data *Res, errors []error) {
 
 // Interface to constrain the type of action updates
 type ActionUpdate[Req interface{}, Res interface{}] interface {
-	isForAction() string // returns the ID of the action that this update is for
+	IsForAction() string // returns the ID of the action that this update is for
 }
 type ActionV2Init[Req interface{}, Res interface{}] struct {
 	id  string
 	req *Req
 }
 
-func (a ActionV2Init[Req, Res]) isForAction() string {
+func (a ActionV2Init[Req, Res]) IsForAction() string {
 	return a.id
 }
 
@@ -269,12 +269,12 @@ type ActionV2Result[Req interface{}, Res interface{}] struct {
 	errors     []error
 }
 
-func (a ActionV2Result[Req, Res]) isForAction() string {
+func (a ActionV2Result[Req, Res]) IsForAction() string {
 	return a.id
 }
 
 func (action *ActionV2[Req, Res]) ProcessUpdate(update ActionUpdate[Req, Res]) {
-	if action.id == update.isForAction() {
+	if action.id == update.IsForAction() {
 		switch u := update.(type) {
 		case ActionV2Init[Req, Res]:
 			action.start(u.req)
@@ -285,7 +285,7 @@ func (action *ActionV2[Req, Res]) ProcessUpdate(update ActionUpdate[Req, Res]) {
 }
 
 func (update ActionV2Init[Req, Res]) IsFor(action ActionUpdate[Req, Res]) bool {
-	return update.isForAction() == action.isForAction()
+	return update.IsForAction() == action.IsForAction()
 }
 
 func (action ActionV2[Req, Res]) IsLoading() bool {
