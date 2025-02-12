@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/VU-ASE/rover/compare/v0.4.0...v0.4.1) (2025-02-12)
+
+
+### Bug Fixes
+
+* version utility and correct comparison ([9251512](https://github.com/VU-ASE/rover/commit/92515124a450c2edd2ad8aed10a20b7b42ba4b9c))
+
 ## [0.4.0](https://github.com/VU-ASE/rover/compare/v0.3.3...v0.4.0) (2025-02-11)
 
 
