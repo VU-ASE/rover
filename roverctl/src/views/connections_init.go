@@ -271,10 +271,10 @@ func (m ConnectionsInitPage) testConnectionView() string {
 			if m.roverdVersion.Error != nil {
 				s += " (" + m.roverdVersion.Error.Error() + ")"
 			}
-		} else if *m.roverdVersion.Data == version {
-			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Roverd is running at version "+*m.roverdVersion.Data)
+		} else if utils.VersionsEqual(version, *m.roverdVersion.Data) {
+			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Roverd is running at version "+utils.Version(*m.roverdVersion.Data))
 		} else {
-			s += "\n ! " + style.Warning.Render("Roverd is running at version "+*m.roverdVersion.Data+" but you are using roverctl version "+version+".")
+			s += "\n ! " + style.Warning.Render("Roverd is running at version "+utils.Version(*m.roverdVersion.Data)+" but you are using roverctl version "+utils.Version(version)+".")
 			s += style.Gray.Render(" This might cause issues in the future")
 		}
 

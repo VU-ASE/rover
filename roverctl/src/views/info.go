@@ -55,14 +55,13 @@ func (m InfoPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 }
 
 func (m InfoPage) View() string {
-	s := style.Title.Render(`░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░       ░▒▓██████▓▒░ ░▒▓███████▓▒░▒▓████████▓▒░ 
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
- ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
- ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░░▒▓██████▓▒░░▒▓██████▓▒░   
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░        
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░        
-   ░▒▓██▓▒░   ░▒▓██████▓▒░       ░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓████████▓▒░ `)
-	s += "\n\nBrought to you by the Vrije Universiteit Amsterdam ASE-Team.\nCheck out ase.vu.nl for more information\n"
+	s := style.Title.Render(`             
+                  ~( @\   \
+             _________]_[__/_>________
+            /  ____ \ <>     |  ____  \
+           =\_/ __ \_\_______|_/ __ \__D
+_______________(__)_____________(__)_________________`)
+	s += "\n\nPowered by the " + style.Bold.Render("Vrije Universiteit Amsterdam ASE-Team") + ".\nFind more information at " + style.Primary.Render("ase.vu.nl") + "\n"
 
 	s += "\n" + style.Title.Render("Roverctl") + "\n"
 	s += style.Gray.Render("Build version: ") + version + "\n"
@@ -82,8 +81,10 @@ func (m InfoPage) View() string {
 				s += "\n"
 			}
 			s += style.Gray.Render("Build version: ") + m.remoteInfo.Data.Version
-			if m.remoteInfo.Data.Version != version {
-				s += style.Error.Render(" (mismatch, might not be compatible)")
+			if !utils.VersionsEqual(version, m.remoteInfo.Data.Version) {
+				s += style.Error.Render(" (mismatch, might be incompatible)")
+			} else {
+				s += style.Success.Render(" (compatible)")
 			}
 			s += "\n"
 			s += style.Gray.Render("Status: ")
