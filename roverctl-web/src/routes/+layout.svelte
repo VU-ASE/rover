@@ -1,9 +1,7 @@
 <script lang="ts">
 	import '../app.postcss';
 	import { AppShell } from '@skeletonlabs/skeleton';
-
 	import { initializeStores, Toast } from '@skeletonlabs/skeleton';
-
 	initializeStores();
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
@@ -13,6 +11,7 @@
 
 <Toast />
 <AppShell>
+	<title>roverctl-web</title>
 	<svelte:fragment slot="header"></svelte:fragment>
 	<slot />
 </AppShell>
