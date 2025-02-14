@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+html,
+body {
+	@apply h-full overflow-hidden;
+}
+
+/* rocket theme */
+@font-face {
+	font-family: 'Space Grotesk';
+	src: url('/fonts/SpaceGrotesk.ttf');
+	font-display: swap;
+}
+
+/* Fade-in animation for success state */
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: scale(0.8);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+.animate-fade-in {
+	animation: fade-in 0.5s ease-out;
+}
+
+/* Fade-out animation */
+@keyframes fade-out {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.8);
+	}
+}
+
+/* Base styles */
+.animate-fade-out-container .animate-fade-out {
+	opacity: 1;
+	transform: scale(1);
+	transition:
+		opacity 0.5s ease-out,
+		transform 0.5s ease-out;
+}
+
+/* Trigger fade-out when the checkbox is checked */
+:has(#toggle:checked) .animate-fade-out-container .animate-fade-out {
+	animation: fade-out 0.5s ease-out forwards;
+}
+
+/* Remove the element visually after the animation (but it's still in the DOM) */
+:has(#toggle:checked) .animate-fade-out-container {
+	display: none;
+}
