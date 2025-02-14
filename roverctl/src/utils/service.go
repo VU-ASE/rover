@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"gopkg.in/yaml.v3"
 )
 
@@ -40,4 +41,8 @@ func GetServiceInformation(path string) (*ServiceInformation, error) {
 	}
 
 	return &info, nil
+}
+
+func FqnsEqual(a openapi.FullyQualifiedService, b openapi.FullyQualifiedService) bool {
+	return a.Name == b.Name && a.Author == b.Author && a.Version == b.Version
 }

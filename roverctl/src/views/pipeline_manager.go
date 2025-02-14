@@ -42,16 +42,10 @@ type PipelineManagerPage struct {
 	// Actions to install the basic pipeline
 	defaultPipelineServices     tui.ActionV2[any, []utils.UpdateAvailable]                           // all latest services in the default autonomous driving pipeline
 	missingServicesInstallation []*tui.ActionV2[utils.UpdateAvailable, openapi.FetchPost200Response] // installation if missing services (if started)
-}
 
-type PipelineService struct {
-	service utils.ServiceFqn
-	enabled bool
-}
-
-type ServiceDetails struct {
-	service utils.ServiceFqn
-	details openapi.ServicesAuthorServiceVersionGet200Response
+	// Actions to get more details on the selected service
+	selectedServiceDetails tui.ActionV2[openapi.FullyQualifiedService, openapi.ServicesAuthorServiceVersionGet200Response]
+	selectedServiceLogs    tui.ActionV2[openapi.FullyQualifiedService, []string]
 }
 
 func NewPipelineManagerPage() PipelineManagerPage {
@@ -59,6 +53,8 @@ func NewPipelineManagerPage() PipelineManagerPage {
 	pipeline := tui.NewActionV2[any, openapi.PipelineGet200Response]()
 	services := tui.NewActionV2[any, []openapi.FullyQualifiedService]()
 	locallyEnabledServices := make([]openapi.FullyQualifiedService, 0)
+	selectedServiceDetails := tui.NewActionV2[openapi.FullyQualifiedService, openapi.ServicesAuthorServiceVersionGet200Response]()
+	selectedServiceLogs := tui.NewActionV2[openapi.FullyQualifiedService, []string]()
 
 	ti := textinput.New()
 	ti.Placeholder = "Type to filter services..."
@@ -72,6 +68,10 @@ func NewPipelineManagerPage() PipelineManagerPage {
 		services:               services,
 		filterValue:            ti,
 		locallyEnabledServices: locallyEnabledServices,
+		selectedIndex:          0,
+		ignoreUpdates:          false,
+		selectedServiceDetails: selectedServiceDetails,
+		selectedServiceLogs:    selectedServiceLogs,
 	}
 }
 
@@ -149,9 +149,17 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 			if m.selectedIndex > 0 {
 				m.selectedIndex--
 			}
+			selected := m.selectedService()
+			if selected != nil {
+				return m, tea.Batch(m.fetchServiceDetails(*selected), m.fetchServiceLogs(*selected))
+			}
 		case key.Matches(msg, m.keys().Down):
 			if m.selectedIndex < len(m.services.Result())-1 {
 				m.selectedIndex++
+			}
+			selected := m.selectedService()
+			if selected != nil {
+				return m, tea.Batch(m.fetchServiceDetails(*selected), m.fetchServiceLogs(*selected))
 			}
 		case key.Matches(msg, m.keys().Toggle):
 			// Both pipeline and services need to be available
@@ -218,6 +226,8 @@ func (m PipelineManagerPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		for _, action := range m.missingServicesInstallation {
 			action.ProcessUpdate(msg)
 		}
+		m.selectedServiceDetails.ProcessUpdate(msg)
+		m.selectedServiceLogs.ProcessUpdate(msg)
 
 		// If this was a response to the service request, find out which services are enabled remotely
 		// if msg.IsForAction() == m.services.Id() && m.services.IsSuccess() {
@@ -411,15 +421,34 @@ func (m PipelineManagerPage) serviceListView(w int) string {
 				enabled = style.Success.Render(" ✔ ")
 			}
 
-			entry := selectorStyle.Render(enabled) + nameStyle.Render(service.Name) + versionStyle.Render(service.Version) + authorStyle.Render(service.Author) + faultsStyle.Render("0 ")
+			// Get the pipeline entry so that we can show faults
+			var pipelineEntry *openapi.PipelineGet200ResponseEnabledInner = nil
+			faults := "-"
+			if m.pipeline.HasResult() {
+				for _, e := range m.pipeline.Result().Enabled {
+					if e.Service.Fq.Name == service.Name && e.Service.Fq.Author == service.Author && e.Service.Fq.Version == service.Version {
+						pipelineEntry = &e
+						break
+					}
+				}
+			}
+			if pipelineEntry != nil {
+				faults = fmt.Sprintf("%d", pipelineEntry.Service.Faults)
+			}
+
+			name := service.Name
+			if service.As != nil {
+				name += " (" + *service.As + ")"
+			}
+
+			entry := selectorStyle.Render(enabled) + nameStyle.Render(name) + versionStyle.Render(service.Version) + authorStyle.Render(service.Author) + faultsStyle.Render(faults)
 			if i+startIndex == m.selectedIndex {
 				bg := style.AsePrimary
 				if isEnabled {
 					bg = style.SuccessPrimary
 				}
-				entry = selectorStyle.Background(bg).Render(enabled) + nameStyle.Background(bg).Render(service.Name) + versionStyle.Background(bg).Render(service.Version) + authorStyle.Background(bg).Render(service.Author) + faultsStyle.Background(bg).Render("0 ")
+				entry = selectorStyle.Background(bg).Render(enabled) + nameStyle.Background(bg).Render(name) + versionStyle.Background(bg).Render(service.Version) + authorStyle.Background(bg).Render(service.Author) + faultsStyle.Background(bg).Render(faults)
 			}
-
 			serviceList += entry + "\n"
 		}
 
@@ -440,16 +469,61 @@ func (m PipelineManagerPage) serviceListView(w int) string {
 	return serviceList + suffix
 }
 
-func (m PipelineManagerPage) selectedServiceView(w int) string {
-	width := w
+func (m PipelineManagerPage) selectedServiceView(w int, h int) string {
+
+	// width := w
 
 	selectedService := m.selectedService()
 	if selectedService == nil {
 		return "None"
 	}
 
-	// Get the pipeline entry
-pipelineEntry:
+	if m.selectedServiceDetails.HasResult() && m.selectedServiceLogs.HasResult() && utils.FqnsEqual(*selectedService, m.selectedServiceDetails.Request()) && utils.FqnsEqual(*selectedService, m.selectedServiceLogs.Request()) {
+		// details := m.selectedServiceDetails.Result()
+		logs := m.selectedServiceLogs.Result()
+
+		logViewportStyle := lipgloss.NewStyle().Width(w-10).Height(h-10).Padding(1, 0)
+
+		// Create the view
+		view := ""
+
+		view += logViewportStyle.Render(strings.Join(logs, "\n")) + "\n"
+
+		// view += strings.Join(logs, "\n") + "\n"
+
+		return view
+
+	}
+
+	return "ah"
+
+	// Get the service
+
+	// // See if this service is in the current pipeline
+	// var pipelineEntry *openapi.PipelineGet200ResponseEnabledInner = nil
+	// if m.pipeline.HasResult() {
+	// 	for _, e := range m.pipeline.Result().Enabled {
+	// 		if e.Service.Fq.Name == selectedService.Name && e.Service.Fq.Author == selectedService.Author && e.Service.Fq.Version == selectedService.Version {
+	// 			pipelineEntry = &e
+	// 			break
+	// 		}
+	// 	}
+	// }
+	// if pipelineEntry == nil {
+	// 	return "No pipeline info"
+	// }
+
+	// process := pipelineEntry.Process
+	// if process != nil {
+	// 	// Compute how many = to print based on the CPU percentage
+	// 	width -= 2
+	// 	cpuBarWidth := int(float64(width) * float64(pipelineEntry.Process.Cpu) / 100)
+	// 	cpuBar := strings.Repeat("=", cpuBarWidth)
+
+	// 	return "CPU " + cpuBar + fmt.Sprintf("%d", process.Cpu)
+	// } else {
+	// 	return "No process info"
+	// }
 }
 
 func (m PipelineManagerPage) View() string {
@@ -488,14 +562,15 @@ func (m PipelineManagerPage) View() string {
 
 	// Create two columns: a left column (35%) and a right column (65%)
 	// they should be separated by a vertical line
+	columnHeight := fullHeight - 1 - len(strings.Split(header, "\n"))
 	leftColumnWidth := fullWidth / 3
-	leftColumn := lipgloss.NewStyle().Height(fullHeight-1-len(strings.Split(header, "\n"))).Width(leftColumnWidth).Padding(0, 2).Border(lipgloss.NormalBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderForeground(style.GrayPrimary)
+	leftColumn := lipgloss.NewStyle().Height(columnHeight).Width(leftColumnWidth).Padding(0, 2).Border(lipgloss.NormalBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderForeground(style.GrayPrimary)
 	rightColumnWidth := fullWidth - leftColumnWidth
 	rightColumn := lipgloss.NewStyle().Width(rightColumnWidth).Padding(0, 4)
 
 	// Render the left column
 	left := leftColumn.Render(m.serviceListView(leftColumnWidth))
-	right := rightColumn.Render(m.selectedServiceView(rightColumnWidth))
+	right := rightColumn.Render(m.selectedServiceView(rightColumnWidth, columnHeight))
 
 	return header + "\n" + lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 }
@@ -528,17 +603,6 @@ func (m PipelineManagerPage) keys() utils.GeneralKeyMap {
 		key.WithKeys("ctrl+s"),
 		key.WithHelp("ctrl+s", "save/start/stop"),
 	)
-	if m.filterEnabled {
-		kb.Configure = key.NewBinding(
-			key.WithKeys("ctrl+e"),
-			key.WithHelp("ctrl+e", "show all"),
-		)
-	} else {
-		kb.Configure = key.NewBinding(
-			key.WithKeys("ctrl+e"),
-			key.WithHelp("ctrl+e", "show only enabled"),
-		)
-	}
 
 	lenServices := len(m.services.Result())
 	if lenServices > 0 {
@@ -794,6 +858,52 @@ func (m PipelineManagerPage) fetchDefaultServiceReleases() tea.Cmd {
 		}
 
 		return &releases, nil
+	})
+}
+
+func (m PipelineManagerPage) fetchServiceLogs(service openapi.FullyQualifiedService) tea.Cmd {
+	return tui.PerformActionV2(&m.selectedServiceLogs, &service, func() (*[]string, []error) {
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, []error{fmt.Errorf("No active rover connection")}
+		}
+
+		// Fetch logs for provided service
+		api := remote.ToApiClient()
+		res, htt, err := api.PipelineAPI.LogsAuthorNameVersionGet(
+			context.Background(),
+			service.Author,
+			service.Name,
+			service.Version,
+		).Execute()
+		if err != nil && htt != nil {
+			return nil, []error{utils.ParseHTTPError(err, htt)}
+		}
+
+		return &res, nil
+	})
+}
+
+func (m PipelineManagerPage) fetchServiceDetails(service openapi.FullyQualifiedService) tea.Cmd {
+	return tui.PerformActionV2(&m.selectedServiceDetails, &service, func() (*openapi.ServicesAuthorServiceVersionGet200Response, []error) {
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, []error{fmt.Errorf("No active rover connection")}
+		}
+
+		// Fetch logs for provided service
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionGet(
+			context.Background(),
+			service.Author,
+			service.Name,
+			service.Version,
+		).Execute()
+		if err != nil && htt != nil {
+			return nil, []error{utils.ParseHTTPError(err, htt)}
+		}
+
+		return res, nil
 	})
 }
 
