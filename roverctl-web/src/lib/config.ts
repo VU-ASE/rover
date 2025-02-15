@@ -6,6 +6,7 @@ import {
 	PUBLIC_PASSTHROUGH_HOST,
 	PUBLIC_PASSTHROUGH_PORT
 } from '$env/static/public';
+import { Configuration } from './openapi';
 
 /**
  * This file is used to parse the environment variables
@@ -25,6 +26,8 @@ type RoverdConfig = {
 	// Authorization
 	username: string;
 	password: string;
+	// openapi configuration object
+	api: Configuration;
 };
 
 // Used for debugging using passthrough and the transceiver service on the Rover
@@ -34,10 +37,9 @@ type PassthroughConfig = {
 };
 
 type ParsedConfig =
-	| {
+	| ({
 			success: true;
-			config: AppConfig;
-	  }
+	  } & AppConfig)
 	| {
 			success: false;
 			error: string;
@@ -86,18 +88,21 @@ const parseConfigFromEnv = (): ParsedConfig => {
 
 		return {
 			success: true,
-			config: {
-				roverd: {
-					host: roverdHost,
-					port: roverdPort,
+			roverd: {
+				host: roverdHost,
+				port: roverdPort,
+				username: roverdUsername,
+				password: roverdPassword,
+				api: new Configuration({
+					basePath: `http://${roverdHost}:${roverdPort}`,
 					username: roverdUsername,
 					password: roverdPassword
-				},
-				passthrough:
-					passthroughHost && passthroughPort
-						? { host: passthroughHost, port: passthroughPort }
-						: undefined
-			}
+				})
+			},
+			passthrough:
+				passthroughHost && passthroughPort
+					? { host: passthroughHost, port: passthroughPort }
+					: undefined
 		} as const;
 	} catch (err) {
 		console.error('Could not parse configuration from environment variables:', err);
