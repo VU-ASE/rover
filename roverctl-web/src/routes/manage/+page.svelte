@@ -14,6 +14,7 @@
 
 	import { Modal } from '@skeletonlabs/skeleton';
 	import ErrorOverlay from '../../components/ErrorOverlay.svelte';
+	import Pipeline from '../../components/manage/Pipeline.svelte';
 
 	const statusQuery = useQuery(
 		'status',
@@ -34,8 +35,9 @@
 	);
 </script>
 
-<div class="w-full flex animate-fade-out-container">
-	<Navbar />
+<Navbar />
+<div class="h-[50vh]">
+	<Pipeline />
 </div>
 
 <ErrorOverlay />

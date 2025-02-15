@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Authenticate from '../views/authenticate.svelte';
-	import Connecting from '../views/connecting.svelte';
-	import Connected from '../views/connected/index.svelte';
+	import Authenticate from '../../views/authenticate.svelte';
+	import Connecting from '../../views/connecting.svelte';
+	import Connected from '../../views/connected/index.svelte';
 	import { connectionStore } from '$lib/store/connection';
 	import { initServerConnection } from '$lib/events/connection';
 	import { authStore } from '$lib/store/auth';
