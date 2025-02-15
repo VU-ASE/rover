@@ -323,6 +323,27 @@ pub fn find_latest_daemon(author: &str, name: &str) -> Result<FqBuf, Error> {
     }
 }
 
+pub fn get_service_as<T: AsRef<str>>(author: T, name: T, version: T) -> Option<String> {
+    let contents_opt = fs::read_to_string(format!(
+        "{}/{}/{}/{}/service.yaml",
+        ROVER_DIR,
+        author.as_ref(),
+        name.as_ref(),
+        version.as_ref()
+    ))
+    .ok();
+
+    if let Some(contents) = contents_opt {
+        let service_opt = serde_yaml::from_str::<rovervalidate::service::Service>(&contents).ok();
+        if let Some(service) = service_opt {
+            if let Some(valid) = service.validate().ok() {
+                return valid.0.service_as;
+            }
+        }
+    }
+    return None;
+}
+
 #[macro_export]
 macro_rules! warn_generic {
     ($expr:expr, $error_type:ty) => {{
