@@ -36,8 +36,6 @@
 </script>
 
 <Navbar />
-<div class="h-[50vh]">
-	<Pipeline />
-</div>
+<Pipeline />
 
 <ErrorOverlay />

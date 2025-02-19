@@ -23,15 +23,7 @@
 <div class="h-full w-full flex justify-center items-center animate-fade-out-container">
 	<div class="flex flex-col gap-4 items-center align-center">
 		{#if config.success}
-			{#if $statusQuery.isLoading}
-				<div class="flex flex-col text-center">
-					<h1>Rover</h1>
-					<div class="flex flex-row items-center gap-2 text-zinc-400">
-						<Circle size="10" color={colors.zinc[400]} />
-						<p class="text-zinc-400">loading status</p>
-					</div>
-				</div>
-			{:else if $statusQuery.isError}
+			{#if $statusQuery.isError}
 				<div class="flex flex-col text-center">
 					<h1>Rover</h1>
 					<p class="text-error-400">unavailable ({$statusQuery.error})</p>
@@ -42,6 +34,14 @@
 						Rover {$statusQuery.data.rover_id} ({$statusQuery.data.rover_name})
 					</h1>
 					<p class="text-success-400">available (roverd {$statusQuery.data.version})</p>
+				</div>
+			{:else}
+				<div class="flex flex-col text-center">
+					<h1>Rover</h1>
+					<div class="flex flex-row items-center gap-2 text-zinc-400">
+						<Circle size="10" color={colors.zinc[400]} />
+						<p class="text-zinc-400">loading status</p>
+					</div>
 				</div>
 			{/if}
 

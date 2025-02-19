@@ -33,7 +33,7 @@
 		class="w-full h-full absolute top-0 left-0 flex justify-center items-center animate-fade-out-container text-white"
 	>
 		<!-- Background with 20% opacity -->
-		<div class="absolute inset-0 bg-orange-500 bg-opacity-20"></div>
+		<div class="absolute inset-0 bg-orange-500 bg-opacity-80"></div>
 
 		<!-- Content with full opacity -->
 		<div class="relative flex flex-col gap-2 items-center text-center">
@@ -41,7 +41,7 @@
 			<h1 class="text-xl">roverd is not operational</h1>
 			<p>
 				The roverd process reported itself as <span class="code variant-filled-error"
-					>{$statusQuery.data?.status}</span
+					>{$statusQuery.data?.status || 'unknown'}</span
 				>.<br />
 				Resolve the issue by checking the logs over SSH.
 			</p>
