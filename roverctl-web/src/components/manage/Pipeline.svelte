@@ -399,7 +399,12 @@
 			}}
 		>
 			<!-- <Background bgColor={colors.slate[900]} patternColor={colors.slate[500]} /> -->
-			<Background bgColor={'transparent'} class="bg-transparent" gap={10} />
+			<Background
+				bgColor={'transparent'}
+				class="bg-transparent"
+				patternColor={colors.slate[500]}
+				gap={20}
+			/>
 			<AutoFit />
 		</SvelteFlow>
 
@@ -453,7 +458,7 @@
 				</div>
 			</div>
 		{:else if $pipelineQuery.data.status === 'startable'}
-			<div class="w-full bg-blue-900 p-2 px-4">
+			<div class="w-full card variant-glass-primary p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
 						<div class="flex flex-row items-center gap-2">
@@ -516,9 +521,34 @@
 			</div>
 		{/if}
 	{:else if $pipelineQuery.isError}
-		<p>An error occurred {$pipelineQuery.error}</p>
+		<div class="w-full bg-orange-700 p-2 px-4">
+			<div class="flex flex-row justify-between items-center w-full">
+				<div class="flex flex-col">
+					<div class="flex flex-row items-center gap-2">
+						<p class="text-white text-xl">
+							Could not fetch pipeline status <span class="text-orange-300"
+								>{$pipelineQuery.error}</span
+							>
+						</p>
+					</div>
+				</div>
+
+				<div class="h-10"></div>
+			</div>
+		</div>
 	{:else}
-		<p>Loading</p>
+		<div class="w-full bg-gray-500 p-2 px-4">
+			<div class="flex flex-row justify-between items-center w-full">
+				<div class="flex flex-col">
+					<div class="flex flex-row items-center gap-2">
+						<Circle size="20" color={colors.gray[200]} />
+						<p class="text-white text-xl">Fetching pipeline status</p>
+					</div>
+				</div>
+
+				<div class="h-10"></div>
+			</div>
+		</div>
 	{/if}
 
 	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-7.5rem)] overflow-hidden">
@@ -526,7 +556,7 @@
 		<div class=" lg:col-span-1 overflow-y-auto flex flex-col">
 			{#if $servicesQuery.data && $servicesQuery.data.length > 0}
 				{#if enabledServices.length > 0}
-					<div class="bg-green-800 p-2 px-4">Enabled services</div>
+					<div class="bg-green-900 p-2 px-4">Enabled services</div>
 				{/if}
 				{#each enabledServices as service}
 					<button
@@ -539,7 +569,7 @@
 										? 'bg-slate-800 '
 										: 'bg-slate-700 text-slate-300'
 								}
-						
+						border-b border-slate-800
 						flex flex-row justify-between items-center text-left btn`}
 						on:click={() => (selectedService = service.fq)}
 						on:dblclick={() => addService(service)}
@@ -553,6 +583,10 @@
 								</span>
 							</p>
 						</div>
+
+						<button class="btn variant-filled-error" on:click={() => addService(service)}>
+							<PlusIcon />
+						</button>
 					</button>
 				{/each}
 
@@ -571,7 +605,7 @@
 										? 'bg-slate-800 '
 										: 'bg-slate-700 text-slate-300'
 								}
-						
+						border-b border-slate-800
 						flex flex-row justify-between items-center text-left btn`}
 						on:click={() => (selectedService = service.fq)}
 						on:dblclick={() => addService(service)}
@@ -588,16 +622,24 @@
 					</button>
 				{/each}
 			{:else if $servicesQuery.data}
-				<p>No services installed</p>
+				<div class="p-4 text-gray-300">
+					<p>There are no services installed on this Rover yet.</p>
+				</div>
 			{:else if $servicesQuery.isError}
-				<p>An error occurred {$servicesQuery.error}</p>
+				<div class="p-4 text-red-400">
+					<p>
+						Could not fetch installed services. {$servicesQuery.error}
+					</p>
+				</div>
 			{:else}
-				<p>Loading</p>
+				<div class="p-4 text-gray-300">
+					<p>There are no services installed on this Rover yet.</p>
+				</div>
 			{/if}
 		</div>
 
 		<!-- Main Content (4/5 width on large screens) -->
-		<div class="p-2 px-4 bg-slate-800 lg:col-span-4 overflow-y-auto">
+		<div class="p-2 px-4 card variant-ghost-tertiary lg:col-span-4 overflow-y-auto">
 			{#if selectedService}
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>

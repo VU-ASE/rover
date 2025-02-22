@@ -25,57 +25,60 @@
 		{#if config.success}
 			{#if $statusQuery.isError}
 				<div class="flex flex-col text-center">
-					<h1>Rover</h1>
-					<p class="text-error-400">unavailable ({$statusQuery.error})</p>
+					<p class="text-error-500">
+						Could not fetch Rover status: ({$statusQuery.error})
+					</p>
 				</div>
 			{:else if $statusQuery.data}
-				<div class="flex flex-col text-center">
-					<h1>
-						Rover {$statusQuery.data.rover_id} ({$statusQuery.data.rover_name})
+				<div class="flex flex-col items-center text-center gap-1">
+					<h1 class="text-4xl text-secondary-700">
+						Rover <span class="text-primary-500">{$statusQuery.data.rover_id}</span>
 					</h1>
-					<p class="text-success-400">available (roverd {$statusQuery.data.version})</p>
+					<h2 class="text-xl text-secondary-700 font-mono">{$statusQuery.data.rover_name}</h2>
 				</div>
 			{:else}
-				<div class="flex flex-col text-center">
-					<h1>Rover</h1>
-					<div class="flex flex-row items-center gap-2 text-zinc-400">
-						<Circle size="10" color={colors.zinc[400]} />
-						<p class="text-zinc-400">loading status</p>
+				<div class="flex flex-col items-center text-center gap-1">
+					<div class="flex flex-row items-center gap-4 text-zinc-400">
+						<h1 class="text-4xl text-secondary-700">Rover</h1>
+						<Circle size="30" color={'#0089d9'} />
 					</div>
+					<Circle size="20" color={colors.zinc[500]} />
 				</div>
 			{/if}
 
-			<a class="block card card-hover p-4 px-6 w-full" href="/manage">
-				<div class="flex flex-row gap-4 w-full pr-4 items-center">
-					<SteeringIcon class="text-2xl" />
-					<div class="flex flex-col">
-						<h1>Manage</h1>
-						<p>Configure pipelines and services</p>
-					</div>
-				</div>
-			</a>
-			{#if config.passthrough}
+			<div class="flex flex-col gap-4">
 				<a class="block card card-hover p-4 px-6 w-full" href="/manage">
 					<div class="flex flex-row gap-4 w-full pr-4 items-center">
-						<DebugIcon class="text-2xl" />
+						<SteeringIcon class="text-4xl text-primary-500" />
 						<div class="flex flex-col">
-							<h1>Tune and Debug</h1>
-							<p>Modify service behavior on the fly</p>
+							<h1 class="">Manage</h1>
+							<p class="text-secondary-800">Configure pipelines and services</p>
 						</div>
 					</div>
 				</a>
-			{:else}
-				<div class="block card variant-soft p-4 px-6 w-full">
-					<div class="flex flex-row gap-4 w-full pr-4 items-center text-zinc-500">
-						<DebugIcon class="text-2xl" />
-						<div class="flex flex-col">
-							<h1>Tune and Debug</h1>
-							<p>Modify service behavior on the fly</p>
-							<p class="text-sm text-error-300">Not available in current configuration</p>
+				{#if config.passthrough}
+					<a class="block card card-hover p-4 px-6 w-full" href="/manage">
+						<div class="flex flex-row gap-4 w-full pr-4 items-center">
+							<DebugIcon class="text-2xl" />
+							<div class="flex flex-col">
+								<h1>Tune and Debug</h1>
+								<p>Modify service behavior on the fly</p>
+							</div>
+						</div>
+					</a>
+				{:else}
+					<div class="block card variant-soft p-4 px-6 w-full">
+						<p class="text-sm text-secondary-600 mb-2">Currently unavailable</p>
+						<div class="flex flex-row gap-4 w-full pr-4 items-center text-secondary-900">
+							<DebugIcon class="text-4xl" />
+							<div class="flex flex-col">
+								<h1>Tune and Debug</h1>
+								<p>Modify service behavior on the fly</p>
+							</div>
 						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
+			</div>
 		{:else}
 			<div class="block text-error-300">
 				<div class="flex flex-row gap-4 w-full pr-4 items-start">
@@ -93,8 +96,5 @@
 				</div>
 			</div>
 		{/if}
-		<p class="text-gray-400 text-sm">
-			<strong>roverctl-web</strong> v0.0.1
-		</p>
 	</div>
 </div>

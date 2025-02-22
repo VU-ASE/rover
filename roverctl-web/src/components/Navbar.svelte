@@ -29,7 +29,7 @@
 	);
 </script>
 
-<div class="w-full flex flex-row p-2 justify-between bg-slate-700 items-center">
+<div class="w-full flex flex-row p-2 justify-between card items-center">
 	<div class="flex flex-row items-center gap-2">
 		<!-- Want to show when (re)fetching as well -->
 		{#if $statusQuery.isSuccess && $statusQuery.data && !$statusQuery.isFetching}
@@ -52,9 +52,11 @@
 
 		<!-- Want to show the (stale) name, even if the Rover is going offline -->
 		{#if $statusQuery.data}
-			<div class="flex flex-col">
-				<h1 class="text-sm">{$statusQuery.data.rover_name}</h1>
-				<p class="text-xs">Rover {$statusQuery.data.rover_id}</p>
+			<div class="flex flex-col text-secondary-600">
+				<h1 class="text-sm font-mono">{$statusQuery.data.rover_name}</h1>
+				<p class="text-xs">
+					Rover <span class="text-primary-500">{$statusQuery.data.rover_id}</span>
+				</p>
 			</div>
 		{:else if $statusQuery.isError}
 			<div class="flex flex-col">
@@ -70,7 +72,7 @@
 	</div>
 
 	<div class="flex flex-row items-center gap-2">
-		<a href="/manage" class="card variant-soft p-1 px-2 flex flex-row items-center gap-1">
+		<a href="/manage" class="card variant-ghost-primary p-1 px-2 flex flex-row items-center gap-1">
 			<SteeringIcon class="text-sm" />
 			<p class="">manage</p>
 		</a>

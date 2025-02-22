@@ -15,9 +15,7 @@
 	$$restProps;
 </script>
 
-<div
-	class="bg-slate-200 rounded-md text-slate-900 w-[200px] h-[80px] relative border border-solid border-slate-800"
->
+<div class="card variant-outline-primary w-[200px] h-[80px] relative">
 	<!-- NB: The width and height values are hardcoded and correspond to the node w/h in pipeline.svelte, required for dagre to work -->
 
 	<!-- Overlapping Source and Target Handles -->
@@ -44,7 +42,7 @@
 			<span class="whitespace-nowrap">Unmet dependencies</span>
 		</div> -->
 
-	{#if data.onDelete}
+	<!-- {#if data.onDelete}
 		<button
 			class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md"
 			on:click={() => data.onDelete && data.onDelete()}
@@ -52,21 +50,21 @@
 		>
 			<DeleteIcon />
 		</button>
-	{/if}
+	{/if} -->
 
 	<div class="flex flex-col p-2 px-4">
 		<div class="flex flex-row items-center gap-1 text-sm">
 			{#if data.fq.author.toLowerCase() === 'vu-ase'}
-				<span class="text-blue-500">
+				<span class="text-primary-500">
 					<CheckmarkIcon />
 				</span>
 			{/if}
-			<p class="text-slate-500">{data.fq.author}</p>
+			<p class="text-secondary-700">{data.fq.author}</p>
 		</div>
-		<h1 class="truncate w-full overflow-hidden whitespace-nowrap">
+		<h1 class="truncate w-full overflow-hidden whitespace-nowrap text-primary-500 font-mono">
 			{data.fq.name}
 		</h1>
-		<p class="text-xs truncate w-full overflow-hidden whitespace-nowrap">
+		<p class="text-xs truncate w-full overflow-hidden whitespace-nowra text-secondary-800">
 			{data.fq.version}
 		</p>
 	</div>

@@ -27,4 +27,8 @@
 	<QueryClientProvider client={queryClient}>
 		<slot />
 	</QueryClientProvider>
+
+	<div class="absolute bottom-0 right-0 w-[25vw] h-[30vh] pr-10 z-[-1] opacity-10 flex items-end">
+		<img src="/rover-top.svg" alt="ASE/Rover top view as background pattern" class="w-full" />
+	</div>
 </AppShell>
