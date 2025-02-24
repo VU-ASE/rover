@@ -268,11 +268,7 @@ const createGlobalStore = () => {
 				// If there is a tuning override in the current state that has the same name but a mismatching type, remove it
 				const tuningOverrides = oldState.tuningOverrides.filter((override) => {
 					const tuningParam = tuning.dynamicParameters.find((param) => {
-						return (
-							param.float?.key === override.key ||
-							param.int?.key === override.key ||
-							param.string?.key === override.key
-						);
+						return param.number?.key === override.key || param.string?.key === override.key;
 					});
 
 					// If there is no match, the tuning override should be removed anyway
@@ -281,9 +277,9 @@ const createGlobalStore = () => {
 					}
 
 					// If there is a match, check if the types match
-					if (tuningParam.float && override.type === 'float') {
+					if (tuningParam.number && override.type === 'float') {
 						return true;
-					} else if (tuningParam.int && override.type === 'integer') {
+					} else if (tuningParam.number && override.type === 'integer') {
 						return true;
 					} else if (tuningParam.string && override.type === 'string') {
 						return true;
@@ -317,7 +313,7 @@ const createGlobalStore = () => {
 
 				// Check if there is a tuning parameter with the same key
 				const tuningParam = oldState.tuning?.dynamicParameters.find((param) => {
-					return param.float?.key === key || param.int?.key === key || param.string?.key === key;
+					return param.number?.key === key || param.string?.key === key;
 				});
 
 				// We can't override a value that does not exist
@@ -335,22 +331,7 @@ const createGlobalStore = () => {
 						type: 'string',
 						value: value
 					});
-				} else if (tuningParam.int) {
-					const intValue = parseInt(value);
-					if (isNaN(intValue)) {
-						notify('error', `Tuning value '${key}' must be an integer`);
-						return oldState;
-					}
-
-					tuningOverrides = tuningOverrides.filter((override) => {
-						return override.key !== key;
-					});
-					tuningOverrides.push({
-						key: key,
-						type: 'integer',
-						value: intValue
-					});
-				} else if (tuningParam.float) {
+				} else if (tuningParam.number) {
 					const floatValue = parseFloat(value);
 					if (isNaN(floatValue)) {
 						notify('error', `Tuning value '${key}' must be a float`);

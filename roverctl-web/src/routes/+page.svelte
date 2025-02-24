@@ -57,12 +57,12 @@
 					</div>
 				</a>
 				{#if config.passthrough}
-					<a class="block card card-hover p-4 px-6 w-full" href="/manage">
+					<a class="block card card-hover p-4 px-6 w-full" href="/debug">
 						<div class="flex flex-row gap-4 w-full pr-4 items-center">
-							<DebugIcon class="text-2xl" />
+							<DebugIcon class="text-4xl text-primary-500" />
 							<div class="flex flex-col">
 								<h1>Tune and Debug</h1>
-								<p>Modify service behavior on the fly</p>
+								<p class="text-secondary-800">Modify service behavior on the fly</p>
 							</div>
 						</div>
 					</a>

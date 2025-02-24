@@ -18,15 +18,6 @@
 	import BufferSizeIndicator from './indicators/buffer.svelte';
 	import CacheSizeIndicator from './indicators/cache.svelte';
 	import DelayIndicator from './indicators/delay.svelte';
-
-	// Allow users to reauthenticate or retry connecting
-	const dispatch = createEventDispatcher();
-	function reauthenticate() {
-		dispatch('reauthenticate');
-	}
-	function retry() {
-		dispatch('connect');
-	}
 </script>
 
 <div class="flex flex-col min-h-screen w-full relative">
@@ -34,20 +25,19 @@
 	{#if $globalStore.services.size <= 0}
 		<div class="flex-1 flex items-center justify-center">
 			<div class="space-y-2 text-center animate-fade-in animate-fade-out w-full">
-				<h1>Connection established</h1>
-				<p>Waiting for incoming debugging data.</p>
-				<p class="text-sm text-gray-400">Start the transceiver service on the Rover to send data</p>
+				<h1 class="text-green-500 text-lg font-bold">Connection established</h1>
+				<p class="text-secondary-700">Waiting for incoming debugging data.</p>
 			</div>
 		</div>
 	{:else}
 		<div
-			class="animate-fade-in animate-fade-out w-full grid grid-cols-1 md:grid-cols-2 p-2 gap-x-4 gap-y-2 items-start"
+			class=" animate-fade-out w-full grid grid-cols-1 md:grid-cols-2 p-2 gap-x-4 gap-y-2 items-start"
 		>
 			<div class="flex flex-col w-full gap-y-2">
 				<Videostream />
 				<div class="w-full grid grid-cols-3 gap-x-2 gap-y-2">
 					<PlaybackIndicator />
-					<PassthroughIndicator on:connect={retry} />
+					<PassthroughIndicator />
 					<OffsetIndicator />
 					<BufferSizeIndicator />
 					<CacheSizeIndicator />
@@ -80,7 +70,6 @@
 				{:else}
 					<!-- Error Warning -->
 					<p class="text-red-500 font-bold">disconnected</p>
-					<button on:click={retry}>(reconnect)</button>
 					{#if $connectionStore.error}
 						<p class="text-gray-200 text-sm animate-fade-in">
 							{$connectionStore.error}

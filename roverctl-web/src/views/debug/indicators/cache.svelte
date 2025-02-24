@@ -10,17 +10,12 @@
 	import PauseIcon from '~icons/fluent/pause-12-filled';
 	import PlayIcon from '~icons/fluent/play-12-filled';
 	import RetryIcon from '~icons/akar-icons/arrow-cycle';
-	import { CIRCULAR_BUFFER_SIZE } from '$lib/store/circularbuffer';
 </script>
 
-<div class="card variant-soft p-2 px-4">
-	<div class="flex flex-row items-center justify-between">
-		<div>
-			<h2>Buffer size</h2>
+<div class="card variant-soft p-2 px-4 text-start">
+	<h2>Cache</h2>
 
-			<p class="text-gray-400 text-sm">
-				{CIRCULAR_BUFFER_SIZE} frames
-			</p>
-		</div>
-	</div>
+	<p class="text-gray-400 text-sm">
+		Preserve last {$globalStore.millisecondsPreserved} ms
+	</p>
 </div>

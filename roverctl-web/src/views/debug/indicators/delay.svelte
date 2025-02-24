@@ -12,14 +12,10 @@
 	import RetryIcon from '~icons/akar-icons/arrow-cycle';
 </script>
 
-<div class="card variant-soft p-2 px-4">
-	<div class="flex flex-row items-center justify-between">
-		<div>
-			<h2>Cache</h2>
+<div class="card variant-soft p-2 px-4 text-start">
+	<h2>Delay</h2>
 
-			<p class="text-gray-400 text-sm">
-				Preserve last {$globalStore.millisecondsPreserved} ms
-			</p>
-		</div>
-	</div>
+	<p class="text-gray-400 text-sm">
+		Scrubbed {$globalStore.scrubOffsetMilliseconds} ms back
+	</p>
 </div>

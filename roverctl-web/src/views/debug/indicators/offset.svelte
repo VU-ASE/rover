@@ -12,14 +12,16 @@
 	import RetryIcon from '~icons/akar-icons/arrow-cycle';
 </script>
 
-<div class="card variant-soft p-2 px-4">
-	<div class="flex flex-row items-center justify-between">
-		<div>
-			<h2>Delay</h2>
+<div class="card variant-soft p-2 px-4 text-start">
+	<h2>Time offset</h2>
 
-			<p class="text-gray-400 text-sm">
-				Scrubbed {$globalStore.scrubOffsetMilliseconds} ms back
-			</p>
-		</div>
-	</div>
+	{#if $connectionStore.isConnecting || $connectionStore.server?.connectionState === 'connecting'}
+		<p class="text-gray-400 text-sm">Not connected</p>
+	{:else if $connectionStore.server?.connectionState === 'connected'}
+		<p class="text-gray-400 text-sm">
+			{$globalStore.carOffset} ms
+		</p>
+	{:else}
+		<p class="text-gray-400 text-sm">Not connected</p>
+	{/if}
 </div>

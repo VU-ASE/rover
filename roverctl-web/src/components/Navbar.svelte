@@ -10,6 +10,8 @@
 	import { HealthApi } from '$lib/openapi';
 	import colors from 'tailwindcss/colors';
 
+	export let page: 'manage' | 'debug' = 'manage';
+
 	const statusQuery = useQuery(
 		'status',
 		async () => {
@@ -27,6 +29,10 @@
 			keepPreviousData: true
 		}
 	);
+
+	const activeClass = (p: 'manage' | 'debug') => {
+		return p === page ? 'card variant-soft-primary' : 'card variant-soft-surface';
+	};
 </script>
 
 <div class="w-full flex flex-row p-2 justify-between card items-center">
@@ -72,11 +78,11 @@
 	</div>
 
 	<div class="flex flex-row items-center gap-2">
-		<a href="/manage" class="card variant-soft-primary p-1 px-2 flex flex-row items-center gap-1">
+		<a href="/manage" class={`${activeClass('manage')} p-1 px-2 flex flex-row items-center gap-1`}>
 			<SteeringIcon class="text-sm" />
 			<p class="">manage</p>
 		</a>
-		<a href="/" class="p-1 px-2 flex flex-row items-center gap-1 text-secondary-800">
+		<a href="/debug" class={`${activeClass('debug')} p-1 px-2 flex flex-row items-center gap-1`}>
 			<DebugIcon class="text-sm" />
 			<p class="">debug</p>
 		</a>
