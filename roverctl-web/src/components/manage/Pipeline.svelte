@@ -44,6 +44,11 @@
 	import { errorToText } from '$lib/errors';
 	import InstallServiceModal from './InstallServiceModal.svelte';
 
+	import InputIcon from '~icons/ic/baseline-input';
+	import OutputIcon from '~icons/ic/baseline-output';
+	import ConfigurationIcon from '~icons/ic/baseline-settings';
+	import LogsIcon from '~icons/ic/baseline-notes';
+
 	const queryClient = useQueryClient();
 
 	// Flowchart data
@@ -151,7 +156,11 @@
 						fq: e.service.fq,
 						service: service.service,
 						process: e.process,
-						onDelete: () => removeService(service.fq)
+						onDelete: () => removeService(service.fq),
+						onSetActive: () => {
+							// Set the selected service
+							selectedService = service.fq;
+						}
 					}
 				};
 			});
@@ -696,9 +705,29 @@
 			{#if selectedService}
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>
-						<span>Details</span>
+						<div class="flex flex-row items-center text-md gap-2">
+							<InputIcon />
+							<span>Inputs</span>
+						</div>
 					</Tab>
-					<Tab bind:group={tabSet} name="tab2" value={1}>Logs</Tab>
+					<Tab bind:group={tabSet} name="tab1" value={1}>
+						<div class="flex flex-row items-center text-md gap-2">
+							<OutputIcon />
+							<span>Outputs</span>
+						</div>
+					</Tab>
+					<Tab bind:group={tabSet} name="tab1" value={2}>
+						<div class="flex flex-row items-center text-md gap-2">
+							<ConfigurationIcon />
+							<span>Configuration</span>
+						</div>
+					</Tab>
+					<Tab bind:group={tabSet} name="tab2" value={3}>
+						<div class="flex flex-row items-center text-md gap-2">
+							<LogsIcon />
+							<span>Logs</span>
+						</div>
+					</Tab>
 					<!-- <Tab bind:group={tabSet} name="tab3" value={2}>Performance</Tab> -->
 					<!-- Tab Panels --->
 					<svelte:fragment slot="panel">

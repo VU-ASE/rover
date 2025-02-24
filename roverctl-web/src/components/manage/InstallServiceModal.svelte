@@ -156,7 +156,10 @@
 		<div class="bg-surface-600 shadow-lg relative z-50 text-secondary-700 min-w-[40vw]">
 			<div class="p-6 pb-4">
 				<h2 class="text-xl mb-4 text-secondary-200">Install a Service</h2>
-				<p class="">Here is where you can add your modal content.</p>
+				<p class="">
+					There are various options to install services on your Rover. Select one that fits your
+					workflow best.
+				</p>
 			</div>
 			<Accordion autocollapse>
 				<AccordionItem padding="px-6 py-2">

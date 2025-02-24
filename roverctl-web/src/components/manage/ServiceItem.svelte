@@ -18,6 +18,9 @@
 	export let fq: FullyQualifiedService;
 	export let process: PipelineGet200ResponseEnabledInnerProcess | undefined;
 
+	let showOnlyLastRun = true;
+	$: showOnlyLastRun;
+
 	const logsQuery = useQuery(
 		['logs', fq],
 		async () => {
@@ -80,77 +83,101 @@
 </script>
 
 <div class="px-4">
-	{#if tabSet === 0}
+	{#if tabSet < 3}
 		{#if $serviceQuery.data}
-			<div class="flex flex-col gap-2">
-				{#if fq.author.toLowerCase() === 'vu-ase'}
-					<div class=" text-blue-500 border-l-4 border-blue-500 pl-2">
-						<p>
-							This service is developed by the VU-ASE team. <br />You can find its source code
-							<a
-								class="text-blue-300"
-								href={`
-                                    https://github.com/vu-ase/${fq.name}
-                                `}>here</a
-							>.
-						</p>
-					</div>
-				{/if}
-				<div class="grid grid-cols-2 gap-4">
-					<div>
-						<h1>Inputs</h1>
-						{#if $serviceQuery.data.inputs.length === 0}
-							<p class="text-gray-500">This service does not depend on any inputs</p>
-						{:else}
-							{#each $serviceQuery.data.inputs as input}
-								<p class="pl-2 font-mono">
-									- {input.service}
+			{#if tabSet === 0}
+				{#if $serviceQuery.data.inputs.length === 0}
+					<p class="text-secondary-700">This service does not depend on any other services.</p>
+				{:else}
+					<div class="flex flex-col gap-2">
+						{#each $serviceQuery.data.inputs as input}
+							<div class="flex flex-col gap-1">
+								<p class=" text-secondary-400">
+									Depends on data from service <span class="font-mono text-success-400">
+										{input.service}
+									</span>
 								</p>
 
 								{#each input.streams as stream}
-									<p class="pl-8 font-mono">- {stream}</p>
+									<p class="pl-8 text-secondary-400">
+										-> This service should expose the <span class="font-mono text-success-400">
+											{stream}</span
+										> output
+									</p>
 								{/each}
-							{/each}
-						{/if}
-					</div>
-					<div>
-						<h1>Outputs</h1>
-						{#if $serviceQuery.data.outputs.length === 0}
-							<p class="text-gray-500">This service does not produce any outputs</p>
-						{:else}
-							{#each $serviceQuery.data.outputs as output}
-								<p class="pl-2 font-mono">
-									- {output}
-								</p>
-							{/each}
-						{/if}
-					</div>
-				</div>
-				{#if fq.as}
-					<div>
-						<h1>Impersonation</h1>
-						<p>
-							This service impersonates the <span class="font-mono">{fq.as || 'controller'}</span> service
-						</p>
-					</div>
-				{/if}
-
-				{#if $serviceQuery.data.configuration.length > 0}
-					<div>
-						<h1>Configurable options</h1>
-						<p>
-							The following options can be modified through <span class="font-mono"
-								>service.yaml</span
-							>
-						</p>
-						{#each $serviceQuery.data.configuration as config}
-							<p class="pl-2 font-mono">
-								- {config.name}
-							</p>
+							</div>
 						{/each}
 					</div>
 				{/if}
-			</div>
+			{:else if tabSet === 1}
+				{#if $serviceQuery.data.outputs.length === 0}
+					<p class="text-secondary-700">This service does not produce data for other services.</p>
+				{:else}
+					<div class="flex flex-col gap-2">
+						{#each $serviceQuery.data.outputs as output}
+							<div class="flex flex-col gap-1">
+								<p class=" text-secondary-400">
+									Exposes the <span class="font-mono text-pink-400">
+										{output}
+									</span> stream
+								</p>
+								<p class="text-sm text-secondary-800">
+									Add the following code to your service.yaml to read from this stream:
+								</p>
+								<div class="code variant-ghost-secondary p-2 px-4 mt-1">
+									<p class="text-secondary-200">
+										inputs:<br />
+										&nbsp;&nbsp;- service: {fq.name}<br />
+										&nbsp;&nbsp;&nbsp;&nbsp;streams:<br />
+										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- {output}<br />
+									</p>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{:else if tabSet === 2}
+				{#if $serviceQuery.data.configuration.length === 0}
+					<p class="text-secondary-700">This service does not expose any configurable options.</p>
+				{:else}
+					<div class="flex flex-col gap-2">
+						<!-- Responsive Container (recommended) -->
+						<div class="table-container">
+							<!-- Native Table Element -->
+							<table class="table table-hover">
+								<tbody>
+									{#each $serviceQuery.data.configuration as config}
+										<tr>
+											<td class="font-mono text-secondary-600 whitespace-nowrap">
+												{config.name}
+											</td>
+											<td>
+												{#if config.type === 'number'}
+													<span class="badge variant-ghost-tertiary">number</span>
+												{:else if config.type === 'string'}
+													<span class="badge variant-ghost-warning">string</span>
+												{:else}
+													<span class="badge variant-ghost-secondary">unknown</span>
+												{/if}
+											</td>
+											<td>
+												{#if config.tunable}
+													<span class="badge variant-glass-success">tunable</span>
+												{:else}
+													<span class="badge variant-glass-secondary">not tunable</span>
+												{/if}
+											</td>
+											<td>
+												{config.value}
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				{/if}
+			{/if}
 		{:else if $serviceQuery.isError}
 			<div class=" text-red-500 font-mono whitespace-pre-line">
 				{errorToText($serviceQuery.error)}
@@ -161,10 +188,38 @@
 				<p class="text-gray-500">Loading...</p>
 			</div>
 		{/if}
-	{:else if tabSet === 1}
+	{:else if tabSet >= 3}
 		{#if $logsQuery.data}
+			{#if !showOnlyLastRun}
+				<div class="flex flex-row gap-2 items-center mb-2 text-secondary-700">
+					<p>These are the logs from all previous runs.</p>
+					<button
+						class="text-primary-500"
+						on:click={() => {
+							showOnlyLastRun = true;
+						}}>Show only last run</button
+					>
+				</div>
+			{:else}
+				<div class="flex flex-row gap-2 items-center mb-2 text-secondary-700">
+					<p>These are the logs from last run.</p>
+					<button
+						class="text-primary-500"
+						on:click={() => {
+							showOnlyLastRun = false;
+						}}>Show all logs</button
+					>
+				</div>
+			{/if}
 			<div class=" text-gray-100 font-mono h-full text-sm overflow-y-auto mb-2">
-				{#each $logsQuery.data as log}
+				{#each $logsQuery.data.filter((line, index) => {
+					if (showOnlyLastRun) {
+						// Find the last line that includes "roverd spawned"
+						const findIndex = $logsQuery.data.findLastIndex( (line) => line.includes('roverd spawned') );
+						return index >= findIndex;
+					}
+					return true;
+				}) as log}
 					<p>{@html highlight(log)}</p>
 				{/each}
 			</div>

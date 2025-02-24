@@ -13,6 +13,7 @@ type PipelineNodeData = {
 	process?: PipelineGet200ResponseEnabledInnerProcess;
 	// Functions to manage state in pipeline
 	onDelete?: () => void;
+	onSetActive?: () => void;
 };
 
 type PipelineNode = Node<PipelineNodeData>;

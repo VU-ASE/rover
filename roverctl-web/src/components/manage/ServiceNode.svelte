@@ -16,7 +16,10 @@
 	$$restProps;
 </script>
 
-<div class="card variant-outline-primary w-[200px] h-[80px] relative">
+<button
+	class="card variant-outline-primary w-[200px] h-[80px] relative text-start"
+	on:click={data.onSetActive}
+>
 	<!-- NB: The width and height values are hardcoded and correspond to the node w/h in pipeline.svelte, required for dagre to work -->
 
 	<!-- Overlapping Source and Target Handles -->
@@ -69,4 +72,4 @@
 			{data.fq.version}
 		</p>
 	</div>
-</div>
+</button>
