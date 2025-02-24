@@ -8,6 +8,8 @@
 	import WifiOffIcon from '~icons/material-symbols/wifi-off';
 	import StartIcon from '~icons/ic/round-play-circle';
 	import StopIcon from '~icons/ic/round-stop-circle';
+	import CheckIcon from '~icons/ic/sharp-check';
+	import RemoveIcon from '~icons/ic/sharp-remove';
 
 	import { useStore } from '@xyflow/svelte';
 	import type { Edge, Node } from '@xyflow/svelte';
@@ -363,18 +365,6 @@
 
 	// Filter services from the service query if available
 
-	let enabledServices: PipelineNodeData[] = [];
-	$: enabledServices =
-		$servicesQuery.data && $nodes
-			? $servicesQuery.data.filter((s) => $nodes.some((n) => n.data.fq.name === s.fq.name))
-			: [];
-
-	let availableServices: PipelineNodeData[] = [];
-	$: availableServices =
-		$servicesQuery.data && $nodes
-			? $servicesQuery.data.filter((s) => !$nodes.some((n) => n.data.fq.name === s.fq.name))
-			: [];
-
 	let tabSet: number = 0;
 
 	let pipelineStarting = false;
@@ -411,8 +401,8 @@
 		<!-- Loading Overlay -->
 		{#if $nodesQuery.isLoading}
 			<div class="absolute inset-0 flex justify-center items-center">
-				<div class="absolute inset-0 bg-gray-200 bg-opacity-20"></div>
-				<div class="flex flex-row items-center gap-2 text-zinc-400">
+				<div class="absolute inset-0 bg-secondary-700 bg-opacity-20"></div>
+				<div class="flex flex-row items-center gap-2 text-secondary-200">
 					<Circle size="20" color={colors.zinc[400]} />
 					<p>fetching pipeline</p>
 				</div>
@@ -458,12 +448,12 @@
 				</div>
 			</div>
 		{:else if $pipelineQuery.data.status === 'startable'}
-			<div class="w-full card variant-glass-primary p-2 px-4">
+			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
 						<div class="flex flex-row items-center gap-2">
 							<p class="text-white text-xl">
-								Pipeline is <span class="text-blue-300">startable</span>
+								Pipeline is <span class="text-blue-400">startable</span>
 							</p>
 						</div>
 					</div>
@@ -551,14 +541,11 @@
 		</div>
 	{/if}
 
-	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-7.5rem)] overflow-hidden">
+	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-8.5rem)] overflow-hidden gap-4 mt-4">
 		<!-- Sidebar (1/5 width on large screens) -->
-		<div class=" lg:col-span-1 overflow-y-auto flex flex-col">
+		<div class="card lg:col-span-1 overflow-y-auto flex flex-col">
 			{#if $servicesQuery.data && $servicesQuery.data.length > 0}
-				{#if enabledServices.length > 0}
-					<div class="bg-green-900 p-2 px-4">Enabled services</div>
-				{/if}
-				{#each enabledServices as service}
+				{#each $servicesQuery.data as service}
 					<button
 						class={`p-2 px-4 
 								${
@@ -566,55 +553,65 @@
 									selectedService.name === service.fq.name &&
 									selectedService.author === service.fq.author &&
 									selectedService.version === service.fq.version
-										? 'bg-slate-800 '
-										: 'bg-slate-700 text-slate-300'
+										? 'card variant-soft-primary'
+										: ''
 								}
-						border-b border-slate-800
-						flex flex-row justify-between items-center text-left btn`}
+
+						flex flex-row w-full gap-2 items-center text-left btn`}
 						on:click={() => (selectedService = service.fq)}
-						on:dblclick={() => addService(service)}
 					>
-						<div class="flex flex-col">
-							<h1 class="text-sm text-slate-300">{service.fq.author}</h1>
+						<!-- <input
+							type="checkbox"
+							class="bg-transparent w-4 h-4 appearance-none checked:bg-primary-800 text-primary-700"
+							checked={!!$nodes.find(
+								(n) =>
+									n.data.fq.name === service.fq.name &&
+									n.data.fq.author === service.fq.author &&
+									n.data.fq.version === service.fq.version
+							)}
+							on:click={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+
+								if (
+									$nodes.some(
+										(n) =>
+											n.data.fq.name === service.fq.name &&
+											n.data.fq.author === service.fq.author &&
+											n.data.fq.version === service.fq.version
+									)
+								) {
+									removeService(service.fq);
+								} else {
+									addService(service);
+								}
+							}}
+							on:dblclick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+							}}
+						/> -->
+
+						{#if $nodes.some((node) => node.data.fq.name === service.fq.name && node.data.fq.author === service.fq.author && node.data.fq.version === service.fq.version)}
+							<button
+								class="w-6 h-6 card variant-outline-primary text-primary-400"
+								on:click={() => removeService(service.fq)}
+							>
+								<CheckIcon />
+							</button>
+						{:else}
+							<button
+								on:click={() => addService(service)}
+								class="w-6 h-6 card variant-outline-tertiary text-primary-400"
+							>
+							</button>
+						{/if}
+
+						<div class="flex flex-col w-full">
+							<h1 class="text-sm text-secondary-700">{service.fq.author}</h1>
 							<p class="text-md">
 								{service.fq.name}
-								<span class="text-slate-500">
-									{service.fq.version}
-								</span>
-							</p>
-						</div>
-
-						<button class="btn variant-filled-error" on:click={() => addService(service)}>
-							<PlusIcon />
-						</button>
-					</button>
-				{/each}
-
-				{#if availableServices.length > 0}
-					<div class="bg-cyan-900 p-2 px-4">Available services</div>
-				{/if}
-				<!-- todo: this could be DRYed out, because the component is the same as for installed services -->
-				{#each availableServices as service}
-					<button
-						class={`p-2 px-4 
-								${
-									selectedService &&
-									selectedService.name === service.fq.name &&
-									selectedService.author === service.fq.author &&
-									selectedService.version === service.fq.version
-										? 'bg-slate-800 '
-										: 'bg-slate-700 text-slate-300'
-								}
-						border-b border-slate-800
-						flex flex-row justify-between items-center text-left btn`}
-						on:click={() => (selectedService = service.fq)}
-						on:dblclick={() => addService(service)}
-					>
-						<div class="flex flex-col">
-							<h1 class="text-sm text-slate-300">{service.fq.author}</h1>
-							<p class="text-md">
-								{service.fq.name}
-								<span class="text-slate-500">
+								<span class="text-secondary-800">
 									{service.fq.version}
 								</span>
 							</p>
@@ -633,13 +630,13 @@
 				</div>
 			{:else}
 				<div class="p-4 text-gray-300">
-					<p>There are no services installed on this Rover yet.</p>
+					<p>Fetching installed services</p>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Main Content (4/5 width on large screens) -->
-		<div class="p-2 px-4 card variant-ghost-tertiary lg:col-span-4 overflow-y-auto">
+		<div class="p-2 px-4 card variant-ghost lg:col-span-4 overflow-y-auto">
 			{#if selectedService}
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>

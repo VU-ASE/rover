@@ -5,6 +5,7 @@
 	import DeleteIcon from '~icons/ic/baseline-delete';
 
 	import CheckmarkIcon from '~icons/heroicons/check-badge-20-solid';
+	import RemoveIcon from '~icons/ic/sharp-remove';
 	import type { PipelineNode, PipelineNodeData } from './type';
 	import { createEventDispatcher } from 'svelte';
 
@@ -42,15 +43,15 @@
 			<span class="whitespace-nowrap">Unmet dependencies</span>
 		</div> -->
 
-	<!-- {#if data.onDelete}
+	{#if data.onDelete}
 		<button
-			class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md"
+			class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 p-1 bg-red-500 hover:bg-red-600 text-red-200 flex items-center justify-center shadow-md"
 			on:click={() => data.onDelete && data.onDelete()}
 			title="Delete Node"
 		>
-			<DeleteIcon />
+			<RemoveIcon />
 		</button>
-	{/if} -->
+	{/if}
 
 	<div class="flex flex-col p-2 px-4">
 		<div class="flex flex-row items-center gap-1 text-sm">

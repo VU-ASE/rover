@@ -72,11 +72,11 @@
 	</div>
 
 	<div class="flex flex-row items-center gap-2">
-		<a href="/manage" class="card variant-ghost-primary p-1 px-2 flex flex-row items-center gap-1">
+		<a href="/manage" class="card variant-soft-primary p-1 px-2 flex flex-row items-center gap-1">
 			<SteeringIcon class="text-sm" />
 			<p class="">manage</p>
 		</a>
-		<a href="/" class="p-1 px-2 flex flex-row items-center gap-1">
+		<a href="/" class="p-1 px-2 flex flex-row items-center gap-1 text-secondary-800">
 			<DebugIcon class="text-sm" />
 			<p class="">debug</p>
 		</a>
