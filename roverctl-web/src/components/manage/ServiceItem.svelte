@@ -12,6 +12,7 @@
 	import stripAnsi from 'strip-ansi';
 	import { Circle } from 'svelte-loading-spinners';
 	import colors from 'tailwindcss/colors';
+	import { errorToText } from '$lib/errors';
 
 	export let tabSet: number;
 	export let fq: FullyQualifiedService;
@@ -151,7 +152,9 @@
 				{/if}
 			</div>
 		{:else if $serviceQuery.isError}
-			<p class="text-red-500">{$serviceQuery.error}</p>
+			<div class=" text-red-500 font-mono whitespace-pre-line">
+				{errorToText($serviceQuery.error)}
+			</div>
 		{:else if $serviceQuery.isLoading}
 			<div class="flex flex-row items-center gap-2">
 				<Circle color={colors.gray[500]} size="20" />
@@ -166,7 +169,9 @@
 				{/each}
 			</div>
 		{:else if $logsQuery.isError}
-			<p class="text-red-500">{$logsQuery.error}</p>
+			<div class=" text-red-500 font-mono whitespace-pre-line">
+				{errorToText($logsQuery.error)}
+			</div>
 		{:else if $logsQuery.isLoading}
 			<div class="flex flex-row items-center gap-2">
 				<Circle color={colors.gray[500]} size="20" />

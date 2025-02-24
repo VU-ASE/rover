@@ -2,7 +2,6 @@
 	import SteeringIcon from '~icons/ix/steering';
 	import DebugIcon from '~icons/ix/chart-curve-spline';
 	import WarningIcon from '~icons/ix/warning-filled';
-	import PlusIcon from '~icons/icons8/plus';
 
 	import WifiIcon from '~icons/material-symbols/wifi';
 	import WifiOffIcon from '~icons/material-symbols/wifi-off';
@@ -10,6 +9,7 @@
 	import StopIcon from '~icons/ic/round-stop-circle';
 	import CheckIcon from '~icons/ic/sharp-check';
 	import RemoveIcon from '~icons/ic/sharp-remove';
+	import PlusIcon from '~icons/subway/add-1';
 
 	import { useStore } from '@xyflow/svelte';
 	import type { Edge, Node } from '@xyflow/svelte';
@@ -40,6 +40,9 @@
 	import AutoFit from './AutoFit.svelte';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
 	import ServiceItem from './ServiceItem.svelte';
+	import { AxiosError } from 'axios';
+	import { errorToText } from '$lib/errors';
+	import InstallServiceModal from './InstallServiceModal.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -190,6 +193,8 @@
 	};
 
 	const addService = (service: PipelineNodeData) => {
+		$stopPipeline.mutate();
+
 		// Check if service is already present
 		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
 			return;
@@ -220,6 +225,8 @@
 	};
 
 	const removeService = (fq: FullyQualifiedService) => {
+		$stopPipeline.mutate();
+
 		// Check if service is already present
 		if (!$nodes.some((n) => n.data.fq.name === fq.name)) {
 			return;
@@ -254,11 +261,11 @@
 			return pipeline.data;
 		},
 		{
-			staleTime: 1 // needs to be fresh
+			keepPreviousData: false
 		}
 	);
 
-	// Whether the "add service" modal is open
+	// Whether the "install service" modal is open
 	$: serviceModalOpen = false;
 
 	let selectedService: FullyQualifiedService | null = null;
@@ -305,19 +312,30 @@
 	 * Sequential actions for starting the actual pipeline
 	 */
 
-	const stopPipeline = useMutation('stopPipeline', async () => {
-		if (!config.success) {
-			throw new Error('Configuration could not be loaded');
-		}
+	const stopPipeline = useMutation(
+		'stopPipeline',
+		async () => {
+			if (!config.success) {
+				throw new Error('Configuration could not be loaded');
+			}
 
-		const papi = new PipelineApi(config.roverd.api);
-		// Best-effort based, ignore errors (i.e. if already stopped)
-		try {
-			const response = await papi.pipelineStopPost();
-			return response.data;
-		} catch {}
-		queryClient.invalidateQueries('pipeline');
-	});
+			const papi = new PipelineApi(config.roverd.api);
+			// Best-effort based, ignore errors (i.e. if already stopped)
+			try {
+				const response = await papi.pipelineStopPost();
+				return response.data;
+			} catch {}
+		},
+		{
+			// Invalidate the pipeline query regardless of mutation success or failure
+			onSettled: () => {
+				queryClient.invalidateQueries('pipeline');
+				$startPipeline.reset();
+				$buildService.reset();
+				$savePipeline.reset();
+			}
+		}
+	);
 
 	const buildService = useMutation('buildService', async (fq: FullyQualifiedService) => {
 		if (!config.success) {
@@ -343,19 +361,32 @@
 		return response.data;
 	});
 
-	const startPipeline = useMutation('startPipeline', async () => {
-		if (!config.success) {
-			throw new Error('Configuration could not be loaded');
-		}
+	const startPipeline = useMutation(
+		'startPipeline',
+		async () => {
+			if (!config.success) {
+				throw new Error('Configuration could not be loaded');
+			}
 
-		const papi = new PipelineApi(config.roverd.api);
-		const response = await papi.pipelineStartPost();
-		queryClient.invalidateQueries('pipeline');
-		return response.data;
-	});
+			const papi = new PipelineApi(config.roverd.api);
+			const response = await papi.pipelineStartPost();
+			return response.data;
+		},
+		{
+			// Invalidate the pipeline query regardless of mutation success or failure
+			onSettled: () => {
+				queryClient.invalidateQueries('pipeline');
+			}
+		}
+	);
 
 	const startConfiguredPipeline = async () => {
 		const services = $nodes;
+		$stopPipeline.reset();
+		$buildService.reset();
+		$savePipeline.reset();
+		$startPipeline.reset();
+		selectedService = null;
 
 		await $stopPipeline.mutateAsync();
 		await Promise.all(services.map((n) => $buildService.mutateAsync(n.data.fq)));
@@ -423,13 +454,16 @@
 <div class="w-full px-4">
 	{#if $pipelineQuery.data}
 		{#if $pipelineQuery.data.status === 'started'}
-			<div class="w-full bg-green-700 p-2 px-4">
+			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
 						<div class="flex flex-row items-center gap-2">
-							<DoubleBounce size="20" color={colors.green[200]} />
+							<DoubleBounce size="15" color={colors.green[400]} />
 							<p class="text-white text-xl">
-								Pipeline is <span class="text-green-300">running</span>
+								Pipeline is <span class="text-green-500">running</span>
+								{#if $stopPipeline.isLoading}
+									, stopping...
+								{/if}
 							</p>
 						</div>
 					</div>
@@ -438,16 +472,40 @@
 						<button
 							on:click={() => $stopPipeline.mutate()}
 							type="button"
-							class="btn variant-filled"
+							class="btn text-orange-500"
 							disabled={$stopPipeline.isLoading}
 						>
 							<StopIcon />
-							<span>Stop</span>
+							<span>Stop execution</span>
 						</button>
 					</div>
 				</div>
 			</div>
-		{:else if $pipelineQuery.data.status === 'startable'}
+		{:else if $nodes.length === 0}
+			<div class="w-full card p-2 px-4">
+				<div class="flex flex-row justify-between items-center w-full">
+					<div class="flex flex-col">
+						<div class="flex flex-row items-center gap-2">
+							<p class="text-white text-xl">
+								Pipeline is <span class="text-secondary-700">empty</span>
+							</p>
+						</div>
+					</div>
+
+					<div class="flex flex-col">
+						<button
+							on:click={startConfiguredPipeline}
+							type="button"
+							class="btn text-primary-500"
+							disabled
+						>
+							<StartIcon />
+							<span>Start execution</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		{:else if $pipelineQuery.data.status === 'startable' || ($pipelineQuery.data.status === 'empty' && $nodes.length > 0)}
 			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
@@ -462,92 +520,103 @@
 						<button
 							on:click={startConfiguredPipeline}
 							type="button"
-							class="btn variant-filled"
+							class="btn text-primary-500"
 							disabled={pipelineStarting}
 						>
 							<StartIcon />
-							<span>Start</span>
-						</button>
-					</div>
-				</div>
-			</div>
-		{:else if $pipelineQuery.data.status === 'empty'}
-			<div class="w-full bg-gray-700 p-2 px-4">
-				<div class="flex flex-row justify-between items-center w-full">
-					<div class="flex flex-col">
-						<div class="flex flex-row items-center gap-2">
-							<p class="text-white text-xl">
-								Pipeline is <span class="text-gray-300">empty</span>
-							</p>
-						</div>
-					</div>
-
-					<div class="flex flex-col">
-						<button type="button" class="btn variant-filled">
-							<StopIcon />
-							<span>Stop</span>
+							<span>Start execution</span>
 						</button>
 					</div>
 				</div>
 			</div>
 		{:else}
-			<div class="w-full bg-orange-700 p-2 px-4">
+			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
 						<div class="flex flex-row items-center gap-2">
+							<DoubleBounce size="15" color={colors.green[400]} />
 							<p class="text-white text-xl">
-								Pipeline status is <span class="text-orange-300">unknown</span>
+								Pipeline is <span class="text-orange-500">running</span>
+								{#if $stopPipeline.isLoading}
+									, stopping...
+								{/if}
 							</p>
 						</div>
 					</div>
 
 					<div class="flex flex-col">
-						<button type="button" class="btn variant-filled">
+						<button
+							on:click={() => $stopPipeline.mutate()}
+							type="button"
+							class="btn text-orange-500"
+							disabled={$stopPipeline.isLoading}
+						>
 							<StopIcon />
-							<span>Stop</span>
+							<span>Stop execution</span>
 						</button>
 					</div>
 				</div>
 			</div>
 		{/if}
 	{:else if $pipelineQuery.isError}
-		<div class="w-full bg-orange-700 p-2 px-4">
+		<div class="w-full card p-2 px-4">
 			<div class="flex flex-row justify-between items-center w-full">
 				<div class="flex flex-col">
 					<div class="flex flex-row items-center gap-2">
 						<p class="text-white text-xl">
-							Could not fetch pipeline status <span class="text-orange-300"
-								>{$pipelineQuery.error}</span
-							>
+							<span class="text-error-500">Error</span> fetching pipeline
 						</p>
 					</div>
 				</div>
 
-				<div class="h-10"></div>
+				<div class="flex flex-col">
+					<button
+						on:click={startConfiguredPipeline}
+						type="button"
+						class="btn text-primary-500"
+						disabled
+					>
+						<StartIcon />
+						<span>Start execution</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	{:else}
-		<div class="w-full bg-gray-500 p-2 px-4">
+		<div class="w-full card p-2 px-4">
 			<div class="flex flex-row justify-between items-center w-full">
 				<div class="flex flex-col">
 					<div class="flex flex-row items-center gap-2">
 						<Circle size="20" color={colors.gray[200]} />
-						<p class="text-white text-xl">Fetching pipeline status</p>
+						<p class="text-white text-xl">
+							<span class="text-secondary-700">fetching</span> pipeline status
+						</p>
 					</div>
 				</div>
 
-				<div class="h-10"></div>
+				<div class="flex flex-col">
+					<button
+						on:click={startConfiguredPipeline}
+						type="button"
+						class="btn text-primary-500"
+						disabled
+					>
+						<StartIcon />
+						<span>Start execution</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	{/if}
 
 	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-8.5rem)] overflow-hidden gap-4 mt-4">
 		<!-- Sidebar (1/5 width on large screens) -->
-		<div class="card lg:col-span-1 overflow-y-auto flex flex-col">
-			{#if $servicesQuery.data && $servicesQuery.data.length > 0}
-				{#each $servicesQuery.data as service}
-					<button
-						class={`p-2 px-4 
+		<div class="flex flex-col h-full gap-4">
+			<div class="card lg:col-span-1 overflow-y-auto flex flex-col h-full">
+				{#if $servicesQuery.data && $servicesQuery.data.length > 0}
+					{#each $servicesQuery.data as service}
+						<button
+							class={`p-2 px-4 
 								${
 									selectedService &&
 									selectedService.name === service.fq.name &&
@@ -558,85 +627,72 @@
 								}
 
 						flex flex-row w-full gap-2 items-center text-left btn`}
-						on:click={() => (selectedService = service.fq)}
+							on:click={() => (selectedService = service.fq)}
+						>
+							{#if $nodes.some((node) => node.data.fq.name === service.fq.name && node.data.fq.author === service.fq.author && node.data.fq.version === service.fq.version)}
+								<button
+									class="w-6 h-6 card variant-outline-primary text-primary-400"
+									on:click={() => removeService(service.fq)}
+								>
+									<CheckIcon />
+								</button>
+							{:else}
+								<button
+									on:click={() => addService(service)}
+									class="w-6 h-6 card variant-outline-tertiary text-primary-400"
+								>
+								</button>
+							{/if}
+
+							<div class="flex flex-col w-full">
+								<h1 class="text-sm text-secondary-700">{service.fq.author}</h1>
+								<p class="text-md">
+									{service.fq.name}
+									<span class="text-secondary-800">
+										{service.fq.version}
+									</span>
+								</p>
+							</div>
+						</button>
+					{/each}
+				{:else if $servicesQuery.data}
+					<div
+						class="flex w-full h-full items-center justify-center text-center text-secondary-600 p-4"
 					>
-						<!-- <input
-							type="checkbox"
-							class="bg-transparent w-4 h-4 appearance-none checked:bg-primary-800 text-primary-700"
-							checked={!!$nodes.find(
-								(n) =>
-									n.data.fq.name === service.fq.name &&
-									n.data.fq.author === service.fq.author &&
-									n.data.fq.version === service.fq.version
-							)}
-							on:click={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-
-								if (
-									$nodes.some(
-										(n) =>
-											n.data.fq.name === service.fq.name &&
-											n.data.fq.author === service.fq.author &&
-											n.data.fq.version === service.fq.version
-									)
-								) {
-									removeService(service.fq);
-								} else {
-									addService(service);
-								}
-							}}
-							on:dblclick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-							}}
-						/> -->
-
-						{#if $nodes.some((node) => node.data.fq.name === service.fq.name && node.data.fq.author === service.fq.author && node.data.fq.version === service.fq.version)}
-							<button
-								class="w-6 h-6 card variant-outline-primary text-primary-400"
-								on:click={() => removeService(service.fq)}
-							>
-								<CheckIcon />
-							</button>
-						{:else}
-							<button
-								on:click={() => addService(service)}
-								class="w-6 h-6 card variant-outline-tertiary text-primary-400"
-							>
-							</button>
-						{/if}
-
-						<div class="flex flex-col w-full">
-							<h1 class="text-sm text-secondary-700">{service.fq.author}</h1>
-							<p class="text-md">
-								{service.fq.name}
-								<span class="text-secondary-800">
-									{service.fq.version}
-								</span>
-							</p>
+						<div class="flex flex-row items-center gap-2">
+							<p>There are no services installed yet!</p>
 						</div>
-					</button>
-				{/each}
-			{:else if $servicesQuery.data}
-				<div class="p-4 text-gray-300">
-					<p>There are no services installed on this Rover yet.</p>
-				</div>
-			{:else if $servicesQuery.isError}
-				<div class="p-4 text-red-400">
-					<p>
-						Could not fetch installed services. {$servicesQuery.error}
-					</p>
-				</div>
-			{:else}
-				<div class="p-4 text-gray-300">
-					<p>Fetching installed services</p>
-				</div>
-			{/if}
+					</div>
+				{:else if $servicesQuery.isError}
+					<div class="p-4 text-red-400">
+						<p>Could not fetch installed services</p>
+						<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+							{errorToText($servicesQuery.error)}
+						</div>
+					</div>
+				{:else}
+					<div
+						class="flex w-full h-full items-center justify-center text-center text-secondary-600"
+					>
+						<div class="flex flex-row items-center gap-2">
+							<Circle size="10" color={colors.gray[200]} />
+							<p>Fetching installed services</p>
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			<button
+				class="w-full btn variant-ghost-primary text-primary-400 flex flex-row gap-0 items-center"
+				on:click={() => (serviceModalOpen = true)}
+			>
+				<p>Install a service</p>
+				<span class="text-xs"><PlusIcon /></span>
+			</button>
 		</div>
 
 		<!-- Main Content (4/5 width on large screens) -->
-		<div class="p-2 px-4 card variant-ghost lg:col-span-4 overflow-y-auto">
+		<div class=" card variant-ghost lg:col-span-4 overflow-y-auto">
 			{#if selectedService}
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>
@@ -664,94 +720,68 @@
 			{:else}
 				<div class="flex flex-col p-4">
 					{#if $stopPipeline.isSuccess}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-green-500"></div>
-							<p class="text-green-500">Stopped pipeline</p>
+						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
+							Stopped running pipeline
 						</div>
 					{:else if $stopPipeline.isError}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-red-500"></div>
-							<p class="text-red-500">Could not stop pipeline. {$stopPipeline.error}</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
+							Could not stop previous pipeline:
+							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+								{errorToText($stopPipeline.error)}
+							</div>
 						</div>
 					{:else if $stopPipeline.isLoading}
-						<div class="flex flex-row gap-2 items-center">
-							<Circle size="20" color={colors.gray[500]} />
-							<p class="text-gray-500">Stopping pipeline...</p>
-						</div>
-					{:else}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-gray-500"></div>
-							<p class="text-gray-500">Pipeline is stopped</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
+							Stopping pipeline...
 						</div>
 					{/if}
 
 					{#if $buildService.isSuccess}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-green-500"></div>
-							<p class="text-green-500">
-								Built service {$buildService.variables?.name}
-							</p>
+						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
+							Built all services
 						</div>
 					{:else if $buildService.isError}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-red-500"></div>
-							<p class="text-red-500">
-								Could not build service {$buildService.variables?.name}. {$buildService.error}
-							</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
+							Could not build service {$buildService.variables?.name}:
+							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+								{errorToText($buildService.error)}
+							</div>
 						</div>
 					{:else if $buildService.isLoading}
-						<div class="flex flex-row gap-2 items-center">
-							<Circle size="20" color={colors.gray[500]} />
-							<p class="text-gray-500">Building service {$buildService.variables?.name}...</p>
-						</div>
-					{:else}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-gray-500"></div>
-							<p class="text-gray-500">No service built</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
+							Building service {$buildService.variables?.name}...
 						</div>
 					{/if}
 
 					{#if $savePipeline.isSuccess}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-green-500"></div>
-							<p class="text-green-500">Saved pipeline</p>
-						</div>
+						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">Saved pipeline</div>
 					{:else if $savePipeline.isError}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-red-500"></div>
-							<p class="text-red-500">Could not save pipeline. {$savePipeline.error}</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
+							Could not save pipeline
+							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+								{errorToText($savePipeline.error)}
+							</div>
 						</div>
 					{:else if $savePipeline.isLoading}
-						<div class="flex flex-row gap-2 items-center">
-							<Circle size="20" color={colors.gray[500]} />
-							<p class="text-gray-500">Saving pipeline...</p>
-						</div>
-					{:else}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-gray-500"></div>
-							<p class="text-gray-500">No pipeline saved</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
+							Saving pipeline...
 						</div>
 					{/if}
 
 					{#if $startPipeline.isSuccess}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-green-500"></div>
-							<p class="text-green-500">Started pipeline</p>
+						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
+							Started pipeline
 						</div>
 					{:else if $startPipeline.isError}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-red-500"></div>
-							<p class="text-red-500">Could not start pipeline. {$startPipeline.error}</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
+							Could not start pipeline:
+							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+								{errorToText($startPipeline.error)}
+							</div>
 						</div>
 					{:else if $startPipeline.isLoading}
-						<div class="flex flex-row gap-2 items-center">
-							<Circle size="20" color={colors.gray[500]} />
-							<p class="text-gray-500">Starting pipeline...</p>
-						</div>
-					{:else}
-						<div class="flex flex-row gap-2 items-center">
-							<div class="w-2 h-2 rounded-full bg-gray-500"></div>
-							<p class="text-gray-500">Pipeline is not started</p>
+						<div class="gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
+							Starting pipeline...
 						</div>
 					{/if}
 				</div>
@@ -759,3 +789,5 @@
 		</div>
 	</div>
 </div>
+
+<InstallServiceModal bind:modalOpen={serviceModalOpen} />

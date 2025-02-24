@@ -33,7 +33,7 @@
 		class="w-full h-full absolute top-0 left-0 flex justify-center items-center animate-fade-out-container text-white"
 	>
 		<!-- Background with 20% opacity -->
-		<div class="absolute inset-0 bg-orange-500 bg-opacity-80"></div>
+		<div class="absolute inset-0 bg-error-500 bg-opacity-90"></div>
 
 		<!-- Content with full opacity -->
 		<div class="relative flex flex-col gap-2 items-center text-center">
@@ -46,15 +46,17 @@
 				Resolve the issue by checking the logs over SSH.
 			</p>
 			{#if config.success}
-				<p class="code text-left w-full">
-					# SSH into the Rover <br />
-					ssh {config.roverd.username}@{config.roverd.host}<br /><br />
+				<p class="code text-left w-full variant-glass-secondary p-1 px-2">
+					<span class="text-secondary-400">
+						# SSH into the Rover <br />
+						ssh {config.roverd.username}@{config.roverd.host}<br /><br />
 
-					# View status<br />
-					sudo systemctl status roverd<br /><br />
+						# View status<br />
+						sudo systemctl status roverd<br /><br />
 
-					# View logs<br />
-					sudo journalctl -u roverd -n 100 -f<br />
+						# View logs<br />
+						sudo journalctl -u roverd -n 100 -f<br />
+					</span>
 				</p>
 			{/if}
 		</div>
