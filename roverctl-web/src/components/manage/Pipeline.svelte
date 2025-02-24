@@ -172,7 +172,7 @@
 		{
 			enabled: true, // run once on mount
 			refetchOnMount: false,
-			staleTime: Infinity // no background refetch
+			staleTime: 1
 		}
 	);
 
@@ -270,7 +270,9 @@
 			return pipeline.data;
 		},
 		{
-			keepPreviousData: false
+			keepPreviousData: false,
+			staleTime: 1,
+			refetchInterval: 1000
 		}
 	);
 
