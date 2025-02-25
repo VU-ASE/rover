@@ -323,6 +323,17 @@ pub fn find_latest_daemon(author: &str, name: &str) -> Result<FqBuf, Error> {
     }
 }
 
+pub fn roverd_log(file_path: PathBuf, msg: String) -> Result<(), Error> {
+    let mut log_file = create_log_file(&file_path)?;
+
+    let cur_time = chrono::Local::now().format("%H:%M:%S");
+    if writeln!(log_file, "[roverd {}] {}", cur_time, msg).is_err() {
+        warn!("could not write log_line to file: {:?}", file_path)
+    };
+
+    Ok(())
+}
+
 #[macro_export]
 macro_rules! warn_generic {
     ($expr:expr, $error_type:ty) => {{

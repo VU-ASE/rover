@@ -579,12 +579,9 @@ impl App {
         spawned_procs.clear();
 
         for p in &mut *procs {
-            let mut log_file = create_log_file(&p.log_file)?;
+            roverd_log(p.log_file.clone(), format!("spawned service '{}'", p.name))?;
 
-            let cur_time = chrono::Local::now().format("%H:%M:%S");
-            if writeln!(log_file, "[{}] roverd spawned {}", cur_time, p.name).is_err() {
-                warn!("could not write log_line to file: {:?}", p.log_file)
-            };
+            let log_file = create_log_file(&p.log_file)?;
 
             let stdout = Stdio::from(
                 log_file
@@ -671,11 +668,17 @@ impl App {
 
                                 if let Some(proc) = procs_guard.iter_mut().find(|p| p.fq == spawned.fq) {
                                     proc.status = ProcessStatus::Stopped;
+
+                                    // In general we ignore the errors of logging since
+                                    // we are inside of an async closure
                                     if let Some(e) = exit_code {
                                         proc.last_exit_code = e;
-                                    }
-                                    if !exit_status.success() {
-                                        proc.faults += 1
+                                        let _ = roverd_log(proc.log_file.clone(), format!("service exited with code: {}", e));
+                                    } else if !exit_status.success() {
+                                            proc.faults += 1;
+                                            let _ = roverd_log(proc.log_file.clone(), "service exited without error code".to_string());
+                                    } else {
+                                        let _ = roverd_log(proc.log_file.clone(), "service exited".to_string());
                                     }
                                 }
                                 process_shutdown_tx.send(()).ok();
@@ -693,12 +696,6 @@ impl App {
                         let mut stats = stats_clone.write().await;
                         stats.status = PipelineStatus::Startable;
 
-                        let mut procs_guard = procs_clone.write().await;
-                        if let Some(proc) = procs_guard.iter_mut().find(|p| p.fq == spawned.fq) {
-                            proc.status = ProcessStatus::Terminated;
-                            proc.last_exit_code = 0;
-                        }
-
                         if let Some(id) = child.id() {
                             info!("terminating {} pid ({})", spawned.name, id);
                             unsafe {
@@ -708,6 +705,14 @@ impl App {
 
                         // Wait a short while before checking if child still exists
                         tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+
+                        let mut procs_guard = procs_clone.write().await;
+                        if let Some(proc) = procs_guard.iter_mut().find(|p| p.fq == spawned.fq) {
+                            proc.status = ProcessStatus::Terminated;
+                            proc.last_exit_code = 0;
+                            let _ = roverd_log(proc.log_file.clone(), "terminated by roverd".to_string());
+                        }
 
                         // If the child has not terminated, kill it.
                         match child.try_wait() {
