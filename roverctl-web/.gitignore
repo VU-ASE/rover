@@ -20,5 +20,5 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Need to bring in the api spec manually if you want to change it
-spec
+
+build
