@@ -3,15 +3,15 @@
 	import DebugIcon from '~icons/ix/chart-curve-spline';
 	import WarningIcon from '~icons/ix/warning-filled';
 
-	import WifiIcon from '~icons/material-symbols/wifi';
-	import WifiOffIcon from '~icons/material-symbols/wifi-off';
 	import StartIcon from '~icons/ic/round-play-circle';
 	import StopIcon from '~icons/ic/round-stop-circle';
 	import CheckIcon from '~icons/ic/sharp-check';
-	import RemoveIcon from '~icons/ic/sharp-remove';
 	import PlusIcon from '~icons/subway/add-1';
+	import CheckmarkIcon from '~icons/heroicons/check-badge-20-solid';
+	import UserIcon from '~icons/heroicons/user-20-solid';
 
-	import { useStore } from '@xyflow/svelte';
+	import { toasts } from 'svelte-toasts';
+
 	import type { Edge, Node } from '@xyflow/svelte';
 	import { Circle, DoubleBounce } from 'svelte-loading-spinners';
 	import { config } from '$lib/config';
@@ -26,9 +26,9 @@
 	} from '$lib/openapi';
 	import colors from 'tailwindcss/colors';
 	import Navbar from '../../components/Navbar.svelte';
-	import { Modal, Tab, TabGroup } from '@skeletonlabs/skeleton';
+	import { Accordion, AccordionItem, Modal, Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import ErrorOverlay from '../../components/ErrorOverlay.svelte';
-	import { writable } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { SvelteFlow, Background, Controls, MarkerType } from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
 	import ServiceNode from './ServiceNode.svelte';
@@ -48,6 +48,8 @@
 	import OutputIcon from '~icons/ic/baseline-output';
 	import ConfigurationIcon from '~icons/ic/baseline-settings';
 	import LogsIcon from '~icons/ic/baseline-notes';
+	import { ASE_AUTHOR_IDENTIFIER, TRANSCEIVER_IDENTIFIER } from '$lib/constants';
+	import { compareVersions } from '$lib/utils/versions';
 
 	const queryClient = useQueryClient();
 
@@ -182,8 +184,12 @@
 		graph.setGraph({ rankdir: 'LR' }); // Top-to-Bottom layout
 		graph.setDefaultEdgeLabel(() => ({}));
 
-		// Add nodes to graph
-		newNodes.forEach((node) => graph.setNode(node.id, { width: node.width, height: node.height }));
+		// Add nodes to graph, don't include the transceiver node in the layout, but do add it to the existing nodes
+		newNodes.forEach((node) => {
+			if (node.data.fq.name !== TRANSCEIVER_IDENTIFIER) {
+				graph.setNode(node.id, { width: node.width, height: node.height });
+			}
+		});
 
 		// Add edges to graph
 		newEdges.forEach((edge) => graph.setEdge(edge.source, edge.target));
@@ -194,7 +200,10 @@
 		// Apply computed positions
 		const positionedNodes = newNodes.map((node) => ({
 			...node,
-			position: { x: graph.node(node.id).x, y: graph.node(node.id).y }
+			position:
+				node.data.fq.name !== TRANSCEIVER_IDENTIFIER
+					? { x: graph.node(node.id).x, y: graph.node(node.id).y }
+					: { x: 0, y: 0 }
 		}));
 
 		nodes.set(positionedNodes);
@@ -203,6 +212,7 @@
 
 	const addService = (service: PipelineNodeData) => {
 		$stopPipeline.mutate();
+		selectedService = service.fq;
 
 		// Check if service is already present
 		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
@@ -233,8 +243,47 @@
 		createAndSetGraph(newNodes, newEdges);
 	};
 
+	const addServiceByName = (author: string, name: string, version?: string) => {
+		// Filter services that match the author and name, sort by version descending
+		const filtered = $servicesQuery.data?.filter(
+			(s) => s.fq.author === author && s.fq.name === name
+		);
+		if (!filtered) {
+			return;
+		}
+
+		const sorted = filtered.sort((a, b) => compareVersions(b.fq.version, a.fq.version));
+		if (sorted.length < 1) {
+			return;
+		}
+
+		// If a version is specified, use it, otherwise use the latest version
+		const service = sorted.find((s) => s.fq.version === version) || sorted[0];
+
+		// If there is already a service with this name enabled, remove this
+		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
+			removeService(service.fq);
+		}
+
+		// Add the service to the pipeline
+		addService(service);
+	};
+
+	const removeServiceByName = (name: string) => {
+		$stopPipeline.mutate();
+
+		// Remove the service from the pipeline
+		const newNodes = $nodes.filter((n) => n.data.fq.name !== name);
+
+		// Add edges from the new service
+		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
+
+		createAndSetGraph(newNodes, newEdges);
+	};
+
 	const removeService = (fq: FullyQualifiedService) => {
 		$stopPipeline.mutate();
+		selectedService = fq;
 
 		// Check if service is already present
 		if (!$nodes.some((n) => n.data.fq.name === fq.name)) {
@@ -272,7 +321,37 @@
 		{
 			keepPreviousData: false,
 			staleTime: 1,
-			refetchInterval: 1000
+			refetchInterval: 1000,
+			onSuccess: (data) => {
+				const previousData = $pipelineQuery.data;
+				if (previousData && previousData.enabled.length > 0 && data.enabled.length <= 0) {
+					toasts.add({
+						title: 'Pipeline reset',
+						description: 'The existing pipeline was emptied by roverd',
+						duration: 10000,
+						placement: 'bottom-right',
+						type: 'info',
+						theme: 'dark',
+						onClick: () => {},
+						onRemove: () => {}
+					});
+				}
+			},
+			onError: () => {
+				const previousSuccess = $pipelineQuery.isSuccess;
+				if (previousSuccess) {
+					toasts.add({
+						title: 'Pipeline error',
+						description: 'An error occurred while fetching the pipeline status',
+						duration: 10000,
+						placement: 'bottom-right',
+						type: 'error',
+						theme: 'dark',
+						onClick: () => {},
+						onRemove: () => {}
+					});
+				}
+			}
 		}
 	);
 
@@ -405,16 +484,68 @@
 		await $startPipeline.mutateAsync();
 	};
 
-	// Filter services from the service query if available
-
+	// The active tab selected for service information
 	let tabSet: number = 0;
-
 	let pipelineStarting = false;
 	$: pipelineStarting =
 		$stopPipeline.isLoading ||
 		$startPipeline.isLoading ||
 		$buildService.isLoading ||
 		$savePipeline.isLoading;
+
+	let searchInput = writable('');
+	// Organize available services per author, name and version
+	const groupedServices = derived(
+		[servicesQuery, searchInput], // Reactively depend on servicesQuery and searchInput
+		([$servicesQuery, $searchInput]) => {
+			if (!$servicesQuery?.data) return [];
+
+			const searchTerm = $searchInput.toLowerCase().trim();
+
+			const serviceMap = new Map<string, Map<string, Set<string>>>();
+
+			for (const service of $servicesQuery.data) {
+				const { name, author, version } = service.fq;
+
+				if (!serviceMap.has(author)) {
+					serviceMap.set(author, new Map());
+				}
+
+				const authorMap = serviceMap.get(author)!;
+
+				if (!authorMap.has(name)) {
+					authorMap.set(name, new Set());
+				}
+
+				authorMap.get(name)!.add(version);
+			}
+
+			// Convert map to array, filter results based on search input
+			return Array.from(serviceMap.entries())
+				.map(([author, namesMap]) => {
+					// Filter names based on search input
+					const filteredNames = Array.from(namesMap.entries())
+						.map(([name, versionsSet]) => {
+							// Filter versions based on search input
+							const filteredVersions = Array.from(versionsSet)
+								.filter(
+									(version) =>
+										searchTerm === '' ||
+										author.toLowerCase().includes(searchTerm) ||
+										name.toLowerCase().includes(searchTerm) ||
+										version.toLowerCase().includes(searchTerm)
+								)
+								.sort((a, b) => compareVersions(b, a)); // Sort versions descending
+
+							return filteredVersions.length > 0 ? { name, versions: filteredVersions } : null;
+						})
+						.filter(Boolean) as { name: string; versions: string[] }[];
+
+					return filteredNames.length > 0 ? { author, names: filteredNames } : null;
+				})
+				.filter(Boolean); // Ensure only non-null values are returned
+		}
+	);
 </script>
 
 <div class="h-[90vh] sm:h-[30vh] overflow-hidden relative">
@@ -625,47 +756,134 @@
 		<div class="flex flex-col h-full gap-4">
 			<div class="card lg:col-span-1 overflow-y-auto flex flex-col h-full">
 				{#if $servicesQuery.data && $servicesQuery.data.length > 0}
-					{#each $servicesQuery.data as service}
-						<button
-							class={`p-2 px-4 
-								${
-									selectedService &&
-									selectedService.name === service.fq.name &&
-									selectedService.author === service.fq.author &&
-									selectedService.version === service.fq.version
-										? 'card variant-soft-primary'
-										: ''
-								}
+					<input
+						class="input"
+						type="text"
+						bind:value={$searchInput}
+						placeholder="Search services or authors..."
+					/>
 
-						flex flex-row w-full gap-2 items-center text-left btn`}
-							on:click={() => (selectedService = service.fq)}
-						>
-							{#if $nodes.some((node) => node.data.fq.name === service.fq.name && node.data.fq.author === service.fq.author && node.data.fq.version === service.fq.version)}
-								<button
-									class="w-6 h-6 card variant-outline-primary text-primary-400"
-									on:click={() => removeService(service.fq)}
-								>
-									<CheckIcon />
-								</button>
-							{:else}
-								<button
-									on:click={() => addService(service)}
-									class="w-6 h-6 card variant-outline-tertiary text-primary-400"
-								>
-								</button>
-							{/if}
-
-							<div class="flex flex-col w-full">
-								<h1 class="text-sm text-secondary-700">{service.fq.author}</h1>
-								<p class="text-md">
-									{service.fq.name}
-									<span class="text-secondary-800">
-										{service.fq.version}
+					<Accordion>
+						{#each $groupedServices as group}
+							<AccordionItem regionPanel="px-0 py-0" regionControl="px-3 py-1" open>
+								<svelte:fragment slot="lead">
+									{#if group?.author.toLowerCase() === ASE_AUTHOR_IDENTIFIER.toLowerCase()}
+										<span class="text-primary-400">
+											<CheckmarkIcon />
+										</span>
+									{:else}
+										<span class="text-secondary-700">
+											<UserIcon />
+										</span>
+									{/if}
+								</svelte:fragment>
+								<svelte:fragment slot="summary">
+									<span class="text-secondary-200">
+										{group?.author}
 									</span>
-								</p>
-							</div>
-						</button>
-					{/each}
+								</svelte:fragment>
+								<svelte:fragment slot="content">
+									<Accordion>
+										{#if group}
+											{#each group?.names as service}
+												<AccordionItem
+													regionPanel="px-0 py-0"
+													regionControl="px-3 py-1"
+													on:click={() => {}}
+												>
+													<svelte:fragment slot="lead">
+														<div class="flex h-full flex-row items-center">
+															{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author)}
+																<button
+																	on:click={(e) => {
+																		e.preventDefault();
+																		e.stopPropagation();
+																		removeServiceByName(service.name);
+																	}}
+																	class="w-5 h-5 card variant-outline-success text-success-400"
+																>
+																	<CheckIcon />
+																</button>
+															{:else}
+																<button
+																	on:click={(e) => {
+																		e.preventDefault();
+																		e.stopPropagation();
+																		addServiceByName(group.author, service.name);
+																	}}
+																	class="w-5 h-5 card variant-outline-tertiary text-primary-400"
+																>
+																</button>
+															{/if}
+														</div>
+													</svelte:fragment>
+													<svelte:fragment slot="summary">
+														<span class="font-mono text-secondary-800">
+															{service.name}
+														</span>
+													</svelte:fragment>
+													<svelte:fragment slot="content">
+														{#each service.versions as version}
+															<button
+																class={`p-2 px-4 
+																${
+																	selectedService &&
+																	selectedService.name === service.name &&
+																	selectedService.author === group.author &&
+																	selectedService.version === version
+																		? 'card variant-soft-primary'
+																		: ''
+																}
+								
+														flex flex-row w-full gap-2 items-center text-left btn pl-8
+
+														`}
+																on:click={() =>
+																	(selectedService = {
+																		name: service.name,
+																		author: group.author,
+																		version: version
+																	})}
+															>
+																{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author && node.data.fq.version === version)}
+																	<button
+																		class="w-5 h-5 rounded-full card variant-outline-success text-success-400"
+																		on:click={() =>
+																			removeService({
+																				name: service.name,
+																				author: group.author,
+																				version: version
+																			})}
+																	>
+																		<CheckIcon />
+																	</button>
+																{:else}
+																	<button
+																		on:click={() =>
+																			addServiceByName(group.author, service.name, version)}
+																		class="w-5 h-5 rounded-full card variant-outline-tertiary text-primary-400"
+																	>
+																	</button>
+																{/if}
+
+																<div class="flex flex-col w-full">
+																	<p class="text-md">
+																		<span class="text-secondary-800">
+																			{version}
+																		</span>
+																	</p>
+																</div>
+															</button>
+														{/each}
+													</svelte:fragment>
+												</AccordionItem>
+											{/each}
+										{/if}
+									</Accordion>
+								</svelte:fragment>
+							</AccordionItem>
+						{/each}
+					</Accordion>
 				{:else if $servicesQuery.data}
 					<div
 						class="flex w-full h-full items-center justify-center text-center text-secondary-600 p-4"
