@@ -800,7 +800,7 @@
 																		e.stopPropagation();
 																		removeServiceByName(service.name);
 																	}}
-																	class="w-5 h-5 card variant-outline-success text-success-400"
+																	class="w-5 h-5 card variant-outline-secondary text-secondary-400"
 																>
 																	<CheckIcon />
 																</button>
@@ -847,7 +847,7 @@
 															>
 																{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author && node.data.fq.version === version)}
 																	<button
-																		class="w-5 h-5 rounded-full card variant-outline-success text-success-400"
+																		class="w-5 h-5 rounded-full card variant-outline-secondary text-secondary-400"
 																		on:click={() =>
 																			removeService({
 																				name: service.name,
@@ -921,8 +921,8 @@
 		</div>
 
 		<!-- Main Content (4/5 width on large screens) -->
-		<div class=" card variant-ghost lg:col-span-4 overflow-y-auto">
-			{#if selectedService}
+		{#if selectedService}
+			<div class=" card variant-ghost lg:col-span-4 overflow-y-auto">
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>
 						<div class="flex flex-row items-center text-md gap-2">
@@ -966,8 +966,10 @@
 						{/key}
 					</svelte:fragment>
 				</TabGroup>
-			{:else}
-				<div class="flex flex-col p-4">
+			</div>
+		{:else}
+			<div class="  lg:col-span-4 overflow-y-auto">
+				<div class="flex flex-col">
 					{#if $stopPipeline.isSuccess}
 						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
 							Stopped running pipeline
@@ -1034,8 +1036,8 @@
 						</div>
 					{/if}
 				</div>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
