@@ -342,6 +342,7 @@ pub fn get_service_as<T: AsRef<str>>(author: T, name: T, version: T) -> Option<S
         }
     }
     return None;
+}
 
 pub fn roverd_log(file_path: PathBuf, msg: String) -> Result<(), Error> {
     let mut log_file = create_log_file(&file_path)?;
@@ -436,10 +437,10 @@ macro_rules! rover_is_operating {
 
 #[macro_export]
 macro_rules! time_now {
-    () => {
+    () => {{
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis()
-    };
+    }};
 }
