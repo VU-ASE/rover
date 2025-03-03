@@ -1,0 +1,30 @@
+name: coolercontroller
+author: elias
+source: github.com/coolercontroller
+version: 0.0.1
+description: A template service in Go
+
+as: controller
+
+commands:
+  build: make build
+  run: ./bin/coolercontroller
+
+inputs:
+  - service: imaging
+    streams:
+      - path
+outputs:
+  - example-output
+
+configuration:
+  - name: number-example
+    type: number
+    value: 30
+  - name: string-example
+    type: string
+    value: "hello all"
+  - name: tunable-string-example
+    type: string
+    value: "hello all, this is tunable"
+    tunable: true

@@ -46,7 +46,7 @@ func (m UtilitiesPage) Init() tea.Cmd {
 	return m.spinner.Tick
 }
 
-func (m UtilitiesPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m UtilitiesPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := style.Docstyle.GetFrameSize()
@@ -90,6 +90,6 @@ func (m UtilitiesPage) keys() utils.GeneralKeyMap {
 	return utils.NewGeneralKeyMap()
 }
 
-func (m UtilitiesPage) previousPage() *pageModel {
+func (m UtilitiesPage) previousPage() *tea.Model {
 	return nil
 }

@@ -157,7 +157,7 @@ func NewServiceInitPage() ServiceInitPage {
 	}
 }
 
-func (m ServiceInitPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m ServiceInitPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.form.State == huh.StateCompleted {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -382,7 +382,7 @@ func (m ServiceInitPage) keys() utils.GeneralKeyMap {
 	return kb
 }
 
-func (m ServiceInitPage) previousPage() *pageModel {
-	var pageModel pageModel = NewStartPage()
-	return &pageModel
+func (m ServiceInitPage) previousPage() *tea.Model {
+	var tea.Model tea.Model = NewStartPage()
+	return &tea.Model
 }

@@ -57,7 +57,7 @@ func (m ServicesOverviewPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m ServicesOverviewPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := style.Docstyle.GetFrameSize()
@@ -103,6 +103,6 @@ func (m ServicesOverviewPage) keys() utils.GeneralKeyMap {
 	return utils.NewGeneralKeyMap()
 }
 
-func (m ServicesOverviewPage) previousPage() *pageModel {
+func (m ServicesOverviewPage) previousPage() *tea.Model {
 	return nil
 }

@@ -1,11 +1,7 @@
 package views
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/VU-ASE/rover/roverctl/src/openapi"
-	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/VU-ASE/rover/roverctl/src/style"
 	"github.com/VU-ASE/rover/roverctl/src/tui"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
@@ -37,7 +33,7 @@ func NewShutdownRoverPage() ShutdownRoverPage {
 // Page model methods
 //
 
-func (m ShutdownRoverPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m ShutdownRoverPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -92,9 +88,9 @@ func (m ShutdownRoverPage) keys() utils.GeneralKeyMap {
 	return kb
 }
 
-func (m ShutdownRoverPage) previousPage() *pageModel {
-	var pageModel pageModel = NewStartPage()
-	return &pageModel
+func (m ShutdownRoverPage) previousPage() *tea.Model {
+	var tea.Model tea.Model = NewStartPage()
+	return &tea.Model
 }
 
 //
@@ -103,21 +99,21 @@ func (m ShutdownRoverPage) previousPage() *pageModel {
 
 func (m ShutdownRoverPage) shutdownRover() tea.Cmd {
 	return tui.PerformAction(&m.shutdown, func() (*bool, error) {
-		remote := state.Get().RoverConnections.GetActive()
-		if remote == nil {
-			return nil, fmt.Errorf("No active rover connection")
-		}
+		// remote := state.Get().RoverConnections.GetActive()
+		// if remote == nil {
+		// 	return nil, fmt.Errorf("No active rover connection")
+		// }
 
-		// First, save the pipeline
-		api := remote.ToApiClient()
-		req := api.HealthAPI.ShutdownPost(
-			context.Background(),
-		)
+		// // First, save the pipeline
+		// api := remote.ToApiClient()
+		// req := api.HealthAPI.ShutdownPost(
+		// 	context.Background(),
+		// )
 
-		htt, err := req.Execute()
-		if err != nil {
-			return nil, utils.ParseHTTPError(err, htt)
-		}
+		// htt, err := req.Execute()
+		// if err != nil {
+		// 	return nil, utils.ParseHTTPError(err, htt)
+		// }
 
 		return openapi.PtrBool(true), nil
 	})

@@ -28,7 +28,7 @@ func NewServiceSyncInstructionsPage() ServiceSyncInstructionsPage {
 // Page model methods
 //
 
-func (m ServiceSyncInstructionsPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m ServiceSyncInstructionsPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -75,6 +75,6 @@ func (m ServiceSyncInstructionsPage) keys() utils.GeneralKeyMap {
 	return utils.NewGeneralKeyMap()
 }
 
-func (m ServiceSyncInstructionsPage) previousPage() *pageModel {
+func (m ServiceSyncInstructionsPage) previousPage() *tea.Model {
 	return nil
 }

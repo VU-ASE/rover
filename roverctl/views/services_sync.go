@@ -100,7 +100,7 @@ func (m ServicesSyncPage) Init() tea.Cmd {
 	)
 }
 
-func (m ServicesSyncPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m ServicesSyncPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -473,9 +473,9 @@ func (m ServicesSyncPage) keys() utils.GeneralKeyMap {
 	return kb
 }
 
-func (m ServicesSyncPage) previousPage() *pageModel {
-	var pageModel pageModel = NewStartPage()
-	return &pageModel
+func (m ServicesSyncPage) previousPage() *tea.Model {
+	var tea.Model tea.Model = NewStartPage()
+	return &tea.Model
 }
 
 // Reports if all uploads are done (i.e. successful or failed, but not loading anymore)

@@ -28,7 +28,7 @@ func NewTemplatePage() TemplatePage {
 // Page model methods
 //
 
-func (m TemplatePage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m TemplatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
@@ -60,6 +60,6 @@ func (m TemplatePage) keys() utils.GeneralKeyMap {
 	return utils.NewGeneralKeyMap()
 }
 
-func (m TemplatePage) previousPage() *pageModel {
+func (m TemplatePage) previousPage() *tea.Model {
 	return nil
 }
