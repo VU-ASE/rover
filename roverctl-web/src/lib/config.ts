@@ -1,11 +1,4 @@
-import {
-	PUBLIC_ROVERD_HOST,
-	PUBLIC_ROVERD_PORT,
-	PUBLIC_ROVERD_USERNAME,
-	PUBLIC_ROVERD_PASSWORD,
-	PUBLIC_PASSTHROUGH_HOST,
-	PUBLIC_PASSTHROUGH_PORT
-} from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import { Configuration } from './openapi';
 
 /**
@@ -47,14 +40,14 @@ type ParsedConfig =
 
 const parseConfigFromEnv = (): ParsedConfig => {
 	try {
-		let roverdHost = PUBLIC_ROVERD_HOST;
+		let roverdHost = env.PUBLIC_ROVERD_HOST;
 		if (!roverdHost) {
 			throw new Error('ROVERD_HOST environment variable was not set but is required');
 		}
 		// Strip schema (http:// or https://) from the host
 		roverdHost = roverdHost.replace(/(^\w+:|^)\/\//, '');
 
-		const roverdPortStr = PUBLIC_ROVERD_PORT;
+		const roverdPortStr = env.PUBLIC_ROVERD_PORT;
 		if (!roverdPortStr) {
 			throw new Error('ROVERD_PORT environment variable was not set but is required');
 		}
@@ -64,19 +57,19 @@ const parseConfigFromEnv = (): ParsedConfig => {
 			throw new Error('ROVERD_PORT environment variable was not a valid integer');
 		}
 
-		const roverdUsername = PUBLIC_ROVERD_USERNAME;
+		const roverdUsername = env.PUBLIC_ROVERD_USERNAME;
 		if (!roverdUsername) {
 			throw new Error('ROVERD_USERNAME environment variable was not set but is required');
 		}
 
-		const roverdPassword = PUBLIC_ROVERD_PASSWORD;
+		const roverdPassword = env.PUBLIC_ROVERD_PASSWORD;
 		if (!roverdPassword) {
 			throw new Error('ROVERD_PASSWORD environment variable was not set but is required');
 		}
 
 		// Try to parse the passthrough host and port
-		let passthroughHost = PUBLIC_PASSTHROUGH_HOST;
-		const passthroughPortStr = PUBLIC_PASSTHROUGH_PORT;
+		let passthroughHost = env.PUBLIC_PASSTHROUGH_HOST;
+		const passthroughPortStr = env.PUBLIC_PASSTHROUGH_PORT;
 		let passthroughPort: number | undefined;
 		if (passthroughHost && passthroughPortStr) {
 			passthroughHost = passthroughHost.replace(/(^\w+:|^)\/\//, '');

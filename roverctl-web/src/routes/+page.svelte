@@ -79,22 +79,6 @@
 					</div>
 				{/if}
 			</div>
-		{:else}
-			<div class="block text-error-300">
-				<div class="flex flex-row gap-4 w-full pr-4 items-start">
-					<WarningIcon class="text-2xl" />
-					<div class="flex flex-col">
-						<h1>Not started properly</h1>
-						<p class="text-sm">
-							The configuration could not be loaded.<br />
-							Are you sure that you instantiated roverctl with the correct parameters?
-						</p>
-						<div class="card variant-ghost-error mt-2 p-2 px-4 code">
-							{config.error}
-						</div>
-					</div>
-				</div>
-			</div>
 		{/if}
 	</div>
 </div>
