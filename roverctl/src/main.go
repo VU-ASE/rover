@@ -71,6 +71,7 @@ func run() error {
 	//
 	// CLI commands
 	//
+	var debugMode bool
 	var rootCmd = &cobra.Command{
 		Use:   "roverctl",
 		Short: "CLI to manage a Rover",
@@ -123,9 +124,9 @@ func run() error {
 			// Register with GHCR
 			author := "vu-ase"
 			name := "roverctl-web"
-			// version := "v" + strings.TrimPrefix(res.Version, "v") //todo: enable again
-			version := "v0.6.0"
+			version := "v" + strings.TrimPrefix(res.Version, "v")
 			imageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, name, version)
+			ptImageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, "passthrough", version) // passthrough for debugging
 			ghcr := registry.AuthConfig{
 				ServerAddress: "ghcr.io",
 			}
@@ -140,6 +141,15 @@ func run() error {
 				fmt.Printf("No matching roverctl-web image found for roverd version %s. Upgrade roverd to ensure compatibility.\n", version)
 				return nil
 			}
+			if debugMode {
+				_, err = dc.DistributionInspect(ctx, ptImageRef, encodedAuth)
+				if err != nil {
+					fmt.Printf("No matching passthrough image found for roverd version %s. Upgrade roverd to ensure compatibility.\n", version)
+					return nil
+				}
+			}
+
+			// Pull roverctl-web
 			fmt.Printf("Found matching roverctl-web image, pulling...\n")
 			out, err := dc.ImagePull(ctx, imageRef, image.PullOptions{})
 			if err != nil {
@@ -148,10 +158,30 @@ func run() error {
 			}
 			defer out.Close()
 			io.Copy(os.Stdout, out) // Stream pull output to console
+			if debugMode {
+				fmt.Printf("Found matching passthrough image, pulling...\n")
+				out, err = dc.ImagePull(ctx, ptImageRef, image.PullOptions{})
+				if err != nil {
+					fmt.Println("Error pulling image:", err)
+					return nil
+				}
+				defer out.Close()
+				io.Copy(os.Stdout, out) // Stream pull output to console
+			}
 
 			//
-			// Start the container
+			// Start the container(s)
 			//
+
+			passthroughHost := ""
+			if debugMode {
+				passthroughHost, err = utils.GetLocalIP()
+				if err != nil {
+					fmt.Println("Failed to get local IP necessary for debugging:", err)
+					return nil
+				}
+				fmt.Printf("Using local IP %s for debugging\n", passthroughHost)
+			}
 
 			// Environment variables roverctl-web needs
 			envVars := []string{
@@ -159,8 +189,7 @@ func run() error {
 				"PUBLIC_ROVERD_PORT=80",
 				"PUBLIC_ROVERD_USERNAME=" + conn.Username,
 				"PUBLIC_ROVERD_PASSWORD=" + conn.Password,
-				// todo: when debugging released
-				"PUBLIC_PASSTHROUGH_HOST=''",
+				"PUBLIC_PASSTHROUGH_HOST=" + passthroughHost,
 				"PUBLIC_PASSTHROUGH_PORT=7500",
 			}
 
@@ -183,17 +212,63 @@ func run() error {
 				PortBindings: portBindings, // Port forwarding
 			}, &network.NetworkingConfig{}, nil, "")
 			if err != nil {
-				fmt.Printf("failed to create container: %v", err)
+				fmt.Printf("failed to create roverctl-web container: %v", err)
 				return nil
 			}
 
 			// Start the container
 			if err := dc.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-				fmt.Printf("failed to start container: %v", err)
+				fmt.Printf("failed to start roverctl-web container: %v", err)
 				return nil
 			}
 
-			fmt.Println("Container started:", resp.ID)
+			passthroughContainerId := ""
+			if debugMode {
+				// Environment variables passthrough needs
+				ptEnvVars := []string{
+					"ASE_SERVER_IP=" + passthroughHost,
+				}
+
+				// Port forwarding (host:container)
+				ptPortBindings := nat.PortMap{
+					"7500/tcp": []nat.PortBinding{
+						{HostIP: "0.0.0.0", HostPort: "7500"},
+					},
+					"40000/udp": []nat.PortBinding{
+						{HostIP: "0.0.0.0", HostPort: "4000"},
+					},
+				}
+
+				// Create a container with the specified image and environment variables
+				ptResp, err := dc.ContainerCreate(ctx, &container.Config{
+					Image: ptImageRef,
+					Env:   ptEnvVars,
+					Tty:   true, // Keep terminal session interactive
+					ExposedPorts: nat.PortSet{
+						"7500/tcp": struct{}{}, // Expose container's port 80
+						"4000/udp": struct{}{}, // Expose container's port 80
+					},
+				}, &container.HostConfig{
+					PortBindings: ptPortBindings, // Port forwarding
+				}, &network.NetworkingConfig{}, nil, "")
+				if err != nil {
+					fmt.Printf("failed to create passthrough container: %v", err)
+					return nil
+				}
+
+				// Start the container
+				if err := dc.ContainerStart(ctx, ptResp.ID, container.StartOptions{}); err != nil {
+					fmt.Printf("failed to start passthrough container: %v", err)
+					return nil
+				}
+				passthroughContainerId = ptResp.ID
+			}
+
+			fmt.Println("Roverctl-web started:", resp.ID)
+			if passthroughContainerId != "" {
+				fmt.Println("Passthrough container started:", passthroughContainerId)
+			}
+			fmt.Println("Visit http://localhost:3000 to control this Rover!")
 
 			// Set up signal handling (to stop container on Ctrl+C)
 			sigChan := make(chan os.Signal, 1)
@@ -201,15 +276,27 @@ func run() error {
 
 			go func() {
 				<-sigChan // Wait for Ctrl+C (SIGINT)
-				fmt.Println("\nStopping container...")
+				fmt.Println("\nStopping roverctl-web...")
 
 				// Stop container with a timeout (graceful shutdown)
 				timeout := 10 // seconds
 				err := dc.ContainerStop(ctx, resp.ID, container.StopOptions{Timeout: &timeout})
 				if err != nil {
-					fmt.Printf("failed to stop container: %v\n", err)
+					fmt.Printf("failed to stop roverctl-web container: %v\n", err)
 				} else {
-					fmt.Println("Container stopped successfully")
+					fmt.Println("Roverctl-web container stopped successfully")
+				}
+
+				if passthroughContainerId != "" {
+					fmt.Println("Stopping passthrough container...")
+					// Stop container with a timeout (graceful shutdown)
+					timeout := 10 // seconds
+					err := dc.ContainerStop(ctx, passthroughContainerId, container.StopOptions{Timeout: &timeout})
+					if err != nil {
+						fmt.Printf("failed to stop passthrough container: %v\n", err)
+					} else {
+						fmt.Println("Passthrough container stopped successfully")
+					}
 				}
 				os.Exit(0)
 			}()
@@ -232,6 +319,7 @@ func run() error {
 	rootCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
 	rootCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	rootCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
+	rootCmd.Flags().BoolVarP(&debugMode, "debug", "d", false, "Enable debug/tuning mode")
 
 	// Upload command
 	var watch bool
