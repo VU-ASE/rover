@@ -9,8 +9,8 @@ permissions:
     packages: write
 
 env:
-    ROVERCTL_WEB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/roverctl-web
-    PASSTHROUGH_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/passthrough
+    ROVERCTL_WEB_IMAGE_NAME: ghcr.io/vu-ase/roverctl-web
+    PASSTHROUGH_IMAGE_NAME: ghcr.io/vu-ase/passthrough
 
 jobs:
     build-roverctl:
