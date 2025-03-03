@@ -342,6 +342,16 @@ pub fn get_service_as<T: AsRef<str>>(author: T, name: T, version: T) -> Option<S
         }
     }
     return None;
+
+pub fn roverd_log(file_path: PathBuf, msg: String) -> Result<(), Error> {
+    let mut log_file = create_log_file(&file_path)?;
+
+    let cur_time = chrono::Local::now().format("%H:%M:%S");
+    if writeln!(log_file, "[roverd {}] {}", cur_time, msg).is_err() {
+        warn!("could not write log_line to file: {:?}", file_path)
+    };
+
+    Ok(())
 }
 
 #[macro_export]
