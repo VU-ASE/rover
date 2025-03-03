@@ -9,6 +9,7 @@ import (
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
+	view_info "github.com/VU-ASE/rover/roverctl/src/views/info"
 	view_upload "github.com/VU-ASE/rover/roverctl/src/views/upload"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog"
@@ -146,6 +147,26 @@ You can optionally specify the --watch flag to enable file watch and upload.`,
 	sshCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	sshCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 	rootCmd.AddCommand(sshCmd)
+
+	// info command
+	var infoCmd = &cobra.Command{
+		Use:   "info",
+		Short: "View roverctl and roverd information",
+		Long:  `Display build and connection information for roverctl, and roverd if a rover is specified.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Ignore errors
+			conn, _ := prechecks(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
+
+			p := tea.NewProgram(view_info.New(conn))
+			_, err = p.Run()
+			return err
+		},
+	}
+	infoCmd.Flags().IntVarP(&roverIndex, "rover", "r", 0, "The index of the rover to upload to, between 1 and 20")
+	infoCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
+	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
+	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
+	rootCmd.AddCommand(infoCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {
