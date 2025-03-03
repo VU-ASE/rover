@@ -1,0 +1,21 @@
+version: '3.8'
+
+name: 'ase-roverctl-web'
+
+services:
+  roverctl-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ase-roverctl-web
+    image: aselabsvu/roverctl-web
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PUBLIC_ROVERD_HOST=${PUBLIC_ROVERD_HOST}
+      - PUBLIC_ROVERD_PORT=${PUBLIC_ROVERD_PORT}
+      - PUBLIC_ROVERD_USERNAME=${PUBLIC_ROVERD_USERNAME}
+      - PUBLIC_ROVERD_PASSWORD=${PUBLIC_ROVERD_PASSWORD}
+      - PUBLIC_PASSTHROUGH_HOST=${PUBLIC_PASSTHROUGH_HOST}
+      - PUBLIC_PASSTHROUGH_PORT=${PUBLIC_PASSTHROUGH_PORT}

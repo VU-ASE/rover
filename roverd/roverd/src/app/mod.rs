@@ -956,8 +956,8 @@ impl App {
                     fqns.push(FullyQualifiedService {
                         author: author_name.to_string(),
                         name: service_name.to_string(),
-                        version,
-                        r#as: None,
+                        version: version.clone(),
+                        r#as: get_service_as(author_name, service_name, &version),
                     });
                 }
             }
