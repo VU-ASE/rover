@@ -1,0 +1,32 @@
+{
+    "name": "ASE-roverctl-web",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceFolder": "/workspace/roverctl-web",
+    "workspaceMount": "source=${localWorkspaceFolder}/roverctl-web,target=/workspace/roverctl-web,type=bind",
+    "mounts": [
+        "source=${localWorkspaceFolder}/spec,target=/workspace/spec,type=bind"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "streetsidesoftware.code-spell-checker",
+                "ms-vscode.makefile-tools", // Makefile Tools extension
+                "dbankier.vscode-quick-select", // Quick select with cmd/ctrl+k "
+                "svelte.svelte-vscode", // svelte
+                "dbaeumer.vscode-eslint",
+                "rvest.vs-code-prettier-eslint",
+                "esbenp.prettier-vscode",
+                "bradlc.vscode-tailwindcss"
+            ]
+        }
+    },
+    "capAdd": [
+        "SYS_PTRACE"
+    ],
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "forwardPorts": []
+}

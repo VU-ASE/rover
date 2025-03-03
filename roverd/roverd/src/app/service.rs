@@ -2,6 +2,7 @@ use std::{fmt::Display, path::Path};
 
 use crate::error;
 use crate::error::*;
+use crate::util::get_service_as;
 
 use rovervalidate::service::ValidatedService;
 
@@ -118,7 +119,7 @@ impl From<&ServicesAuthorServiceVersionPostPathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
-            service_as: None,
+            service_as: get_service_as(&value.author, &value.service, &value.version),
             is_daemon: false,
         }
     }
@@ -130,7 +131,7 @@ impl From<&ServicesAuthorServiceVersionDeletePathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
-            service_as: None,
+            service_as: get_service_as(&value.author, &value.service, &value.version),
             is_daemon: false,
         }
     }
@@ -142,7 +143,7 @@ impl From<&ServicesAuthorServiceVersionGetPathParams> for FqBuf {
             name: value.service.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
-            service_as: None,
+            service_as: get_service_as(&value.author, &value.service, &value.version),
             is_daemon: false,
         }
     }
@@ -154,7 +155,7 @@ impl From<&PipelinePostRequestInner> for FqBuf {
             name: service.fq.name.clone(),
             author: service.fq.author.clone(),
             version: service.fq.version.clone(),
-            service_as: None,
+            service_as: get_service_as(&service.fq.author, &service.fq.name, &service.fq.version),
             is_daemon: false,
         }
     }
@@ -166,7 +167,7 @@ impl From<&LogsAuthorNameVersionGetPathParams> for FqBuf {
             name: value.name.clone(),
             author: value.author.clone(),
             version: value.version.clone(),
-            service_as: None,
+            service_as: get_service_as(&value.author, &value.name, &value.version),
             is_daemon: false,
         }
     }
@@ -268,11 +269,15 @@ impl TryFrom<String> for FqBuf {
             .map(|component| Ok(component.as_os_str().to_os_string().into_string()?))
             .collect::<Result<Vec<String>, Error>>()?;
 
+        let author = values.first().ok_or(Error::StringToFqConversion)?.clone();
+        let name = values.get(1).ok_or(Error::StringToFqConversion)?.clone();
+        let version = values.get(2).ok_or(Error::StringToFqConversion)?.clone();
+
         Ok(FqBuf {
-            author: values.first().ok_or(Error::StringToFqConversion)?.clone(),
-            name: values.get(1).ok_or(Error::StringToFqConversion)?.clone(),
-            version: values.get(2).ok_or(Error::StringToFqConversion)?.clone(),
-            service_as: None,
+            author: author.clone(),
+            name: name.clone(),
+            version: version.clone(),
+            service_as: get_service_as(author, name, version),
             is_daemon: false,
         })
     }
@@ -294,11 +299,15 @@ impl TryFrom<&String> for FqBuf {
             .map(|component| Ok(component.as_os_str().to_os_string().into_string()?))
             .collect::<Result<Vec<String>, Error>>()?;
 
+        let author = values.first().ok_or(Error::StringToFqConversion)?.clone();
+        let name = values.get(1).ok_or(Error::StringToFqConversion)?.clone();
+        let version = values.get(2).ok_or(Error::StringToFqConversion)?.clone();
+
         Ok(FqBuf {
-            author: values.first().ok_or(Error::StringToFqConversion)?.clone(),
-            name: values.get(1).ok_or(Error::StringToFqConversion)?.clone(),
-            version: values.get(2).ok_or(Error::StringToFqConversion)?.clone(),
-            service_as: None,
+            author: author.clone(),
+            name: name.clone(),
+            version: version.clone(),
+            service_as: get_service_as(author, name, version),
             is_daemon: false,
         })
     }
