@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/VU-ASE/rover/compare/v0.5.1...v0.6.0) (2025-03-03)
+
+
+### Features
+
+* add passthrough back ([e07dc70](https://github.com/VU-ASE/rover/commit/e07dc7073c6b63dd9ed1c9894a11df2127e7d23c))
+
+
+### Bug Fixes
+
+* rename passthrough to appropriate folder ([5c1d41e](https://github.com/VU-ASE/rover/commit/5c1d41e8f3a1bb3be425841ede4c9a80fe2c2861))
+* roverd unclosed delimiter ([17d8e95](https://github.com/VU-ASE/rover/commit/17d8e95a9b322a205ffe46c5dd367459f59c9aef))
+
 ## [0.5.1](https://github.com/VU-ASE/rover/compare/v0.5.0...v0.5.1) (2025-03-03)
 
 
