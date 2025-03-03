@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.5.0](https://github.com/VU-ASE/rover/compare/v0.4.1...v0.5.0) (2025-03-03)
+
+
+### Features
+
+* added Dockerfile for roverctl-web ([ec9733b](https://github.com/VU-ASE/rover/commit/ec9733b2f507d03d0ec405e6bcc2d82519406e6b))
+* added passthrough and debugging functionality ([90975ef](https://github.com/VU-ASE/rover/commit/90975ef34e1acf2ffc1f9ec740e18b600df7d561))
+* app config and overview page ([1c76d8c](https://github.com/VU-ASE/rover/commit/1c76d8cd42abe86a77e5133806ac97921a4da5d5))
+* enable and install debug logic from roverctl-web ([a760e30](https://github.com/VU-ASE/rover/commit/a760e30d6991e0322399aeb4d65beca78a06dcc6))
+* github actions workflows to build and push docker images ([5c4b035](https://github.com/VU-ASE/rover/commit/5c4b035329c9998331228113913a28fcc72b7552))
+* manage page (wip) and status overlay ([e9132ed](https://github.com/VU-ASE/rover/commit/e9132ed41535b49fbc10353c023d6935edf82640))
+* service information ([c0119a5](https://github.com/VU-ASE/rover/commit/c0119a5c4715cb39d86fdecdf856ce3d48127595))
+* service installation ([246a452](https://github.com/VU-ASE/rover/commit/246a452e0ae9b4d8489b1f852d1a425c7137e895))
+* service selection toggles and ordening ([6ad02f4](https://github.com/VU-ASE/rover/commit/6ad02f49222b35caec422dc1e2c486276a50aa65))
+* starting, stopping and modifying pipelines ([e54a176](https://github.com/VU-ASE/rover/commit/e54a1762fdc686ec0236874c1169ea9c20014bff))
+
+
+### Bug Fixes
+
+* consistent style for services ([a9f5fbe](https://github.com/VU-ASE/rover/commit/a9f5fbef311b50ce30ca3891a9c5591ec3c12d91))
+* poll pipeline status ([a02bbf6](https://github.com/VU-ASE/rover/commit/a02bbf698dbd8888b4f8efcf82dfb2fdb7eca9a8))
+* returning service_as optimistically for all endpoints ([a019fe1](https://github.com/VU-ASE/rover/commit/a019fe1bee5a0a5e591911b389ee599b647e0440))
+* show correct panels for selected services ([5ba569e](https://github.com/VU-ASE/rover/commit/5ba569e06f205686fd5baa2dd7ff0ae765d06bb7))
+* show debug toggle correctly ([3ea63f8](https://github.com/VU-ASE/rover/commit/3ea63f8a79ee4fe7ca0836407fb96d6f501fd94d))
+* use dynamic env variables for configuration ([25d5c88](https://github.com/VU-ASE/rover/commit/25d5c88b217c9040aea12686a4b08b05443a8e03))
+
 ## [0.4.1](https://github.com/VU-ASE/rover/compare/v0.4.0...v0.4.1) (2025-02-12)
 
 
