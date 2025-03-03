@@ -6,9 +6,10 @@
 	import StartIcon from '~icons/ic/round-play-circle';
 	import StopIcon from '~icons/ic/round-stop-circle';
 	import CheckIcon from '~icons/ic/sharp-check';
-	import PlusIcon from '~icons/subway/add-1';
+	import PlusIcon from '~icons/heroicons-solid/plus';
 	import CheckmarkIcon from '~icons/heroicons/check-badge-20-solid';
 	import UserIcon from '~icons/heroicons/user-20-solid';
+	import PowerOffIcon from '~icons/ic/round-power';
 
 	import { toasts } from 'svelte-toasts';
 
@@ -212,7 +213,6 @@
 
 	const addService = (service: PipelineNodeData) => {
 		$stopPipeline.mutate();
-		selectedService = service.fq;
 
 		// Check if service is already present
 		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
@@ -267,6 +267,27 @@
 
 		// Add the service to the pipeline
 		addService(service);
+	};
+
+	const selectServiceByName = (author: string, name: string, version?: string) => {
+		// Filter services that match the author and name, sort by version descending
+		const filtered = $servicesQuery.data?.filter(
+			(s) => s.fq.author === author && s.fq.name === name
+		);
+		if (!filtered) {
+			return;
+		}
+
+		const sorted = filtered.sort((a, b) => compareVersions(b.fq.version, a.fq.version));
+		if (sorted.length < 1) {
+			return;
+		}
+
+		// If a version is specified, use it, otherwise use the latest version
+		const service = sorted.find((s) => s.fq.version === version) || sorted[0];
+
+		// Set the selected service
+		selectedService = service.fq;
 	};
 
 	const removeServiceByName = (name: string) => {
@@ -501,10 +522,12 @@
 			if (!$servicesQuery?.data) return [];
 
 			const searchTerm = $searchInput.toLowerCase().trim();
-
 			const serviceMap = new Map<string, Map<string, Set<string>>>();
 
-			for (const service of $servicesQuery.data) {
+			// Exclude transceiver services always
+			for (const service of $servicesQuery.data.filter(
+				(s) => s.fq.name !== TRANSCEIVER_IDENTIFIER
+			)) {
 				const { name, author, version } = service.fq;
 
 				if (!serviceMap.has(author)) {
@@ -546,6 +569,106 @@
 				.filter(Boolean); // Ensure only non-null values are returned
 		}
 	);
+
+	// Debug mode is active when:
+	// - a transceiver service is enabled
+	// - this transceiver service has the same passthrough server specified as the roverctl configuration
+	// - roverctl-web was started with debug info environment variables
+	const debugActive = useQuery(['debugActive', $nodes], async () => {
+		console.log('checking if debug active');
+		if (!config.success || !config.passthrough) {
+			return false;
+		}
+
+		const transceiver = $nodes.find((n) => n.data.fq.name === TRANSCEIVER_IDENTIFIER);
+		if (!transceiver) {
+			return false;
+		}
+
+		const fq = transceiver.data.fq;
+
+		// Query the service API to get the configuration for this transceiver
+		const sapi = new ServicesApi(config.roverd.api);
+		const service = await sapi.servicesAuthorServiceVersionGet(fq.author, fq.name, fq.version);
+		if (!service) {
+			return false;
+		}
+
+		// Find the "passthrough-address" configuration key
+		const passthrough = service.data.configuration.find(
+			(c) => c.name === 'passthrough-address' && c.type === 'string'
+		);
+		if (!passthrough) {
+			return false;
+		}
+
+		// strip the protocol from the roverctl configuration
+		const address = passthrough.value.toString().replace(/^https?:\/\//, '');
+		console.log('Checking address', address);
+		return address === config.passthrough.host + ':' + config.passthrough.port;
+	});
+
+	const disableDebugMode = () => {
+		// Remove the transceiver service
+		removeServiceByName(TRANSCEIVER_IDENTIFIER);
+		queryClient.invalidateQueries('debugActive');
+	};
+
+	const enableDebugMode = useMutation(
+		'enableDebugMode',
+		async () => {
+			if (!config.success) {
+				throw new Error('Configuration could not be loaded');
+			}
+
+			if (!config.passthrough) {
+				throw new Error('Passthrough mode is not enabled.');
+			}
+
+			// Get all services, check the ones that are transceivers
+			const sapi = new ServicesApi(config.roverd.api);
+			const services = await sapi.fqnsGet();
+			const transceivers = services.data
+				.filter((s) => s.name === TRANSCEIVER_IDENTIFIER)
+				.sort((a, b) => compareVersions(b.version, a.version));
+
+			for (const transceiver of transceivers) {
+				// Does this transceiver expose the same passthrough server as the roverctl configuration?
+				const service = await sapi.servicesAuthorServiceVersionGet(
+					transceiver.author,
+					transceiver.name,
+					transceiver.version
+				);
+				if (!service.data) {
+					continue;
+				}
+
+				// Find the "passthrough-address" configuration key
+				const passthrough = service.data.configuration.find(
+					(c) => c.name === 'passthrough-address' && c.type === 'string'
+				);
+				if (!passthrough) {
+					continue;
+				}
+
+				// strip the protocol from the roverctl configuration
+				const address = passthrough.value.toString().replace(/^https?:\/\//, '');
+				if (address === config.passthrough.host + ':' + config.passthrough.port) {
+					console.log('Adding service', transceiver);
+					addService({
+						fq: transceiver,
+						service: service.data
+					});
+					return;
+				}
+			}
+		},
+		{
+			onSettled: () => {
+				queryClient.invalidateQueries('debugActive');
+			}
+		}
+	);
 </script>
 
 <div class="h-[90vh] sm:h-[30vh] overflow-hidden relative">
@@ -561,7 +684,6 @@
 				console.log('delete', detail);
 			}}
 		>
-			<!-- <Background bgColor={colors.slate[900]} patternColor={colors.slate[500]} /> -->
 			<Background
 				bgColor={'transparent'}
 				class="bg-transparent"
@@ -623,7 +745,7 @@
 					</div>
 				</div>
 			</div>
-		{:else if $nodes.length === 0}
+		{:else if $nodes.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER).length === 0}
 			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
@@ -658,7 +780,30 @@
 						</div>
 					</div>
 
-					<div class="flex flex-col">
+					<div class="flex flex-row gap-4 items-center">
+						<div class="flex flex-row gap-4 items-center">
+							<SlideToggle
+								name="slider-small"
+								checked={!!$debugActive.data}
+								background="bg-surface-400"
+								active="bg-primary-600"
+								size="sm"
+								disabled={$debugActive.isLoading || $enableDebugMode.isLoading}
+								on:click={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+
+									if (!!$debugActive.data) {
+										disableDebugMode();
+									} else {
+										$enableDebugMode.mutate();
+									}
+								}}
+							/>
+
+							<p class="text-secondary-700">debug mode</p>
+						</div>
+
 						<button
 							on:click={startConfiguredPipeline}
 							type="button"
@@ -789,10 +934,12 @@
 												<AccordionItem
 													regionPanel="px-0 py-0"
 													regionControl="px-3 py-1"
-													on:click={() => {}}
+													on:click={() => {
+														selectServiceByName(group.author, service.name);
+													}}
 												>
 													<svelte:fragment slot="lead">
-														<div class="flex h-full flex-row items-center">
+														<div class="flex h-full flex-row items-center ml-4">
 															{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author)}
 																<button
 																	on:click={(e) => {
@@ -810,6 +957,7 @@
 																		e.preventDefault();
 																		e.stopPropagation();
 																		addServiceByName(group.author, service.name);
+																		selectServiceByName(group.author, service.name);
 																	}}
 																	class="w-5 h-5 card variant-outline-tertiary text-primary-400"
 																>
@@ -835,7 +983,7 @@
 																		: ''
 																}
 								
-														flex flex-row w-full gap-2 items-center text-left btn pl-8
+														flex flex-row w-full gap-2 items-center text-left btn pl-12
 
 														`}
 																on:click={() =>
@@ -867,10 +1015,8 @@
 																{/if}
 
 																<div class="flex flex-col w-full">
-																	<p class="text-md">
-																		<span class="text-secondary-800">
-																			{version}
-																		</span>
+																	<p class="text-sm text-secondary-800">
+																		v{version.replace('v', '')}
 																	</p>
 																</div>
 															</button>
@@ -911,13 +1057,23 @@
 				{/if}
 			</div>
 
-			<button
-				class="w-full btn variant-ghost-primary text-primary-400 flex flex-row gap-0 items-center"
-				on:click={() => (serviceModalOpen = true)}
-			>
-				<p>Install a service</p>
-				<span class="text-xs"><PlusIcon /></span>
-			</button>
+			<div class="flex flex-row gap-4">
+				<button
+					class="w-full btn variant-ghost-primary text-primary-400 flex flex-row gap-0 items-center"
+					on:click={() => (serviceModalOpen = true)}
+				>
+					<p>Install a service</p>
+					<span class="text-xs"><PlusIcon /></span>
+				</button>
+				<a
+					href="/shutdown"
+					class="w-full btn variant-ghost-error text-error-400 flex flex-row gap-0 items-center"
+					on:click={() => (serviceModalOpen = true)}
+				>
+					<p>Shut down</p>
+					<span class="text-xs"><PowerOffIcon /></span>
+				</a>
+			</div>
 		</div>
 
 		<!-- Main Content (4/5 width on large screens) -->

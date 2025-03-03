@@ -62,6 +62,9 @@
 				<h1 class="text-sm font-mono">{$statusQuery.data.rover_name}</h1>
 				<p class="text-xs">
 					Rover <span class="text-primary-500">{$statusQuery.data.rover_id}</span>
+					<span class="text-secondary-800">
+						{$statusQuery.data.version}
+					</span>
 				</p>
 			</div>
 		{:else if $statusQuery.isError}

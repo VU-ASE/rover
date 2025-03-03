@@ -12,6 +12,7 @@
 	import CloseCircle from '~icons/tdesign/close-circle-filled';
 	import WarningIcon from '~icons/si/warning-fill';
 	import Navbar from '../../components/Navbar.svelte';
+	import ErrorOverlay from '../../components/ErrorOverlay.svelte';
 
 	const onConnect = () => {
 		if (!config.success || !config.passthrough) {
@@ -70,3 +71,4 @@
 		{/if}
 	</div>
 </div>
+<ErrorOverlay />

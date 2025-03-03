@@ -16,6 +16,10 @@ const errorToText = (error: unknown): string => {
 					case 'generic': {
 						// Cast errorValue to GenericError if possible
 						const generic = errorValue as GenericError;
+						if (generic.message === 'NoLogsFound') {
+							return 'No logs found';
+						}
+
 						return generic.message;
 					}
 					case 'build': {
@@ -73,6 +77,13 @@ const errorToText = (error: unknown): string => {
 				}
 			}
 		}
+
+		if (error.code === 'ERR_NETWORK') {
+			return 'The Rover was not reachable on this network';
+		} else if (error.code === 'ERR_CONNECTION_TIMED_OUT') {
+			return 'Could not reach the Rover in time (timeout)';
+		}
+
 		// If no structured error data is available, fallback to the Axios error message.
 		return error.message;
 	}
