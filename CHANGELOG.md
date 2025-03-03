@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/VU-ASE/rover/compare/v0.6.0...v0.7.0) (2025-03-03)
+
+
+### Features
+
+* CLI approach to roverctl ([bb78304](https://github.com/VU-ASE/rover/commit/bb78304cf2c6fcda4b2ce95bba51fcd183ee6ce3))
+* dangers page ([a296ad3](https://github.com/VU-ASE/rover/commit/a296ad3ccb2d682d7a881c057d5a60aec36a9888))
+* info target ([0bc9cb0](https://github.com/VU-ASE/rover/commit/0bc9cb0ecfd0d6ffe2aac31c12717839d7ede73f))
+* roverctl-web startup through docker ([e3ca9a5](https://github.com/VU-ASE/rover/commit/e3ca9a54be65233a5f7a8f8fa8b915c9d042b724))
+* start roverctl-web container ([9329015](https://github.com/VU-ASE/rover/commit/9329015b9cb86a8db86bc756052327fdf170785e))
+* update target ([0f3cc2a](https://github.com/VU-ASE/rover/commit/0f3cc2a340b5a78a3c04fc363941608fa9622613))
+
 ## [0.6.0](https://github.com/VU-ASE/rover/compare/v0.5.1...v0.6.0) (2025-03-03)
 
 
