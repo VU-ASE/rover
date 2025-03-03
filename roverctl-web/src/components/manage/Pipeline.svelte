@@ -42,7 +42,7 @@
 	import { SlideToggle } from '@skeletonlabs/skeleton';
 	import ServiceItem from './ServiceItem.svelte';
 	import { AxiosError } from 'axios';
-	import { errorToText } from '$lib/errors';
+	import { errorToText, RoverError } from '$lib/errors';
 	import InstallServiceModal from './InstallServiceModal.svelte';
 
 	import InputIcon from '~icons/ic/baseline-input';
@@ -51,6 +51,7 @@
 	import LogsIcon from '~icons/ic/baseline-notes';
 	import { ASE_AUTHOR_IDENTIFIER, TRANSCEIVER_IDENTIFIER } from '$lib/constants';
 	import { compareVersions } from '$lib/utils/versions';
+	import InstallTransceiverModal from './InstallTransceiverModal.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -68,7 +69,6 @@
 			for (const input of e.service.inputs) {
 				const source = input.service;
 				const target = e.fq.name;
-				console.log('trying to create edge between', source, target);
 
 				for (const stream of input.streams) {
 					const id = `${source}-${target}-${stream}`;
@@ -202,9 +202,7 @@
 		const positionedNodes = newNodes.map((node) => ({
 			...node,
 			position:
-				node.data.fq.name !== TRANSCEIVER_IDENTIFIER
-					? { x: graph.node(node.id).x, y: graph.node(node.id).y }
-					: { x: 0, y: 0 }
+				node.data.fq.name !== TRANSCEIVER_IDENTIFIER ? { ...graph.node(node.id) } : { x: 0, y: 0 }
 		}));
 
 		nodes.set(positionedNodes);
@@ -212,7 +210,10 @@
 	};
 
 	const addService = (service: PipelineNodeData) => {
-		$stopPipeline.mutate();
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
 
 		// Check if service is already present
 		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
@@ -244,6 +245,11 @@
 	};
 
 	const addServiceByName = (author: string, name: string, version?: string) => {
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
+
 		// Filter services that match the author and name, sort by version descending
 		const filtered = $servicesQuery.data?.filter(
 			(s) => s.fq.author === author && s.fq.name === name
@@ -291,7 +297,10 @@
 	};
 
 	const removeServiceByName = (name: string) => {
-		$stopPipeline.mutate();
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
 
 		// Remove the service from the pipeline
 		const newNodes = $nodes.filter((n) => n.data.fq.name !== name);
@@ -303,7 +312,11 @@
 	};
 
 	const removeService = (fq: FullyQualifiedService) => {
-		$stopPipeline.mutate();
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
+
 		selectedService = fq;
 
 		// Check if service is already present
@@ -575,7 +588,6 @@
 	// - this transceiver service has the same passthrough server specified as the roverctl configuration
 	// - roverctl-web was started with debug info environment variables
 	const debugActive = useQuery(['debugActive', $nodes], async () => {
-		console.log('checking if debug active');
 		if (!config.success || !config.passthrough) {
 			return false;
 		}
@@ -618,11 +630,11 @@
 		'enableDebugMode',
 		async () => {
 			if (!config.success) {
-				throw new Error('Configuration could not be loaded');
+				throw new RoverError('Config could not be loaded', 'ERR_CONFIG_INVALID');
 			}
 
 			if (!config.passthrough) {
-				throw new Error('Passthrough mode is not enabled.');
+				throw new RoverError('Passthrough was not enabled', 'ERR_PASSTHROUGH_DISABLED');
 			}
 
 			// Get all services, check the ones that are transceivers
@@ -654,7 +666,6 @@
 				// strip the protocol from the roverctl configuration
 				const address = passthrough.value.toString().replace(/^https?:\/\//, '');
 				if (address === config.passthrough.host + ':' + config.passthrough.port) {
-					console.log('Adding service', transceiver);
 					addService({
 						fq: transceiver,
 						service: service.data
@@ -662,10 +673,19 @@
 					return;
 				}
 			}
+
+			throw new RoverError(
+				'No transceiver service with matching passthrough address found',
+				'ERR_NO_TRANSCEIVER_INSTALLED'
+			);
 		},
 		{
 			onSettled: () => {
 				queryClient.invalidateQueries('debugActive');
+				queryClient.invalidateQueries('getRelease');
+				queryClient.invalidateQueries('downloadFile');
+				queryClient.invalidateQueries('modifyZip');
+				queryClient.invalidateQueries('uploadZip');
 			}
 		}
 	);
@@ -708,7 +728,9 @@
 				<div class="flex flex-col text-center text-white items-center">
 					<WarningIcon class="text-2xl relative mb-2" />
 					<h1>Could not fetch pipeline</h1>
-					<p>{$nodesQuery.error || 'An unknown error occurred'}</p>
+					<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
+						{errorToText($nodesQuery.error)}
+					</div>
 				</div>
 			</div>
 		{/if}
@@ -941,16 +963,28 @@
 													<svelte:fragment slot="lead">
 														<div class="flex h-full flex-row items-center ml-4">
 															{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author)}
-																<button
-																	on:click={(e) => {
-																		e.preventDefault();
-																		e.stopPropagation();
-																		removeServiceByName(service.name);
-																	}}
-																	class="w-5 h-5 card variant-outline-secondary text-secondary-400"
-																>
-																	<CheckIcon />
-																</button>
+																{#if $pipelineQuery.data && $pipelineQuery.data.status === 'started'}
+																	<button
+																		on:click={(e) => {
+																			e.preventDefault();
+																			e.stopPropagation();
+																		}}
+																		class="w-5 h-5 card variant-outline-surface text-surface-400"
+																	>
+																		<CheckIcon />
+																	</button>
+																{:else}
+																	<button
+																		on:click={(e) => {
+																			e.preventDefault();
+																			e.stopPropagation();
+																			removeServiceByName(service.name);
+																		}}
+																		class="w-5 h-5 card variant-outline-secondary text-secondary-400"
+																	>
+																		<CheckIcon />
+																	</button>
+																{/if}
 															{:else}
 																<button
 																	on:click={(e) => {
@@ -982,10 +1016,7 @@
 																		? 'card variant-soft-primary'
 																		: ''
 																}
-								
-														flex flex-row w-full gap-2 items-center text-left btn pl-12
-
-														`}
+																flex flex-row w-full gap-2 items-center text-left btn pl-12`}
 																on:click={() =>
 																	(selectedService = {
 																		name: service.name,
@@ -994,17 +1025,25 @@
 																	})}
 															>
 																{#if $nodes.some((node) => node.data.fq.name === service.name && node.data.fq.author === group.author && node.data.fq.version === version)}
-																	<button
-																		class="w-5 h-5 rounded-full card variant-outline-secondary text-secondary-400"
-																		on:click={() =>
-																			removeService({
-																				name: service.name,
-																				author: group.author,
-																				version: version
-																			})}
-																	>
-																		<CheckIcon />
-																	</button>
+																	{#if $pipelineQuery.data && $pipelineQuery.data.status === 'started'}
+																		<button
+																			class="w-5 h-5 rounded-full card variant-outline-surface text-surface-400"
+																		>
+																			<CheckIcon />
+																		</button>
+																	{:else}
+																		<button
+																			class="w-5 h-5 rounded-full card variant-outline-secondary text-secondary-400"
+																			on:click={() =>
+																				removeService({
+																					name: service.name,
+																					author: group.author,
+																					version: version
+																				})}
+																		>
+																			<CheckIcon />
+																		</button>
+																	{/if}
 																{:else}
 																	<button
 																		on:click={() =>
@@ -1079,6 +1118,27 @@
 		<!-- Main Content (4/5 width on large screens) -->
 		{#if selectedService}
 			<div class=" card variant-ghost lg:col-span-4 overflow-y-auto">
+				<div class="flex flex-col gap-1 p-2 px-4">
+					<p class="text-secondary-700">
+						{selectedService.author}
+					</p>
+					<p class="text-2xl font-mono">
+						<span class="text-primary-400">
+							{selectedService.name}
+						</span>
+
+						{#if selectedService.as}
+							as
+							<span class="text-secondary-700">
+								{selectedService.as}
+							</span>
+						{/if}
+					</p>
+					<p class="text-secondary-700">
+						v{selectedService.version.replace('v', '')}
+					</p>
+				</div>
+
 				<TabGroup>
 					<Tab bind:group={tabSet} name="tab1" value={0}>
 						<div class="flex flex-row items-center text-md gap-2">
@@ -1198,3 +1258,4 @@
 </div>
 
 <InstallServiceModal bind:modalOpen={serviceModalOpen} />
+<InstallTransceiverModal enableMutation={enableDebugMode} />

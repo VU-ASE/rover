@@ -87,8 +87,31 @@ const errorToText = (error: unknown): string => {
 		// If no structured error data is available, fallback to the Axios error message.
 		return error.message;
 	}
+	if (error instanceof Error) {
+		return error.message;
+	}
+
 	// Fallback for non-Axios errors.
 	return 'An unexpected error occurred.';
 };
 
-export { errorToText };
+// Custom error for easily checkable codes
+
+type ErrorCode = 'ERR_NO_TRANSCEIVER_INSTALLED' | 'ERR_CONFIG_INVALID' | 'ERR_PASSTHROUGH_DISABLED';
+class RoverError extends Error {
+	code: ErrorCode;
+
+	constructor(message: string, code: ErrorCode) {
+		super(message);
+		this.code = code;
+
+		// Maintains proper stack trace (only needed in V8 environments like Node.js)
+		if (Error.captureStackTrace) {
+			Error.captureStackTrace(this, RoverError);
+		}
+
+		this.name = 'CustomError'; // Set the error name explicitly
+	}
+}
+
+export { errorToText, RoverError };

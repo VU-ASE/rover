@@ -205,9 +205,6 @@
 									<p class="text-error-400">
 										Could not install '{$fetchOfficialService.variables}':
 									</p>
-									<div class="card p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-										{errorToText($fetchOfficialService.error)}
-									</div>
 								</div>
 							{:else if $fetchOfficialService.isSuccess}
 								<div class="flex flex-row items-center gap-2 mt-0 px-2 text-xs text-success-400">
@@ -275,10 +272,7 @@
 				</AccordionItem>
 			</Accordion>
 			<div class="flex justify-end mt-4 p-6 pt-2">
-				<button
-					on:click={() => (modalOpen = false)}
-					class="px-4 py-2 bg-red-500 text-white rounded"
-				>
+				<button on:click={() => (modalOpen = false)} class="btn variant-soft-secondary">
 					Close
 				</button>
 			</div>
