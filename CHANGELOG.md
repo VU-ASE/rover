@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/VU-ASE/rover/compare/v0.5.0...v0.5.1) (2025-03-03)
+
+
+### Bug Fixes
+
+* use lowercase for GHCR tag ([e62a583](https://github.com/VU-ASE/rover/commit/e62a58302e17c7ca9739349b60fc654cce7f7da3))
+
 ## [0.5.0](https://github.com/VU-ASE/rover/compare/v0.4.1...v0.5.0) (2025-03-03)
 
 
