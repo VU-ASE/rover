@@ -1,0 +1,16 @@
+name: test
+
+on:
+  push:
+    branches-ignore:
+      - release-please--branches--main
+
+permissions:
+  contents: read
+  pull-requests: read # Optional: Use with `only-new-issues` option.
+
+jobs:
+  test:
+    uses: VU-ASE/actions/.github/workflows/test.yaml@main
+    secrets:
+      gh_pat: ${{ secrets.GH_PAT }}
