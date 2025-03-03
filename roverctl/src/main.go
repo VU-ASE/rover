@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
@@ -167,6 +168,26 @@ You can optionally specify the --watch flag to enable file watch and upload.`,
 	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 	rootCmd.AddCommand(infoCmd)
+
+	// Self-update command
+	var version string
+	var selfUpdateCmd = &cobra.Command{
+		Use:   "update",
+		Short: "Self-update roverctl",
+		Long:  `Update roverctl to the latest version, or the version specified.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if version != "" {
+				version = strings.TrimPrefix(version, "v")
+				utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v" + version)
+			} else {
+				utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash")
+			}
+		},
+	}
+	selfUpdateCmd.Flags().StringVarP(&version, "version", "v", "", "The version tag to update/downgrade to (e.g. v0.1.0)")
+	rootCmd.AddCommand(selfUpdateCmd)
+
+	// state.Get().QuitCommand =
 
 	err = rootCmd.Execute()
 	if err != nil {
