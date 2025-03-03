@@ -21,6 +21,7 @@ where
     // build our application with a route
     Router::new()
         .route("/", get(root_get::<I, A>))
+        .route("/emergency", post(emergency_post::<I, A>))
         .route("/fetch", post(fetch_post::<I, A>))
         .route("/fqns", get(fqns_get::<I, A>))
         .route(
@@ -50,6 +51,88 @@ where
         .route("/update", post(update_post::<I, A>))
         .route("/upload", post(upload_post::<I, A>))
         .with_state(api_impl)
+}
+
+#[tracing::instrument(skip_all)]
+fn emergency_post_validation() -> std::result::Result<(), ValidationErrors> {
+    Ok(())
+}
+/// EmergencyPost - POST /emergency
+#[tracing::instrument(skip_all)]
+async fn emergency_post<I, A>(
+    method: Method,
+    host: Host,
+    cookies: CookieJar,
+    State(api_impl): State<I>,
+) -> Result<Response, StatusCode>
+where
+    I: AsRef<A> + Send + Sync,
+    A: apis::health::Health,
+{
+    #[allow(clippy::redundant_closure)]
+    let validation = tokio::task::spawn_blocking(move || emergency_post_validation())
+        .await
+        .unwrap();
+
+    let Ok(()) = validation else {
+        return Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(validation.unwrap_err().to_string()))
+            .map_err(|_| StatusCode::BAD_REQUEST);
+    };
+
+    let result = api_impl
+        .as_ref()
+        .emergency_post(method, host, cookies)
+        .await;
+
+    let mut response = Response::builder();
+
+    let resp = match result {
+        Ok(rsp) => match rsp {
+            apis::health::EmergencyPostResponse::Status200_OperationWasSuccessful => {
+                let mut response = response.status(200);
+                response.body(Body::empty())
+            }
+            apis::health::EmergencyPostResponse::Status400_ErrorOccurred(body) => {
+                let mut response = response.status(400);
+                {
+                    let mut response_headers = response.headers_mut().unwrap();
+                    response_headers.insert(
+                        CONTENT_TYPE,
+                        HeaderValue::from_str("application/json").map_err(|e| {
+                            error!(error = ?e);
+                            StatusCode::INTERNAL_SERVER_ERROR
+                        })?,
+                    );
+                }
+
+                let body_content = tokio::task::spawn_blocking(move || {
+                    serde_json::to_vec(&body).map_err(|e| {
+                        error!(error = ?e);
+                        StatusCode::INTERNAL_SERVER_ERROR
+                    })
+                })
+                .await
+                .unwrap()?;
+                response.body(Body::from(body_content))
+            }
+            apis::health::EmergencyPostResponse::Status401_UnauthorizedAccess => {
+                let mut response = response.status(401);
+                response.body(Body::empty())
+            }
+        },
+        Err(_) => {
+            // Application code returned an error. This should not happen, as the implementation should
+            // return a valid response.
+            response.status(500).body(Body::empty())
+        }
+    };
+
+    resp.map_err(|e| {
+        error!(error = ?e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })
 }
 
 #[tracing::instrument(skip_all)]

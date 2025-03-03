@@ -152,4 +152,22 @@ impl Health for Roverd {
             rover_is_operating!(ShutdownPostResponse)
         }
     }
+
+    /// Shutdown the rover..
+    /// `RoverState` - This function can run *only when dormant*
+    /// TODO: fs_lock
+    /// ShutdownPost - POST /shutdown
+    async fn emergency_post(
+        &self,
+        _method: Method,
+        _host: Host,
+        _cookies: CookieJar,
+    ) -> Result<EmergencyPostResponse, ()> {
+        if let Some(rover_state) = self.try_get_operating().await {
+            let _ = warn_generic!(self.app.stop(rover_state).await, EmergencyPostResponse);
+        }
+
+        warn_generic!(self.app.emergency_stop_rover().await, EmergencyPostResponse);
+        Ok(EmergencyPostResponse::Status200_OperationWasSuccessful)
+    }
 }

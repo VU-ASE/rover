@@ -10,6 +10,18 @@ use crate::{models, types::*};
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
+pub enum EmergencyPostResponse {
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+#[allow(clippy::large_enum_variant)]
 pub enum RootGetResponse {
     /// The health and versioning information
     Status200_TheHealthAndVersioningInformation(models::Get200Response),
@@ -55,6 +67,16 @@ pub enum UpdatePostResponse {
 #[async_trait]
 #[allow(clippy::ptr_arg)]
 pub trait Health {
+    /// Stops any running pipeline and emergency stops the rover..
+    ///
+    /// EmergencyPost - POST /emergency
+    async fn emergency_post(
+        &self,
+        method: Method,
+        host: Host,
+        cookies: CookieJar,
+    ) -> Result<EmergencyPostResponse, ()>;
+
     /// Retrieve the health and versioning information.
     ///
     /// RootGet - GET /
