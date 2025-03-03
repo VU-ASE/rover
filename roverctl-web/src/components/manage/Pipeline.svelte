@@ -754,7 +754,20 @@
 						</div>
 					</div>
 
-					<div class="flex flex-col">
+					<div class="flex flex-row gap-4 items-center">
+						<div class="flex flex-row gap-4 items-center">
+							<SlideToggle
+								name="slider-small"
+								checked={!!$debugActive.data}
+								background="bg-surface-400"
+								active="bg-primary-600"
+								size="sm"
+								disabled
+							/>
+
+							<p class="text-secondary-700">debug mode</p>
+						</div>
+
 						<button
 							on:click={() => $stopPipeline.mutate()}
 							type="button"
@@ -778,7 +791,20 @@
 						</div>
 					</div>
 
-					<div class="flex flex-col">
+					<div class="flex flex-row gap-4 items-center">
+						<div class="flex flex-row gap-4 items-center">
+							<SlideToggle
+								name="slider-small"
+								checked={!!$debugActive.data}
+								background="bg-surface-400"
+								active="bg-primary-600"
+								size="sm"
+								disabled
+							/>
+
+							<p class="text-secondary-700">debug mode</p>
+						</div>
+
 						<button
 							on:click={startConfiguredPipeline}
 							type="button"
@@ -845,15 +871,25 @@
 						<div class="flex flex-row items-center gap-2">
 							<DoubleBounce size="15" color={colors.green[400]} />
 							<p class="text-white text-xl">
-								Pipeline is <span class="text-orange-500">running</span>
-								{#if $stopPipeline.isLoading}
-									, stopping...
-								{/if}
+								Pipeline is in <span class="text-orange-500">unknown status</span>
 							</p>
 						</div>
 					</div>
 
-					<div class="flex flex-col">
+					<div class="flex flex-row gap-4 items-center">
+						<div class="flex flex-row gap-4 items-center">
+							<SlideToggle
+								name="slider-small"
+								checked={!!$debugActive.data}
+								background="bg-surface-400"
+								active="bg-primary-600"
+								size="sm"
+								disabled
+							/>
+
+							<p class="text-secondary-700">debug mode</p>
+						</div>
+
 						<button
 							on:click={() => $stopPipeline.mutate()}
 							type="button"
