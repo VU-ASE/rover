@@ -1,7 +1,6 @@
 <script lang="ts">
 	import SteeringIcon from '~icons/ix/steering';
 	import DebugIcon from '~icons/ix/chart-curve-spline';
-	import WarningIcon from '~icons/ix/warning-filled';
 	import { Circle } from 'svelte-loading-spinners';
 	import { config } from '$lib/config';
 	import { useQuery } from '@sveltestack/svelte-query';

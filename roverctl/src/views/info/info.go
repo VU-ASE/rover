@@ -1,4 +1,4 @@
-package views
+package view_info
 
 import (
 	"context"
@@ -18,43 +18,52 @@ import (
 
 var version = "UNSET"
 
-type InfoPage struct {
+type model struct {
+	// If you want to query information about roverd
+	rover *configuration.RoverConnection
+
 	// Fetch information about roverd and the rover
 	remoteInfo tui.Action[openapi.Get200Response]
 	spinner    spinner.Model
 }
 
-func NewInfoPage() InfoPage {
+func New(rover *configuration.RoverConnection) model {
 	ri := tui.NewAction[openapi.Get200Response]("remoteInfo")
 	sp := spinner.New()
-	return InfoPage{
+	return model{
+		rover:      rover,
 		remoteInfo: ri,
 		spinner:    sp,
 	}
 }
 
-func (m InfoPage) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return tea.Batch(m.fetchInfo(), m.spinner.Tick)
 }
 
-func (m InfoPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tui.ActionInit[openapi.Get200Response]:
 		m.remoteInfo.ProcessInit(msg)
 		return m, nil
 	case tui.ActionResult[openapi.Get200Response]:
 		m.remoteInfo.ProcessResult(msg)
-		return m, nil
+		return m, tea.Quit
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		}
 	}
 
 	return m, nil
 }
 
-func (m InfoPage) View() string {
+func (m model) View() string {
 	s := style.Title.Render(`             
                   ~( @\   \
              _________]_[__/_>________
@@ -69,8 +78,8 @@ _______________(__)_____________(__)_________________`)
 	s += style.Gray.Render("Configuration location: ") + configuration.LocalConfigDir() + "\n"
 	s += style.Gray.Render("Architecture: ") + runtime.GOOS + "/" + runtime.GOARCH + "\n"
 
-	s += "\n" + style.Title.Render("Roverd") + "\n"
-	if state.Get().RoverConnections.GetActive() != nil {
+	if m.rover != nil {
+		s += "\n" + style.Title.Render("Roverd") + "\n"
 		if m.remoteInfo.IsSuccess() {
 			if m.remoteInfo.Data.RoverId != nil {
 				str := fmt.Sprintf("%d", *m.remoteInfo.Data.RoverId)
@@ -122,31 +131,17 @@ _______________(__)_____________(__)_________________`)
 	return s
 }
 
-func (m InfoPage) fetchInfo() tea.Cmd {
+func (m model) fetchInfo() tea.Cmd {
 	return tui.PerformAction(&m.remoteInfo, func() (*openapi.Get200Response, error) {
-		remote := state.Get().RoverConnections.GetActive()
-		if remote == nil {
+		if m.rover == nil {
 			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		api := remote.ToApiClient()
+		api := m.rover.ToApiClient()
 		res, _, err := api.HealthAPI.StatusGet(
 			context.Background(),
 		).Execute()
 
 		return res, err
 	})
-}
-
-func (m InfoPage) isQuitable() bool {
-	return true
-}
-
-func (m InfoPage) keys() utils.GeneralKeyMap {
-	return utils.NewGeneralKeyMap()
-}
-
-func (m InfoPage) previousPage() *pageModel {
-	var pageModel pageModel = NewStartPage()
-	return &pageModel
 }
