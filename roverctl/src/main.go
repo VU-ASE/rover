@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"syscall"
 
@@ -13,6 +16,12 @@ import (
 	view_info "github.com/VU-ASE/rover/roverctl/src/views/info"
 	view_upload "github.com/VU-ASE/rover/roverctl/src/views/upload"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -53,31 +62,179 @@ func run() error {
 		return err
 	}
 
-	//
-	// CLI options
-	//
-
-	var rootCmd = &cobra.Command{
-		Use:   "roverctl",
-		Short: "Roverctl terminal user interface",
-		Long:  "A command line interface to manage your Rover",
-		Run: func(cmd *cobra.Command, args []string) {
-			// // We start the app in a separate (full) screen
-			// p := tea.NewProgram(views.RootScreen(appState), tea.WithAltScreen())
-			// _, _ = p.Run()
-
-			fmt.Printf("Hello, Rover!\n")
-		},
-	}
-
 	// General flags
-	var watch bool
 	var roverIndex int
 	var roverdHost string
 	var roverdUsername string
 	var roverdPassword string
 
+	//
+	// CLI commands
+	//
+	var rootCmd = &cobra.Command{
+		Use:   "roverctl",
+		Short: "CLI to manage a Rover",
+		Long:  "A command line interface to manage a Rover",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check if Docker is running
+			cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			if err != nil {
+				return fmt.Errorf("failed to initialize Docker client: %v", err)
+			}
+			_, err = cli.Ping(context.Background())
+			if err != nil {
+				return fmt.Errorf("Docker daemon not reachable: %v", err)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			conn, err := prechecks(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
+			if err != nil {
+				return err
+			}
+
+			//
+			// Check what version roverd is running on the Rover
+			//
+
+			fmt.Print("Connecting to Rover...\n")
+			api := conn.ToApiClient()
+			res, _, err := api.HealthAPI.StatusGet(
+				context.Background(),
+			).Execute()
+			if err != nil {
+				fmt.Printf("failed to connect to Rover: %v", err)
+				return nil
+			}
+			fmt.Printf("Rover is running roverd version %s\n", res.Version)
+
+			//
+			// Find out if there is a matching roverctl-web version
+			//
+
+			// Initialize Docker client
+			dc, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			if err != nil {
+				return fmt.Errorf("failed to create Docker client: %v", err)
+			}
+			ctx := context.Background()
+			dc.NegotiateAPIVersion(ctx)
+
+			// Register with GHCR
+			author := "vu-ase"
+			name := "roverctl-web"
+			// version := "v" + strings.TrimPrefix(res.Version, "v") //todo: enable again
+			version := "v0.6.0"
+			imageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, name, version)
+			ghcr := registry.AuthConfig{
+				ServerAddress: "ghcr.io",
+			}
+			encodedAuth, err := registry.EncodeAuthConfig(ghcr)
+			if err != nil {
+				return fmt.Errorf("failed to encode auth: %v", err)
+			}
+
+			// Check if image exists
+			_, err = dc.DistributionInspect(ctx, imageRef, encodedAuth)
+			if err != nil {
+				fmt.Printf("No matching roverctl-web image found for roverd version %s. Upgrade roverd to ensure compatibility.\n", version)
+				return nil
+			}
+			fmt.Printf("Found matching roverctl-web image, pulling...\n")
+			out, err := dc.ImagePull(ctx, imageRef, image.PullOptions{})
+			if err != nil {
+				fmt.Println("Error pulling image:", err)
+				return nil
+			}
+			defer out.Close()
+			io.Copy(os.Stdout, out) // Stream pull output to console
+
+			//
+			// Start the container
+			//
+
+			// Environment variables roverctl-web needs
+			envVars := []string{
+				"PUBLIC_ROVERD_HOST=" + conn.Host,
+				"PUBLIC_ROVERD_PORT=80",
+				"PUBLIC_ROVERD_USERNAME=" + conn.Username,
+				"PUBLIC_ROVERD_PASSWORD=" + conn.Password,
+				// todo: when debugging released
+				"PUBLIC_PASSTHROUGH_HOST=''",
+				"PUBLIC_PASSTHROUGH_PORT=7500",
+			}
+
+			// Port forwarding (host:container)
+			portBindings := nat.PortMap{
+				"3000/tcp": []nat.PortBinding{
+					{HostIP: "0.0.0.0", HostPort: "3000"},
+				},
+			}
+
+			// Create a container with the specified image and environment variables
+			resp, err := dc.ContainerCreate(ctx, &container.Config{
+				Image: imageRef,
+				Env:   envVars,
+				Tty:   true, // Keep terminal session interactive
+				ExposedPorts: nat.PortSet{
+					"3000/tcp": struct{}{}, // Expose container's port 80
+				},
+			}, &container.HostConfig{
+				PortBindings: portBindings, // Port forwarding
+			}, &network.NetworkingConfig{}, nil, "")
+			if err != nil {
+				fmt.Printf("failed to create container: %v", err)
+				return nil
+			}
+
+			// Start the container
+			if err := dc.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+				fmt.Printf("failed to start container: %v", err)
+				return nil
+			}
+
+			fmt.Println("Container started:", resp.ID)
+
+			// Set up signal handling (to stop container on Ctrl+C)
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+			go func() {
+				<-sigChan // Wait for Ctrl+C (SIGINT)
+				fmt.Println("\nStopping container...")
+
+				// Stop container with a timeout (graceful shutdown)
+				timeout := 10 // seconds
+				err := dc.ContainerStop(ctx, resp.ID, container.StopOptions{Timeout: &timeout})
+				if err != nil {
+					fmt.Printf("failed to stop container: %v\n", err)
+				} else {
+					fmt.Println("Container stopped successfully")
+				}
+				os.Exit(0)
+			}()
+
+			// Attach to container (to keep it running)
+			statusCh, errCh := dc.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+			select {
+			case err := <-errCh:
+				if err != nil {
+					fmt.Printf("container error: %v\n", err)
+				}
+			case <-statusCh:
+			}
+
+			fmt.Println("Container exited")
+			return nil
+		},
+	}
+	rootCmd.Flags().IntVarP(&roverIndex, "rover", "r", 0, "The index of the rover to upload to, between 1 and 20")
+	rootCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
+	rootCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
+	rootCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
+
 	// Upload command
+	var watch bool
 	var uploadCmd = &cobra.Command{
 		Use:   "upload <PATHS>",
 		Short: "Upload specified service folders to a Rover",
