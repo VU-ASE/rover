@@ -124,8 +124,8 @@ func run() error {
 			// Register with GHCR
 			author := "vu-ase"
 			name := "roverctl-web"
-			// version := "v" + strings.TrimPrefix(res.Version, "v")
-			version := "v0.6.0"
+			version := "v" + strings.TrimPrefix(res.Version, "v")
+
 			imageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, name, version)
 			ptImageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, "passthrough", version) // passthrough for debugging
 			ghcr := registry.AuthConfig{
