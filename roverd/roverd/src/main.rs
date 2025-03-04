@@ -114,9 +114,17 @@ async fn auth(
     Ok(response)
 }
 
+fn is_not_root() -> bool {
+    users::get_current_uid() != 0
+}
+
 /// Entry of program, initializes logging and constructs app state used by axum router.
 #[tokio::main]
 async fn main() -> Result<(), error::Error> {
+    if is_not_root() {
+        panic!("roverd must be run with root privilieges");
+    }
+
     log::init();
     info!("logging initialized");
 

@@ -68,6 +68,21 @@
 					{$connectionStore.error}
 				</p>
 			{/if}
+		{:else if !$connectionStore.server}
+			<!-- Spinner -->
+			<div class="flex space-x-4 items-center">
+				<Circle size="20" color={styles.colors.primary} unit="px" duration="1s" />
+				<p class="text-gray-200">Connecting to passthrough server</p>
+			</div>
+		{:else}
+			<!-- Error Warning -->
+			<div
+				class="flex space
+			-x-4 items-center"
+			>
+				<CloseCircle class="text-red-500 text-2xl" />
+				<p class="text-red-500 font-bold">Failed to connect</p>
+			</div>
 		{/if}
 	</div>
 </div>

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"slices"
 	"time"
 
 	"github.com/VU-ASE/rover/roverctl/src/openapi"
@@ -22,11 +21,11 @@ import (
 var connectionsFileName = LocalConfigDir() + "/connections.yaml"
 
 type RoverConnection struct {
-	Name     string             `yaml:"name"`
-	Host     string             `yaml:"host"`
-	Username string             `yaml:"username"`
-	Password string             `yaml:"password"`
-	client   *openapi.APIClient // to be used to communicate with the roverd endpoint
+	Identifier string             `yaml:"identifier"`
+	Host       string             `yaml:"host"`
+	Username   string             `yaml:"username"`
+	Password   string             `yaml:"password"`
+	client     *openapi.APIClient // to be used to communicate with the roverd endpoint
 }
 
 // An overview of all the available connections, as is written to the configuration file
@@ -59,15 +58,6 @@ func ReadConnections() (RoverConnections, error) {
 	return connections, err
 }
 
-func (c RoverConnections) GetActive() *RoverConnection {
-	for _, connection := range c.Available {
-		if connection.Name == c.Active {
-			return &connection
-		}
-	}
-	return nil
-}
-
 func (c RoverConnections) Save() error {
 	// Marshal the connections to YAML
 	content, err := yaml.Marshal(c)
@@ -77,55 +67,6 @@ func (c RoverConnections) Save() error {
 
 	// Write the file, overwriting the existing one
 	return os.WriteFile(connectionsFileName, content, 0644)
-}
-
-func (c RoverConnections) Add(new RoverConnection) RoverConnections {
-	// If a connection with the same name already exists, remove it
-	c.Available = slices.DeleteFunc(c.Available, func(c RoverConnection) bool {
-		return c.Name == new.Name
-	})
-
-	c.Available = append(c.Available, new)
-	c.Active = new.Name
-	return c
-}
-
-func (c RoverConnections) Get(name string) *RoverConnection {
-	for _, connection := range c.Available {
-		if connection.Name == name {
-			return &connection
-		}
-	}
-	return nil
-}
-
-func (c RoverConnections) Remove(name string) RoverConnections {
-	// Find the connection to remove
-	c.Available = slices.DeleteFunc(c.Available, func(c RoverConnection) bool {
-		return c.Name == name
-	})
-	// Set the active connection to the first one in the list
-	if len(c.Available) > 0 {
-		c.Active = c.Available[0].Name
-	}
-	return c
-}
-
-func (c RoverConnections) SetActive(name string) RoverConnections {
-	// Check if the connection exists
-	found := false
-	for _, c := range c.Available {
-		if c.Name == name {
-			found = true
-			break
-		}
-	}
-
-	if found {
-		c.Active = name
-	}
-
-	return c
 }
 
 // Convert the RoverConnection to an SSH connection object

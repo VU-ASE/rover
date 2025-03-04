@@ -9,8 +9,8 @@ permissions:
     packages: write
 
 env:
-    ROVERCTL_WEB_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/roverctl-web
-    PASSTHROUGH_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/passthrough
+    ROVERCTL_WEB_IMAGE_NAME: ghcr.io/vu-ase/roverctl-web
+    PASSTHROUGH_IMAGE_NAME: ghcr.io/vu-ase/passthrough
 
 jobs:
     build-roverctl:
@@ -51,7 +51,7 @@ jobs:
               run: |
                   BUILD_DIR=../bin/
                   BINARY_NAME=roverctl
-                  LDFLAGS="-X 'github.com/VU-ASE/rover/roverctl/src/views.version=${VERSION}'"
+                  LDFLAGS="-X 'github.com/VU-ASE/rover/roverctl/src/views/info.version=${VERSION}'"
                   mkdir -p $BUILD_DIR
 
                   # Build for macOS Intel
@@ -137,6 +137,7 @@ jobs:
                   VERSION: ${{ env.VERSION }}
               working-directory: roverctl-web
               run: |
+                  ls
                   docker buildx build \
                     --platform linux/${{ matrix.arch }} \
                     --tag $ROVERCTL_WEB_IMAGE_NAME:${VERSION}-${{ matrix.arch }} \

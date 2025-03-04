@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.7.0](https://github.com/VU-ASE/rover/compare/v0.6.0...v0.7.0) (2025-03-03)
+
+
+### Features
+
+* CLI approach to roverctl ([bb78304](https://github.com/VU-ASE/rover/commit/bb78304cf2c6fcda4b2ce95bba51fcd183ee6ce3))
+* dangers page ([a296ad3](https://github.com/VU-ASE/rover/commit/a296ad3ccb2d682d7a881c057d5a60aec36a9888))
+* info target ([0bc9cb0](https://github.com/VU-ASE/rover/commit/0bc9cb0ecfd0d6ffe2aac31c12717839d7ede73f))
+* roverctl-web startup through docker ([e3ca9a5](https://github.com/VU-ASE/rover/commit/e3ca9a54be65233a5f7a8f8fa8b915c9d042b724))
+* start roverctl-web container ([9329015](https://github.com/VU-ASE/rover/commit/9329015b9cb86a8db86bc756052327fdf170785e))
+* update target ([0f3cc2a](https://github.com/VU-ASE/rover/commit/0f3cc2a340b5a78a3c04fc363941608fa9622613))
+
+## [0.6.0](https://github.com/VU-ASE/rover/compare/v0.5.1...v0.6.0) (2025-03-03)
+
+
+### Features
+
+* add passthrough back ([e07dc70](https://github.com/VU-ASE/rover/commit/e07dc7073c6b63dd9ed1c9894a11df2127e7d23c))
+
+
+### Bug Fixes
+
+* rename passthrough to appropriate folder ([5c1d41e](https://github.com/VU-ASE/rover/commit/5c1d41e8f3a1bb3be425841ede4c9a80fe2c2861))
+* roverd unclosed delimiter ([17d8e95](https://github.com/VU-ASE/rover/commit/17d8e95a9b322a205ffe46c5dd367459f59c9aef))
+
+## [0.5.1](https://github.com/VU-ASE/rover/compare/v0.5.0...v0.5.1) (2025-03-03)
+
+
+### Bug Fixes
+
+* use lowercase for GHCR tag ([e62a583](https://github.com/VU-ASE/rover/commit/e62a58302e17c7ca9739349b60fc654cce7f7da3))
+
 ## [0.5.0](https://github.com/VU-ASE/rover/compare/v0.4.1...v0.5.0) (2025-03-03)
 
 

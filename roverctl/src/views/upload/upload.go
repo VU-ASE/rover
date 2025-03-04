@@ -1,4 +1,4 @@
-package views
+package view_upload
 
 import (
 	"archive/zip"
@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"github.com/VU-ASE/rover/roverctl/src/state"
 	"github.com/VU-ASE/rover/roverctl/src/style"
 	"github.com/VU-ASE/rover/roverctl/src/tui"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/radovskyb/watcher"
@@ -26,12 +26,10 @@ import (
 
 var mutex sync.Mutex = sync.Mutex{}
 
-type ServicesSyncPage struct {
-	// To select an action to perform with this utility
-	// actions list.Model // actions you can perform when connected to a Rover
-	// help    help.Model // to display a help footer
-	// Is the cwd a service directory?
-	isServiceDir  bool
+type model struct {
+	rover         configuration.RoverConnection                        // The rover to upload to
+	watch         bool                                                 // Whether to watch for changes
+	isServiceDir  bool                                                 // Is the cwd a service directory?
 	uploading     map[string]*tui.Action[openapi.FetchPost200Response] // map of file paths to upload responses
 	watchers      map[string]*tui.Action[bool]                         // map of file paths to watcher actions
 	services      map[string]utils.ServiceInformation                  // map of file paths to service information
@@ -41,12 +39,8 @@ type ServicesSyncPage struct {
 	cwd           string
 }
 
-func NewServicesSyncPage(paths []string) ServicesSyncPage {
-	// Is there already a service.yaml file in the current directory?
-	// _, err := os.Stat("./service.yaml")
-
+func New(rover configuration.RoverConnection, paths []string, watch bool) model {
 	// Actions
-
 	uploading := make(map[string]*tui.Action[openapi.FetchPost200Response])
 	services := make(map[string]utils.ServiceInformation)
 	watchers := make(map[string]*tui.Action[bool])
@@ -74,7 +68,7 @@ func NewServicesSyncPage(paths []string) ServicesSyncPage {
 	}
 
 	sp := spinner.New()
-	model := ServicesSyncPage{
+	model := model{
 		isServiceDir:  true,
 		watchDebounce: 500 * time.Millisecond,
 		spinner:       sp,
@@ -83,12 +77,14 @@ func NewServicesSyncPage(paths []string) ServicesSyncPage {
 		cwd:           cwd,
 		paths:         paths,
 		watchers:      watchers,
+		watch:         watch,
+		rover:         rover,
 	}
 
 	return model
 }
 
-func (m ServicesSyncPage) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	sequence := make([]tea.Cmd, 0)
 	sequence = append(sequence, m.spinner.Tick)
 	for path := range m.uploading {
@@ -100,7 +96,7 @@ func (m ServicesSyncPage) Init() tea.Cmd {
 	)
 }
 
-func (m ServicesSyncPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -121,12 +117,12 @@ func (m ServicesSyncPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		act := m.uploading[msg.Name]
 		act.ProcessResult(msg)
 
-		if m.allUploadsDone() && !state.Get().Interactive {
+		if m.allUploadsDone() && !m.watch {
 			return m, tea.Quit
 		}
 
 		// Start watcher
-		if act.IsSuccess() && state.Get().Interactive {
+		if act.IsSuccess() && m.watch {
 			return m, m.watchChanges(msg.Name)
 		}
 
@@ -163,39 +159,22 @@ func (m ServicesSyncPage) Update(msg tea.Msg) (pageModel, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.keys().Retry):
-			actions := make([]tea.Cmd, 0)
-			for path := range m.uploading {
-				if m.uploading[path].IsError() {
-					actions = append(actions, m.uploadChanges(path))
-				}
-			}
-
-			return m, tea.Batch(actions...)
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, tea.Quit
 		}
 	}
 
 	return m, nil
 }
 
-func (m ServicesSyncPage) View() string {
+func (m model) View() string {
 	st := state.Get()
 	s := ""
-	if st.Interactive {
-		s = style.Title.Render("Upload service") + "\n\n"
-	}
 
 	if st.Config.Author == "" {
 		s += "Uh oh, " + style.Error.Render("roverctl was not initialized yet") + "!\n"
 		s += "To get started, just run " + style.Primary.Render("roverctl") + " and follow the instructions.\n"
-		return s
-	} else if len(st.RoverConnections.Available) == 0 || st.RoverConnections.GetActive() == nil {
-		s += "Uh oh, " + style.Error.Render("you did not connect to a Rover yet") + "!\n"
-		s += "To get started, just run " + style.Primary.Render("roverctl") + " and select " + style.Primary.Render("connect") + ".\n\n"
-
-		s += style.Gray.Render("   \"If you do not specify a Rover, I don't know where to upload to\"") + "\n"
-		s += style.Gray.Render("   - roverctl") + "\n\n"
 		return s
 	}
 
@@ -213,18 +192,13 @@ func (m ServicesSyncPage) View() string {
 
 		// Is this service defined?
 		info, ok := m.services[path]
-		details := strings.Split(st.RoverConnections.GetActive().Name, " ")
-		index := "Unidentified Rover"
-		if len(details) >= 1 {
-			index = "Rover " + details[1]
-		}
 
 		if !ok {
-			s += (pathStr) + " -> " + index + style.Gray.Render(" (unknown)") + "\n"
+			s += (pathStr) + " -> " + m.rover.Identifier + style.Gray.Render(" (unknown)") + "\n"
 			s += style.Warning.Render("✗ Not a valid service directory") + "\n\n"
 			continue
 		}
-		s += (pathStr) + " -> " + (index + style.Gray.Render(" (/home/debix/.rover/"+st.Config.Author+"/"+info.Name+"/"+info.Version+")")) + "\n"
+		s += (pathStr) + " -> " + (m.rover.Identifier + style.Gray.Render(" (/home/debix/.rover/"+st.Config.Author+"/"+info.Name+"/"+info.Version+")")) + "\n"
 
 		if act.IsLoading() {
 			s += style.Primary.Render(m.spinner.View()+" Uploading...") + "\n\n"
@@ -247,10 +221,6 @@ func (m ServicesSyncPage) View() string {
 
 			s += style.Success.Render("✓ Upload successful") + msg + "\n\n"
 		}
-	}
-
-	if m.allUploadsDone() && m.atLeastOneUploadSuccess() {
-		s += style.Bold.Render("tip:") + style.Gray.Render(" you can use your uploaded services by opening ") + style.Primary.Render("roverctl") + style.Gray.Render(" and selecting ") + style.Primary.Render("pipeline") + "\n"
 	}
 
 	return s
@@ -332,16 +302,11 @@ func createZipFromDirectory(zipPath, sourceDir string) error {
 }
 
 // Upload all collected changes to the Rover
-func (m ServicesSyncPage) uploadChanges(path string) tea.Cmd {
+func (m model) uploadChanges(path string) tea.Cmd {
 	act := m.uploading[path]
 	return tui.PerformAction(act, func() (*openapi.FetchPost200Response, error) {
 		mutex.Lock()
 		defer mutex.Unlock()
-
-		remote := state.Get().RoverConnections.GetActive()
-		if remote == nil {
-			return nil, fmt.Errorf("No active rover connection")
-		}
 		sourceDir := path
 
 		// Copy all files to a temp directory
@@ -376,7 +341,7 @@ func (m ServicesSyncPage) uploadChanges(path string) tea.Cmd {
 		defer zipFile.Close()
 
 		// Upload the zip file
-		api := remote.ToApiClient()
+		api := m.rover.ToApiClient()
 		req := api.ServicesAPI.UploadPost(
 			context.Background(),
 		)
@@ -395,7 +360,7 @@ func (m ServicesSyncPage) uploadChanges(path string) tea.Cmd {
 
 // Collect changes for a path, report true if there are changes
 // Upload all collected changes to the Rover
-func (m ServicesSyncPage) watchChanges(path string) tea.Cmd {
+func (m model) watchChanges(path string) tea.Cmd {
 	act, ok := m.watchers[path]
 	if !ok {
 		return nil
@@ -446,40 +411,8 @@ func (m ServicesSyncPage) watchChanges(path string) tea.Cmd {
 	})
 }
 
-func (m ServicesSyncPage) isQuitable() bool {
-	return true
-}
-
-func (m ServicesSyncPage) keys() utils.GeneralKeyMap {
-	st := state.Get()
-	kb := utils.NewGeneralKeyMap()
-
-	// Iterate over all uploading actions
-	if st.Config.Author != "" && len(st.RoverConnections.Available) > 0 && st.RoverConnections.GetActive() != nil && m.allUploadsDone() {
-		for path := range m.uploading {
-			if m.uploading[path].IsError() {
-				kb.Retry = key.NewBinding(
-					key.WithKeys("r"),
-					key.WithHelp("r", "retry"),
-				)
-			}
-		}
-	}
-	kb.Quit = key.NewBinding(
-		key.WithKeys("esc"),
-		key.WithHelp("esc", "quit"),
-	)
-
-	return kb
-}
-
-func (m ServicesSyncPage) previousPage() *pageModel {
-	var pageModel pageModel = NewStartPage()
-	return &pageModel
-}
-
 // Reports if all uploads are done (i.e. successful or failed, but not loading anymore)
-func (m ServicesSyncPage) allUploadsDone() bool {
+func (m model) allUploadsDone() bool {
 	for _, act := range m.uploading {
 		if !act.IsDone() {
 			return false
@@ -489,7 +422,7 @@ func (m ServicesSyncPage) allUploadsDone() bool {
 	return true
 }
 
-func (m ServicesSyncPage) atLeastOneUploadSuccess() bool {
+func (m model) atLeastOneUploadSuccess() bool {
 	for _, act := range m.uploading {
 		if act.IsSuccess() {
 			return true
