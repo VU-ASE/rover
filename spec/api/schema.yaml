@@ -770,6 +770,19 @@ paths:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
 
+  /emergency:
+    post:
+      tags:
+        - "Health"
+      summary: "Stops any running pipeline and emergency stops the rover."
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
 # Set global security requirement
 security:
   - BasicAuth: []

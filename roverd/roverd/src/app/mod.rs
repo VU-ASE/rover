@@ -876,6 +876,17 @@ impl App {
         Ok(())
     }
 
+    /// Spawns a process to emergency stop the rover
+    pub async fn emergency_stop_rover(&self) -> Result<(), Error> {
+        let mut emergency = Command::new("/home/debix/ase/bin/rover-reset");
+
+        match emergency.spawn() {
+            Ok(_) => (),
+            Err(e) => error!("unable to run emergency command: {}", e),
+        }
+        Ok(())
+    }
+
     pub async fn get_fqns(&self) -> Result<Vec<FullyQualifiedService>, Error> {
         let mut fqns = Vec::new();
         let rover_dir = Path::new(ROVER_DIR);
