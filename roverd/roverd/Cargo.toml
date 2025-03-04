@@ -1,6 +1,6 @@
 [package]
 name = "roverd"
-version = "11.11.11"
+version = "6.9.9"
 edition = "2021"
 rust-version = "1.76.0"
 build = "src/build.rs"
@@ -17,7 +17,12 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 rovervalidate = { version = "0.1.0", path = "../rovervalidate" }
 serde_yaml = "0.9.34"
-reqwest = { version = "0.12.9", features = ["multipart", "stream", "json", "native-tls-vendored"] }
+reqwest = { version = "0.12.9", features = [
+    "multipart",
+    "stream",
+    "json",
+    "native-tls-vendored",
+] }
 zip = "0.6.6"
 derive_more = "0.99.18"
 libc = "0.2.167"
@@ -30,4 +35,4 @@ sysinfo = "0.33.0"
 anyhow = "1.0.95"
 semver = "1.0.24"
 rand = "0.9.0"
-# nix = "0.29.0"
+users = "0.11.0"
