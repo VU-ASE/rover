@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/VU-ASE/rover/compare/v0.7.0...v0.7.1) (2025-03-04)
+
+
+### Bug Fixes
+
+* roverd early check for root ([451f7eb](https://github.com/VU-ASE/rover/commit/451f7eb4ab031fe82dc0d7b19e2a7377122a2e5f))
+
 ## [0.7.0](https://github.com/VU-ASE/rover/compare/v0.6.0...v0.7.0) (2025-03-03)
 
 
