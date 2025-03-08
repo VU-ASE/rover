@@ -11,11 +11,15 @@ import (
 	"syscall"
 
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
+	proxy "github.com/VU-ASE/rover/roverctl/src/proxy"
 	"github.com/VU-ASE/rover/roverctl/src/state"
+	style "github.com/VU-ASE/rover/roverctl/src/style"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
 	view_info "github.com/VU-ASE/rover/roverctl/src/views/info"
+
 	view_upload "github.com/VU-ASE/rover/roverctl/src/views/upload"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
@@ -71,7 +75,9 @@ func run() error {
 	//
 	// CLI commands
 	//
-	var debugMode bool
+	var debugMode bool         // enable proxy server and inject its IP into roverctl-web
+	var verbose bool           // show debug logs
+	var roverctlVersion string // force roverctl at a specific version
 	var rootCmd = &cobra.Command{
 		Use:   "roverctl",
 		Short: "CLI to manage a Rover",
@@ -94,20 +100,32 @@ func run() error {
 				return err
 			}
 
+			// If version is set, make sure it has the "v" prefix
+			if roverctlVersion != "" {
+				roverctlVersion = "v" + strings.TrimPrefix(roverctlVersion, "v")
+			}
+
 			//
 			// Check what version roverd is running on the Rover
 			//
 
-			fmt.Print("Connecting to Rover...\n")
-			api := conn.ToApiClient()
-			res, _, err := api.HealthAPI.StatusGet(
-				context.Background(),
-			).Execute()
-			if err != nil {
-				fmt.Printf("failed to connect to Rover: %v", err)
-				return nil
+			version := ""
+			if roverctlVersion == "" {
+				fmt.Print("Connecting to Rover to determine roverctl-web version to use...\n")
+				api := conn.ToApiClient()
+				res, _, err := api.HealthAPI.StatusGet(
+					context.Background(),
+				).Execute()
+				if err != nil {
+					fmt.Printf("Failed to connect to Rover: %v", err)
+					return nil
+				}
+				version = "v" + strings.TrimPrefix(res.Version, "v")
+				fmt.Printf("Rover is running roverd version %s\n", style.Success.Render(version))
+			} else {
+				fmt.Printf("Forcing roverctl-web to run at version %s\n", style.Success.Render(roverctlVersion))
+				version = roverctlVersion
 			}
-			fmt.Printf("Rover is running roverd version %s\n", res.Version)
 
 			//
 			// Find out if there is a matching roverctl-web version
@@ -124,10 +142,7 @@ func run() error {
 			// Register with GHCR
 			author := "vu-ase"
 			name := "roverctl-web"
-			version := "v" + strings.TrimPrefix(res.Version, "v")
-
 			imageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, name, version)
-			ptImageRef := fmt.Sprintf("ghcr.io/%s/%s:%s", author, "passthrough", version) // passthrough for debugging
 			ghcr := registry.AuthConfig{
 				ServerAddress: "ghcr.io",
 			}
@@ -139,15 +154,8 @@ func run() error {
 			// Check if image exists
 			_, err = dc.DistributionInspect(ctx, imageRef, encodedAuth)
 			if err != nil {
-				fmt.Printf("No matching roverctl-web image found for roverd version %s. Upgrade roverd to ensure compatibility.\n", version)
+				fmt.Printf("No matching roverctl-web image found for roverd version %s. Upgrade roverd to ensure compatibility or use the --force flag to use a specific version.\n", version)
 				return nil
-			}
-			if debugMode {
-				_, err = dc.DistributionInspect(ctx, ptImageRef, encodedAuth)
-				if err != nil {
-					fmt.Printf("No matching passthrough image found for roverd version %s. Upgrade roverd to ensure compatibility.\n", version)
-					return nil
-				}
 			}
 
 			// Pull roverctl-web
@@ -158,15 +166,7 @@ func run() error {
 				return nil
 			}
 			defer out.Close()
-			io.Copy(os.Stdout, out) // Stream pull output to console
-			if debugMode {
-				fmt.Printf("Found matching passthrough image, pulling...\n")
-				out, err = dc.ImagePull(ctx, ptImageRef, image.PullOptions{})
-				if err != nil {
-					fmt.Println("Error pulling image:", err)
-					return nil
-				}
-				defer out.Close()
+			if verbose {
 				io.Copy(os.Stdout, out) // Stream pull output to console
 			}
 
@@ -174,24 +174,26 @@ func run() error {
 			// Start the container(s)
 			//
 
-			passthroughHost := ""
+			proxyHost := ""
 			if debugMode {
-				passthroughHost, err = utils.GetLocalIP()
+				proxyHost, err = utils.GetLocalIP()
 				if err != nil {
 					fmt.Println("Failed to get local IP necessary for debugging:", err)
 					return nil
 				}
-				fmt.Printf("Using local IP %s for debugging\n", passthroughHost)
+				fmt.Printf("Using local IP %s for debugging\n", proxyHost)
 			}
 
+			proxyHttpPort := 7500
+			proxyUdpPort := 40000
 			// Environment variables roverctl-web needs
 			envVars := []string{
 				"PUBLIC_ROVERD_HOST=" + conn.Host,
 				"PUBLIC_ROVERD_PORT=80",
 				"PUBLIC_ROVERD_USERNAME=" + conn.Username,
 				"PUBLIC_ROVERD_PASSWORD=" + conn.Password,
-				"PUBLIC_PASSTHROUGH_HOST=" + passthroughHost,
-				"PUBLIC_PASSTHROUGH_PORT=7500",
+				"PUBLIC_PASSTHROUGH_HOST=" + proxyHost,
+				"PUBLIC_PASSTHROUGH_PORT=" + fmt.Sprintf("%d", proxyHttpPort),
 			}
 
 			// Port forwarding (host:container)
@@ -217,59 +219,20 @@ func run() error {
 				return nil
 			}
 
+			// Run the proxy server
+			if debugMode {
+				go proxy.Run(proxyHost, proxyUdpPort, false, verbose)
+			}
+
 			// Start the container
 			if err := dc.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 				fmt.Printf("failed to start roverctl-web container: %v", err)
 				return nil
 			}
 
-			passthroughContainerId := ""
-			if debugMode {
-				// Environment variables passthrough needs
-				ptEnvVars := []string{
-					"ASE_SERVER_IP=" + passthroughHost,
-				}
-
-				// Port forwarding (host:container)
-				ptPortBindings := nat.PortMap{
-					"7500/tcp": []nat.PortBinding{
-						{HostIP: "0.0.0.0", HostPort: "7500"},
-					},
-					"40000/udp": []nat.PortBinding{
-						{HostIP: "0.0.0.0", HostPort: "4000"},
-					},
-				}
-
-				// Create a container with the specified image and environment variables
-				ptResp, err := dc.ContainerCreate(ctx, &container.Config{
-					Image: ptImageRef,
-					Env:   ptEnvVars,
-					Tty:   true, // Keep terminal session interactive
-					ExposedPorts: nat.PortSet{
-						"7500/tcp": struct{}{}, // Expose container's port 80
-						"4000/udp": struct{}{}, // Expose container's port 80
-					},
-				}, &container.HostConfig{
-					PortBindings: ptPortBindings, // Port forwarding
-				}, &network.NetworkingConfig{}, nil, "")
-				if err != nil {
-					fmt.Printf("failed to create passthrough container: %v", err)
-					return nil
-				}
-
-				// Start the container
-				if err := dc.ContainerStart(ctx, ptResp.ID, container.StartOptions{}); err != nil {
-					fmt.Printf("failed to start passthrough container: %v", err)
-					return nil
-				}
-				passthroughContainerId = ptResp.ID
-			}
-
-			fmt.Println("Roverctl-web started:", resp.ID)
-			if passthroughContainerId != "" {
-				fmt.Println("Passthrough container started:", passthroughContainerId)
-			}
-			fmt.Println("Visit http://localhost:3000 to control this Rover!")
+			url := "http://localhost:3000"
+			fmt.Printf("Visit %s to control this Rover!\n", style.Primary.Render(url))
+			utils.OpenBrowser(url)
 
 			// Set up signal handling (to stop container on Ctrl+C)
 			sigChan := make(chan os.Signal, 1)
@@ -285,20 +248,9 @@ func run() error {
 				if err != nil {
 					fmt.Printf("failed to stop roverctl-web container: %v\n", err)
 				} else {
-					fmt.Println("Roverctl-web container stopped successfully")
+					fmt.Println("roverctl-web container stopped successfully")
 				}
 
-				if passthroughContainerId != "" {
-					fmt.Println("Stopping passthrough container...")
-					// Stop container with a timeout (graceful shutdown)
-					timeout := 10 // seconds
-					err := dc.ContainerStop(ctx, passthroughContainerId, container.StopOptions{Timeout: &timeout})
-					if err != nil {
-						fmt.Printf("failed to stop passthrough container: %v\n", err)
-					} else {
-						fmt.Println("Passthrough container stopped successfully")
-					}
-				}
 				os.Exit(0)
 			}()
 
@@ -307,12 +259,12 @@ func run() error {
 			select {
 			case err := <-errCh:
 				if err != nil {
-					fmt.Printf("container error: %v\n", err)
+					fmt.Printf("roverctl-web container error: %v\n", err)
 				}
 			case <-statusCh:
 			}
 
-			fmt.Println("Container exited")
+			fmt.Println("roverctl-web container exited")
 			return nil
 		},
 	}
@@ -321,6 +273,8 @@ func run() error {
 	rootCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	rootCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 	rootCmd.Flags().BoolVarP(&debugMode, "debug", "d", false, "Enable debug/tuning mode")
+	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show verbose output")
+	rootCmd.Flags().StringVarP(&roverctlVersion, "force", "f", "", "Force roverctl-web to run at a specific version")
 
 	// Upload command
 	var watch bool

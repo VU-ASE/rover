@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	livestreamconfig "vu/ase/streamserver/src/config"
-	"vu/ase/streamserver/src/peerconnection"
-	"vu/ase/streamserver/src/state"
+	config "github.com/VU-ASE/rover/roverctl/src/proxy/config"
+	peerconnection "github.com/VU-ASE/rover/roverctl/src/proxy/peerconnection"
+	state "github.com/VU-ASE/rover/roverctl/src/proxy/state"
 
 	pb_control "github.com/VU-ASE/rovercom/packages/go/control"
 	rtc "github.com/VU-ASE/roverrtc/src"
@@ -35,7 +35,7 @@ func OnClientSDPReceived(sdp rtc.RequestSDP, state *state.ServerState) ([]byte, 
 		return nil, err
 	}
 
-	log.Info().Msg("Received SDP offer from client")
+	log.Debug().Msg("Received SDP offer from client")
 
 	// Register data channel creation and other handlers
 	OnClientSDPReturned(rtc, state)
@@ -64,7 +64,7 @@ func OnClientICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, 
 		return nil, err
 	}
 
-	log.Info().Msg("Received ICE candidates from client")
+	log.Debug().Msg("Received ICE candidates from client")
 
 	// Return all candidates to client
 	payload, err := json.Marshal(rtc.GetAllLocalCandidates())
@@ -88,9 +88,9 @@ func OnClientSDPReturned(r *rtc.RTC, state *state.ServerState) {
 			log.Debug().Str("label", d.Label()).Msg("Client channel was opened for communication")
 
 			switch d.Label() {
-			case livestreamconfig.ControlChannelLabel:
+			case config.ControlChannelLabel:
 				registerClientControlMessage(r, d, state)
-			case livestreamconfig.DataChannelLabel:
+			case config.DataChannelLabel:
 				registerClientDataMessage(r, d, state)
 			default:
 				log.Warn().Str("label", d.Label()).Msg("Unknown client channel was opened for communication")
@@ -104,7 +104,7 @@ func onClientConnectionChange(client *rtc.RTC, state *state.ServerState) func(we
 	log := client.Log()
 
 	return func(s webrtc.PeerConnectionState) {
-		log.Info().Str("newState", s.String()).Msg("Client connection changed to new state")
+		log.Debug().Str("newState", s.String()).Msg("Client connection changed to new state")
 
 		if s == webrtc.PeerConnectionStateDisconnected || s == webrtc.PeerConnectionStateClosed || s == webrtc.PeerConnectionStateFailed {
 			// Remove the client from the list of connected clients
@@ -113,7 +113,7 @@ func onClientConnectionChange(client *rtc.RTC, state *state.ServerState) func(we
 		} else if s == webrtc.PeerConnectionStateConnected {
 			// Check if there already is a car connected, and send its car state if so
 			state.Lock.RLock()
-			car := state.ConnectedPeers.Get(livestreamconfig.CarId)
+			car := state.ConnectedPeers.Get(config.CarId)
 			state.Lock.RUnlock()
 			if car == nil {
 				return
@@ -161,7 +161,7 @@ func registerClientDataMessage(client *rtc.RTC, dc *webrtc.DataChannel, state *s
 		log.Debug().Int("length", len(msg.Data)).Msg("Forwarding data: client --> rover")
 
 		// Thank you for the message, we just forward it to the car who can parse it and act accordingly
-		car := state.ConnectedPeers.Get(livestreamconfig.CarId)
+		car := state.ConnectedPeers.Get(config.CarId)
 		if car == nil {
 			// No car to forward to, let the client know
 			notification := pb_control.ControlError{
