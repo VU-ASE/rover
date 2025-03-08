@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/VU-ASE/rover/compare/v0.9.0...v0.10.0) (2025-03-08)
+
+
+### Features
+
+* roverctl service init endpoint ([b8a9027](https://github.com/VU-ASE/rover/commit/b8a90274bc33f681fc5eaf97cb8adf04b828122f))
+
 ## [0.9.0](https://github.com/VU-ASE/rover/compare/v0.8.0...v0.9.0) (2025-03-08)
 
 
