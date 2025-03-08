@@ -11,6 +11,7 @@ import (
 	command_author "github.com/VU-ASE/rover/roverctl/src/commands/author"
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
 	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
+	command_pipeline "github.com/VU-ASE/rover/roverctl/src/commands/pipeline"
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
 	command_update "github.com/VU-ASE/rover/roverctl/src/commands/update"
 	command_upload "github.com/VU-ASE/rover/roverctl/src/commands/upload"
@@ -30,12 +31,13 @@ func run() error {
 	// Build the CLI and commands
 	//
 	rootCmd := commands.NewRoot()
-	command_ssh.Add(rootCmd)
-	command_update.Add(rootCmd)
-	command_info.Add(rootCmd)
+	command_pipeline.Add(rootCmd)
 	command_upload.Add(rootCmd)
-	command_author.Add(rootCmd)
 	command_logs.Add(rootCmd)
+	command_ssh.Add(rootCmd)
+	command_info.Add(rootCmd)
+	command_author.Add(rootCmd)
+	command_update.Add(rootCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {
