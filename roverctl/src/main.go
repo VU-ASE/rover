@@ -8,6 +8,7 @@ import (
 	"github.com/VU-ASE/rover/roverctl/src/utils"
 
 	commands "github.com/VU-ASE/rover/roverctl/src/commands"
+	command_author "github.com/VU-ASE/rover/roverctl/src/commands/author"
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
 	command_update "github.com/VU-ASE/rover/roverctl/src/commands/update"
@@ -31,6 +32,7 @@ func run() error {
 	command_update.Add(rootCmd)
 	command_info.Add(rootCmd)
 	command_upload.Add(rootCmd)
+	command_author.Add(rootCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {

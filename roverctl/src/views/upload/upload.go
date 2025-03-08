@@ -173,8 +173,8 @@ func (m model) View() string {
 	s := ""
 
 	if st.Config.Author == "" {
-		s += "Uh oh, " + style.Error.Render("roverctl was not initialized yet") + "!\n"
-		s += "To get started, just run " + style.Primary.Render("roverctl") + " and follow the instructions.\n"
+		s += "Uh oh, " + style.Error.Render("roverctl does not know who you are yet") + "!\n"
+		s += "To get started, just run " + style.Primary.Render("roverctl author --set <NAME>") + " and try again.\n"
 		return s
 	}
 
