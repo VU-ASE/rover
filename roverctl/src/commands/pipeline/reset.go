@@ -1,4 +1,4 @@
-package command_logs
+package command_pipeline
 
 import (
 	"context"
@@ -6,13 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	strings "strings"
-
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
+	openapi "github.com/VU-ASE/rover/roverctl/src/openapi"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
-func Add(rootCmd *cobra.Command) {
+func addReset(rootCmd *cobra.Command) {
 	// General flags
 	var roverIndex int
 	var roverdHost string
@@ -20,51 +19,37 @@ func Add(rootCmd *cobra.Command) {
 	var roverdPassword string
 	var lines int
 
-	// logs command
+	// pipeline command
 	var infoCmd = &cobra.Command{
-		Use:   "logs <author> <name> <version>",
-		Short: "View logs for a fully qualified service",
-		Long:  `View a specified number of log lines from a service fully qualified by its author, name and version`,
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 3 {
-				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> <version>")
-			}
-			return nil
-		},
+		Use:   "reset",
+		Short: "Reset the currently active pipeline",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
 				return er
 			}
-
-			if len(args) != 3 {
-				return nil // already errored
-			}
-
 			api := conn.ToApiClient()
 
-			author := args[0]
-			name := args[1]
-			version := args[2]
-			version = strings.TrimPrefix(version, "v")
-
-			logs := api.PipelineAPI.LogsAuthorNameVersionGet(
+			// Try to stop first (best effort)
+			stop := api.PipelineAPI.PipelineStopPost(
 				context.Background(),
-				author,
-				name,
-				version,
 			)
-			logs = logs.Lines(int32(lines))
+			_, _ = stop.Execute()
+			// Save an empty pipeline
+			pipeline := api.PipelineAPI.PipelinePost(
+				context.Background(),
+			)
+			pipeline = pipeline.PipelinePostRequestInner(
+				[]openapi.PipelinePostRequestInner{},
+			)
 
-			res, http, err := logs.Execute()
+			http, err := pipeline.Execute()
 			if err != nil {
-				fmt.Printf("Could not fetch logs: %s\n", utils.ParseHTTPError(err, http))
+				fmt.Printf("Could not reset pipeline: %s\n", utils.ParseHTTPError(err, http))
 				return nil
 			}
 
-			for _, line := range res {
-				fmt.Println(line)
-			}
+			fmt.Printf("Pipeline reset\n")
 			return nil
 		},
 	}

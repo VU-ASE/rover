@@ -12,6 +12,7 @@ import (
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
 	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
 	command_pipeline "github.com/VU-ASE/rover/roverctl/src/commands/pipeline"
+
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
 	command_update "github.com/VU-ASE/rover/roverctl/src/commands/update"
 	command_upload "github.com/VU-ASE/rover/roverctl/src/commands/upload"
