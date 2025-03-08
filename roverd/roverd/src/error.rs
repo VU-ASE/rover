@@ -67,8 +67,9 @@ pub enum Error {
     #[from]
     Http(axum::http::StatusCode),
 
-    // #[from]
-    // Io(std::io::Error),
+    #[from]
+    Io(std::io::Error),
+
     #[from]
     Reqwest(reqwest::Error),
 
