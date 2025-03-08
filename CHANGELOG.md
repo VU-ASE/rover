@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.0](https://github.com/VU-ASE/rover/compare/v0.7.2...v0.8.0) (2025-03-08)
+
+
+### Features
+
+* merge passthrough into roverctl, debugging now works ([8f6c88f](https://github.com/VU-ASE/rover/commit/8f6c88f43323856971c7f6f129c47a0d23ba3a1e))
+
+
+### Bug Fixes
+
+* remove unused github action jobs ([04ef005](https://github.com/VU-ASE/rover/commit/04ef0051fa635a52e6fbc521c6ca915b58c1423e))
+
 ## [0.7.2](https://github.com/VU-ASE/rover/compare/v0.7.1...v0.7.2) (2025-03-04)
 
 
