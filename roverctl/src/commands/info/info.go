@@ -1,4 +1,4 @@
-package command_ssh
+package command_info
 
 import (
 	"github.com/spf13/cobra"

@@ -13,7 +13,7 @@ import (
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
-func Add(rootCmd *cobra.Command) {
+func addUpdateRoverd(rootCmd *cobra.Command) {
 	// General flags
 	var roverIndex int
 	var roverdHost string
@@ -23,9 +23,9 @@ func Add(rootCmd *cobra.Command) {
 	// Self-update command
 	var version string
 	var selfUpdateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Self-update roverctl and roverd",
-		Long:  `Update roverctl and roverd to the latest version, or the version specified.`,
+		Use:   "roverd",
+		Short: "Self-update roverd",
+		Long:  `Update roverd to the latest version, or the version specified.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If the user specifies a version, update to that version
 			// otherwise check the latest version of both roverctl and roverd
@@ -39,7 +39,7 @@ func Add(rootCmd *cobra.Command) {
 				version = update.LatestVersion
 			}
 			version = "v" + strings.TrimPrefix(version, "v")
-			fmt.Printf("Updating roverd and roverctl to version %s\n", style.Success.Render(version))
+			fmt.Printf("Updating roverd to version %s...\n", style.Success.Render(version))
 
 			// Update roverd
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
@@ -54,7 +54,6 @@ func Add(rootCmd *cobra.Command) {
 				Version: version,
 			})
 
-			fmt.Printf("Updating roverd...\n")
 			http, err := update.Execute()
 			if err != nil {
 				fmt.Printf("Could not update roverd: %s\n", utils.ParseHTTPError(err, http))
@@ -62,9 +61,6 @@ func Add(rootCmd *cobra.Command) {
 			}
 			fmt.Println("The roverd update was scheduled. This might take a while to complete. Do not interrupt the process.")
 
-			// Update roverctl
-			fmt.Printf("Updating roverctl...\n")
-			utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s " + version)
 			return nil
 		},
 	}
@@ -73,7 +69,5 @@ func Add(rootCmd *cobra.Command) {
 	selfUpdateCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	selfUpdateCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 	selfUpdateCmd.Flags().StringVarP(&version, "version", "v", "", "The version tag to update/downgrade to (e.g. v0.1.0)")
-	addUpdateRoverctl(selfUpdateCmd)
-	addUpdateRoverd(selfUpdateCmd)
 	rootCmd.AddCommand(selfUpdateCmd)
 }

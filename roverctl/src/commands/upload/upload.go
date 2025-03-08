@@ -1,4 +1,4 @@
-package command_ssh
+package command_upload
 
 import (
 	"fmt"
