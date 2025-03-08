@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0](https://github.com/VU-ASE/rover/compare/v0.8.0...v0.9.0) (2025-03-08)
+
+
+### Features
+
+* author command ([6ead41c](https://github.com/VU-ASE/rover/commit/6ead41cdbfb58ab0ce484cb627ae01bae0223da1))
+* logs endpoint ([f1b3077](https://github.com/VU-ASE/rover/commit/f1b3077fb46bcc396dc9a7c1d32c96b8a66537d7))
+* pipeline enable/disable endpoints ([148fb7e](https://github.com/VU-ASE/rover/commit/148fb7eb16da42ae3af8ce568a767419260d9704))
+* pipeline endpoint ([d0beca5](https://github.com/VU-ASE/rover/commit/d0beca50b2d01d0cedaada7833edd6a8bcba1053))
+* services endpoint ([a5e11a4](https://github.com/VU-ASE/rover/commit/a5e11a46ca7d8c5a20345a356f32943e86ba50f0))
+* update endpoints ([e1422b4](https://github.com/VU-ASE/rover/commit/e1422b40ed2e25e98eb094bc088154d896a28caf))
+
+
+### Bug Fixes
+
+* roverd log lines ([97adc00](https://github.com/VU-ASE/rover/commit/97adc0044f551ce2aa9ea1e7db9beeae24e43ab7))
+* service yamls can now specify a bash command for run ([6022928](https://github.com/VU-ASE/rover/commit/60229285d294b95698faef9958704e3d8c81ff5e))
+
 ## [0.8.0](https://github.com/VU-ASE/rover/compare/v0.7.2...v0.8.0) (2025-03-08)
 
 
