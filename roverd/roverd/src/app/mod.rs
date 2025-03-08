@@ -11,11 +11,10 @@ use state::{Dormant, Operating, RoverState};
 use std::cmp;
 use std::collections::HashMap;
 use std::fs::File;
-use std::fs::{self, remove_file, Permissions};
+use std::fs::{self, remove_file};
 use std::io::{BufRead, BufReader, Write};
 use std::io::{Read, Seek, SeekFrom};
 use std::marker::PhantomData;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
@@ -26,7 +25,6 @@ use tokio::select;
 use tokio::sync::{broadcast, broadcast::Sender, Mutex, RwLock};
 use tracing::{error, info, warn};
 
-use crate::command::ParsedCommand;
 use crate::error::Error;
 use crate::util::*;
 use crate::{constants::*, time_now};
@@ -590,23 +588,19 @@ impl App {
             );
             let stderr = Stdio::from(log_file);
 
-            let parsed_command = ParsedCommand::try_from(&p.command)?;
+            let user_run_command = format!("cd {} && {}", p.fq.dir(), &p.command);
 
-            let full_program_path = format!("{}/{}", p.fq.dir(), &parsed_command.program);
-            info!("executing {:?}", full_program_path);
-
-            fs::set_permissions(full_program_path.clone(), Permissions::from_mode(0o755))
-                .with_context(|| {
-                    format!("failed to set permissions for {:?}", full_program_path)
-                })?;
-
-            let mut command = Command::new(parsed_command.program);
+            let mut command = Command::new("sudo");
             command
-                .args(parsed_command.arguments)
+                .args(["-u", "debix", "-E", "bash", "-c", user_run_command.as_str()])
                 .env(ENV_KEY, p.injected_env.clone())
+                .process_group(0)
                 .current_dir(p.fq.dir())
                 .stdout(stdout)
                 .stderr(stderr);
+
+            info!("executing: 'sudo -u debix -E bash -c {}", user_run_command);
+
             match command.spawn() {
                 Ok(child) => {
                     p.status = ProcessStatus::Running;
@@ -693,8 +687,10 @@ impl App {
                         // We have been sent a terminate signal, so end the process
 
                         // Update the pipeline's status.
-                        let mut stats = stats_clone.write().await;
-                        stats.status = PipelineStatus::Startable;
+                        {
+                            let mut stats = stats_clone.write().await;
+                            stats.status = PipelineStatus::Startable;
+                        }
 
                         if let Some(id) = child.id() {
                             info!("terminating {} pid ({})", spawned.name, id);
@@ -704,8 +700,7 @@ impl App {
                         }
 
                         // Wait a short while before checking if child still exists
-                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
-
+                        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 
                         let mut procs_guard = procs_clone.write().await;
                         if let Some(proc) = procs_guard.iter_mut().find(|p| p.fq == spawned.fq) {

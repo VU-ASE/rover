@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use rand::distr::{Alphanumeric, SampleString};
 use reqwest::Client;
 use std::fs::{File, OpenOptions};
-use std::os::unix::fs::chown;
+use std::os::unix::fs::{chown, PermissionsExt};
 use std::time::Duration;
 use std::{
     fs,
@@ -21,6 +21,40 @@ use crate::error::Error;
 use crate::service::FqBuf;
 
 use crate::constants::*;
+
+/// Makes all files within a directory and its subdirectories executable.
+fn make_files_executable<P: AsRef<Path>>(dir_path: P) -> Result<()> {
+    let dir_path = dir_path.as_ref();
+
+    // Check if path exists and is a directory
+    if !dir_path.exists() || !dir_path.is_dir() {
+        return Err(anyhow::anyhow!(
+            "Path is not a valid directory: {:?}",
+            dir_path
+        ));
+    }
+
+    // Process all entries in the directory
+    for entry in fs::read_dir(dir_path)
+        .with_context(|| format!("Failed to read directory: {:?}", dir_path))?
+    {
+        let entry = entry.with_context(|| format!("Failed to access entry in: {:?}", dir_path))?;
+        let path = entry.path();
+
+        if path.is_file() {
+            // Add executable bit for files
+            let metadata = fs::metadata(&path)?;
+            let mut permissions = metadata.permissions();
+            permissions.set_mode(permissions.mode() | 0o111); // Add executable bit
+            fs::set_permissions(&path, permissions)?;
+        } else if path.is_dir() {
+            // Recursively process subdirectories
+            make_files_executable(&path)?;
+        }
+    }
+
+    Ok(())
+}
 
 /// Copies all files from source to destination recursively and sets ownership of all
 /// desitnation files to "debix:debix".
@@ -52,6 +86,9 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination_dir: impl AsRef<Pa
             })?;
         }
     }
+
+    make_files_executable(&destination_dir)?;
+
     Ok(())
 }
 
@@ -78,20 +115,42 @@ pub fn extract_zip(zip_file: &str, destination_dir: &str) -> Result<(), Error> {
 
 /// Makes sure the directories for a given service exist. If there is an
 /// existing service at a given path it will delete it and prepare it such
-/// that the new service can be safely moved in place.
-// fn prepare_dirs(author: &str, name: &str, version: &str) -> Result<String, Error> {
+/// that the new service can be safely moved in place. All created directories
+/// will be owned by the debix:debix user.
 fn prepare_dirs(fq: &FqBuf) -> Result<String, Error> {
     // Construct the full path
     let full_path_string = fq.dir().clone();
     let full_path = PathBuf::from(full_path_string.clone());
 
-    // Ensure the directory exists
+    // First check if the directory exists
+    let path_exists = full_path.exists();
+
+    // If it already existed and it contained old contents, remove them.
+    if path_exists {
+        std::fs::remove_dir_all(full_path.as_path())
+            .with_context(|| format!("failed to remove path {:?}", full_path))?;
+    }
+
+    // Ensure the directory exists by creating it (and parent directories if needed)
     std::fs::create_dir_all(full_path.clone())
         .with_context(|| format!("failed to create dirs {:?}", full_path))?;
 
-    // If it already existed and it contained old contents, remove them.
-    std::fs::remove_dir_all(full_path.as_path())
-        .with_context(|| format!("failed to remove path {:?}", full_path))?;
+    // Set the ownership of the directory to debix:debix
+    chown(&full_path, DEBIX_UID, DEBIX_GID)
+        .with_context(|| format!("failed to set the ownership of {:?}", full_path))?;
+
+    // Also handle parent directories to ensure consistent ownership
+    let mut current = full_path.clone();
+    while let Some(parent) = current.parent() {
+        // Stop at the root or when we hit a directory that isn't part of our service structure
+        if parent.as_os_str().is_empty() || !parent.to_string_lossy().contains(ROVER_DIR) {
+            break;
+        }
+        // Set ownership for parent directories that are part of our service structure
+        chown(parent, DEBIX_UID, DEBIX_GID)
+            .with_context(|| format!("failed to set the ownership of parent dir {:?}", parent))?;
+        current = parent.to_path_buf();
+    }
 
     Ok(full_path_string)
 }
