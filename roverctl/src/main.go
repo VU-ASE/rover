@@ -10,9 +10,11 @@ import (
 	commands "github.com/VU-ASE/rover/roverctl/src/commands"
 	command_author "github.com/VU-ASE/rover/roverctl/src/commands/author"
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
+	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
 	command_update "github.com/VU-ASE/rover/roverctl/src/commands/update"
 	command_upload "github.com/VU-ASE/rover/roverctl/src/commands/upload"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -33,6 +35,7 @@ func run() error {
 	command_info.Add(rootCmd)
 	command_upload.Add(rootCmd)
 	command_author.Add(rootCmd)
+	command_logs.Add(rootCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {
