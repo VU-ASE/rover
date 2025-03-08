@@ -1,0 +1,37 @@
+package command_prechecks
+
+import (
+	"fmt"
+
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
+
+	"github.com/spf13/cobra"
+)
+
+func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost string, roverdUsername, roverdPassword string) (*configuration.RoverConnection, error) {
+	// XOR Logic: Exactly one must be set
+	roverSet := cmd.Flags().Changed("rover")
+	hostSet := cmd.Flags().Changed("host")
+	if roverSet == hostSet { // both false or both true
+		return nil, fmt.Errorf("you must provide either --rover or --host, but not both")
+	}
+
+	identifier := roverdHost
+	host := roverdHost
+	if roverSet {
+		if roverIndex < 1 || roverIndex > 20 {
+			return nil, fmt.Errorf("rover index must be between 1 and 20")
+		}
+		identifier = fmt.Sprintf("rover %d", roverIndex)
+		host = fmt.Sprintf("192.168.0.%d", roverIndex+100)
+	}
+
+	// Create connection
+	conn := configuration.RoverConnection{
+		Identifier: identifier,
+		Host:       host,
+		Username:   roverdUsername,
+		Password:   roverdPassword,
+	}
+	return &conn, nil
+}
