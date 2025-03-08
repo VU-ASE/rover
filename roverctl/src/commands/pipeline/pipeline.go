@@ -16,7 +16,6 @@ func Add(rootCmd *cobra.Command) {
 	var roverdHost string
 	var roverdUsername string
 	var roverdPassword string
-	var lines int
 
 	// pipeline command
 	var infoCmd = &cobra.Command{
@@ -50,10 +49,11 @@ func Add(rootCmd *cobra.Command) {
 	infoCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
 	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
-	infoCmd.Flags().IntVarP(&lines, "lines", "l", 50, "The number of log lines to display")
 
 	addStart(infoCmd)
 	addStop(infoCmd)
 	addReset(infoCmd)
+	addEnable(infoCmd)
+	addDisable(infoCmd)
 	rootCmd.AddCommand(infoCmd)
 }
