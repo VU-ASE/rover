@@ -53,7 +53,7 @@ func CreateFromOffer(offer webrtc.SessionDescription, id string, peerConfig webr
 	// Block until ICE Gathering is complete, disabling trickle ICE so that we can send the answer as one blob
 	<-gatherComplete
 	// from this point on, the ICE candidates are complete (and we don't need locks anymore)
-	log.Info().Msg("ICE gathering completed")
+	log.Debug().Msg("ICE gathering completed")
 
 	return rtc, nil
 }

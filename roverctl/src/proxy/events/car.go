@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	livestreamconfig "vu/ase/streamserver/src/config"
-	"vu/ase/streamserver/src/peerconnection"
-	"vu/ase/streamserver/src/state"
-
+	config "github.com/VU-ASE/rover/roverctl/src/proxy/config"
+	peerconnection "github.com/VU-ASE/rover/roverctl/src/proxy/peerconnection"
+	state "github.com/VU-ASE/rover/roverctl/src/proxy/state"
 	pb_control "github.com/VU-ASE/rovercom/packages/go/control"
 	rtc "github.com/VU-ASE/roverrtc/src"
-
 	"github.com/pion/webrtc/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -31,10 +29,10 @@ func OnCarSDPReceived(sdp rtc.RequestSDP, receivedAt int64, state *state.ServerS
 	// Register event handlers from now on
 	rtc.Pc.OnConnectionStateChange(onCarConnectionChange(rtc, state))
 
-	log.Info().Msg("Received SDP offer from car")
+	log.Debug().Msg("Received SDP offer from car")
 
 	// Add rtc to list of car connections (there can be only one car connection)
-	err = state.ConnectedPeers.Add(livestreamconfig.CarId, rtc, true)
+	err = state.ConnectedPeers.Add(config.CarId, rtc, true)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +52,7 @@ func OnCarSDPReceived(sdp rtc.RequestSDP, receivedAt int64, state *state.ServerS
 // Called when a car sends an ICE candidate to the HTTP server
 func OnCarICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, error) {
 	// Get connection from list of connections
-	rtc := state.ConnectedPeers.Get(livestreamconfig.CarId)
+	rtc := state.ConnectedPeers.Get(config.CarId)
 	if rtc == nil {
 		return nil, fmt.Errorf("Car connection with id %s does not exist", ice.Id)
 	}
@@ -66,7 +64,7 @@ func OnCarICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, err
 		return nil, err
 	}
 
-	log.Info().Msg("Received ICE candidates from car")
+	log.Debug().Msg("Received ICE candidates from car")
 
 	// Return all candidates to client
 	payload, err := json.Marshal(rtc.GetAllLocalCandidates())
@@ -86,12 +84,12 @@ func OnCarSDPReturned(r *rtc.RTC, state *state.ServerState) {
 
 		// Register channel opening handling
 		d.OnOpen(func() {
-			log.Info().Str("label", d.Label()).Msg("Car channel was opened for communication")
+			log.Debug().Str("label", d.Label()).Msg("Car channel was opened for communication")
 
 			switch d.Label() {
-			case livestreamconfig.ControlChannelLabel:
+			case config.ControlChannelLabel:
 				registerCarControlMessage(r, d)
-			case livestreamconfig.DataChannelLabel:
+			case config.DataChannelLabel:
 				registerCarDataMessage(r, d, state)
 			default:
 				log.Warn().Str("label", d.Label()).Msg("Unknown car channel was opened for communication")
@@ -109,7 +107,7 @@ func onCarConnectionChange(car *rtc.RTC, state *state.ServerState) func(webrtc.P
 
 		notification := pb_control.ConnectionState{
 			Connected:       s == webrtc.PeerConnectionStateConnected,
-			Client:          livestreamconfig.CarId,
+			Client:          config.CarId,
 			TimestampOffset: car.TimestampOffset,
 		}
 
@@ -167,7 +165,7 @@ func registerCarDataMessage(car *rtc.RTC, dc *webrtc.DataChannel, state *state.S
 
 		// Forward the message to all clients
 		state.ConnectedPeers.ForEach(func(id string, r *rtc.RTC) {
-			if id == livestreamconfig.CarId {
+			if id == config.CarId {
 				return
 			}
 
