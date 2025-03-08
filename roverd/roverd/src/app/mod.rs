@@ -809,39 +809,64 @@ impl App {
         let file = File::open(fq.log_file()).map_err(|_| Error::NoLogsFound)?;
         let mut reader = BufReader::new(file);
 
-        let mut buffer = Vec::new();
-        let mut lines = Vec::new();
+        // Get the file size to determine how far we can seek
+        let file_size = reader.seek(SeekFrom::End(0))?;
 
-        // Seek to the end of the file
-        let mut position = reader
-            .seek(SeekFrom::End(0))
-            .with_context(|| format!("failed to seek in {}", fq.log_file()))?;
-
-        // Read the file in reverse to gather lines
-        while lines.len() < num_lines && position > 0 {
-            // Adjust buffer size based on remaining file size
-            let chunk_size = cmp::min(position as usize, 4096);
-            position -= chunk_size as u64;
-            reader
-                .seek(SeekFrom::Start(position))
-                .with_context(|| format!("failed to seek in {}", fq.log_file()))?;
-            buffer.resize(chunk_size, 0);
-
-            // Read the chunk
-            reader
-                .get_mut()
-                .read_exact(&mut buffer)
-                .with_context(|| format!("failed to read chunk for {}", fq.log_file()))?;
-
-            // Split into lines and push to the result
-            let chunk = String::from_utf8_lossy(&buffer);
-            let mut chunk_lines: Vec<_> = chunk.lines().rev().map(String::from).collect();
-            lines.append(&mut chunk_lines);
+        // If the file is empty, return an empty vector
+        if file_size == 0 {
+            return Ok(Vec::new());
         }
 
-        // Reverse the lines to restore their original order
+        let mut lines = Vec::new();
+        let mut position = file_size;
+        let mut leftover = String::new();
+
+        // Buffer to store chunks we read
+        let chunk_size = 4096;
+
+        // Read the file backwards until we have enough lines or reach the beginning
+        while lines.len() < num_lines && position > 0 {
+            // Calculate how much to read in this iteration
+            let read_size = cmp::min(chunk_size, position as usize);
+            position -= read_size as u64;
+
+            // Seek to the position we want to read from
+            reader.seek(SeekFrom::Start(position))?;
+
+            // Read the chunk of data
+            let mut buffer = vec![0; read_size];
+            reader.read_exact(&mut buffer)?;
+
+            // Convert the bytes to a string, handling potential UTF-8 issues
+            // Note: This is a simplification. For proper UTF-8 handling, more careful
+            // boundary detection would be needed.
+            let chunk = match String::from_utf8(buffer) {
+                Ok(s) => s,
+                Err(e) => String::from_utf8_lossy(&e.into_bytes()).into_owned(),
+            };
+
+            // Combine with any leftover text from previous iteration
+            let combined = chunk + &leftover;
+
+            // Split into lines
+            let mut chunk_lines: Vec<_> = combined.lines().map(String::from).collect();
+
+            // If this isn't the first chunk (beginning of file), save the first line
+            // as it might be incomplete and will be combined with the previous chunk
+            if position > 0 && !chunk_lines.is_empty() {
+                leftover = chunk_lines.remove(0);
+            }
+
+            // Add the lines in reverse order (since we're reading backwards)
+            for line in chunk_lines.into_iter().rev() {
+                lines.push(line);
+                if lines.len() >= num_lines {
+                    break;
+                }
+            }
+        }
         lines.reverse();
-        Ok(lines.into_iter().take(num_lines).collect())
+        Ok(lines)
     }
 
     /// Spawns a separate shell to run the update script
