@@ -8,6 +8,5 @@
 ## Software
 
 - `roverd`: the central service execution daemon, running on the Rover. This daemon exposes a REST API for service scheduling and execution, as defined in [the OpenAPI spec](/spec)
-- `roverctl`: convenient CLI to communicate with the `roverd` REST API
+- `roverctl`: convenient CLI to communicate with the `roverd` REST API that integrates a proxy server for debugging between the Rover and the browser using webRTC
 - `roverctl-web`: a web interface to get finegrained control over rover execution, an extension of `roverctl`
-- `passthrough`: a webRTC proxy server to communicate between `roverctl-web` and `transceiver` services running on the Rover
