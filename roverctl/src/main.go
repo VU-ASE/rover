@@ -12,6 +12,7 @@ import (
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
 	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
 	command_pipeline "github.com/VU-ASE/rover/roverctl/src/commands/pipeline"
+	command_services "github.com/VU-ASE/rover/roverctl/src/commands/services"
 
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
 	command_update "github.com/VU-ASE/rover/roverctl/src/commands/update"
@@ -33,6 +34,7 @@ func run() error {
 	//
 	rootCmd := commands.NewRoot()
 	command_pipeline.Add(rootCmd)
+	command_services.Add(rootCmd)
 	command_upload.Add(rootCmd)
 	command_logs.Add(rootCmd)
 	command_ssh.Add(rootCmd)
