@@ -107,7 +107,8 @@
                 "type": "object",
                 "required": [
                     "name",
-                    "value"
+                    "value",
+                    "type"
                 ],
                 "properties": {
                     "name": {
@@ -117,8 +118,7 @@
                         "pattern": "^[a-z]+(-[a-z]+)*$"
                     },
                     "value": {
-                        "oneOf": [
-                            {
+                        "oneOf": [{
                                 "type": "string",
                                 "description": "A string value for the configuration option."
                             },

@@ -35,10 +35,12 @@ outputs:
 configuration:
   - name: speed
     value: 1.0
+    type: number
   - name: ki
     value: 123
+    type: number
     tunable: true # do you want to be able to change this value during runtime?
   - name: kp
     value: 456
     tunable: true
-    type: string # override the auto-detected type (can be string/int/float)
+    type: string 
