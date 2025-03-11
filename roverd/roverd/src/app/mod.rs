@@ -670,7 +670,7 @@ impl App {
                                         let _ = roverd_log(proc.log_file.clone(), format!("service exited with code: {}", e));
                                     } else if !exit_status.success() {
                                             proc.faults += 1;
-                                            let _ = roverd_log(proc.log_file.clone(), "service exited without error code".to_string());
+                                            let _ = roverd_log(proc.log_file.clone(), "service terminated by a signal".to_string());
                                     } else {
                                         let _ = roverd_log(proc.log_file.clone(), "service exited".to_string());
                                     }
