@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/VU-ASE/rover/compare/v0.10.0...v0.10.1) (2025-03-11)
+
+
+### Bug Fixes
+
+* specifying value types in service.yaml is required ([e8757a3](https://github.com/VU-ASE/rover/commit/e8757a3edeb67edcccb0cd5d6909d15879d6f886))
+
 ## [0.10.0](https://github.com/VU-ASE/rover/compare/v0.9.0...v0.10.0) (2025-03-08)
 
 
