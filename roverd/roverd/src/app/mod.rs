@@ -15,6 +15,7 @@ use std::fs::{self, remove_file};
 use std::io::{BufRead, BufReader, Write};
 use std::io::{Read, Seek, SeekFrom};
 use std::marker::PhantomData;
+use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
@@ -646,6 +647,7 @@ impl App {
 
             tokio::spawn(async move {
                 let mut child = spawned.child.lock().await;
+
                 select! {
                     // Wait for process completion
                     result_status = child.wait() => {
@@ -657,6 +659,9 @@ impl App {
                                 stats.last_restart = Some(time_now!() as i64);
 
                                 info!("child {} exited with status {}", spawned.name, exit_status);
+
+
+
                                 let exit_code = exit_status.code();
                                 let mut procs_guard = procs_clone.write().await;
 
@@ -670,7 +675,7 @@ impl App {
                                         let _ = roverd_log(proc.log_file.clone(), format!("service exited with code: {}", e));
                                     } else if !exit_status.success() {
                                             proc.faults += 1;
-                                            let _ = roverd_log(proc.log_file.clone(), "service terminated by a signal".to_string());
+                                            let _ = roverd_log(proc.log_file.clone(), format!("service exited with code: {}", exit_status.into_raw()));
                                     } else {
                                         let _ = roverd_log(proc.log_file.clone(), "service exited".to_string());
                                     }
