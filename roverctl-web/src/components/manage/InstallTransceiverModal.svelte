@@ -315,9 +315,10 @@
 				</div>
 			{:else if $enableMutation.error instanceof RoverError && $enableMutation.error.code === 'ERR_PASSTHROUGH_DISABLED'}
 				<div class="p-6 pb-4">
-					<h2 class="text-xl mb-4 text-secondary-200">Failed to enable Debug Mode</h2>
+					<h2 class="text-xl mb-4 text-secondary-200">Debug Mode cannot be enabled</h2>
 					<p class="mb-2">
-						Roverctl-web was not started with the correct options to enable debugging.
+						To enable debug mode, you need to restart <span class="code">roverctl</span>
+						with the <span class="code">--debug</span> flag.
 					</p>
 				</div>
 				<div class="flex justify-end mt-4 p-6 pt-2">

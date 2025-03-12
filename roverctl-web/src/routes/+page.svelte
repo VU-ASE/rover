@@ -67,7 +67,10 @@
 					</a>
 				{:else}
 					<div class="block card variant-soft p-4 px-6 w-full">
-						<p class="text-sm text-secondary-600 mb-2">Currently unavailable</p>
+						<p class="text-sm text-secondary-600 mb-2">
+							Currently unavailable<br />
+							(Run <span class="font-mono">roverctl --debug</span> to enable)
+						</p>
 						<div class="flex flex-row gap-4 w-full pr-4 items-center text-secondary-900">
 							<DebugIcon class="text-4xl" />
 							<div class="flex flex-col">
