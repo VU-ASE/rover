@@ -124,9 +124,11 @@ func downloadTemplate(repository string, destination string) error {
 		return fmt.Errorf("Could not remove .git folder: %v", err)
 	}
 
-	// Move the template to the destination
-	err = os.Rename(tmp, destination)
-	if err != nil {
+	// Move the template to the destination. Using linux 'mv' command because Go's os.Rename requires
+	// src and dest to be part of the same mount point, which in some cases is not always true.
+	// Testing showed that using os.Rename on some systems would yield "invalid cross-device link" error.
+	cmd := exec.Command("mv", tmp, destination)
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Could not move template: %v", err)
 	}
 
