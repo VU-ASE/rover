@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.2](https://github.com/VU-ASE/rover/compare/v0.10.1...v0.10.2) (2025-03-12)
+
+
+### Bug Fixes
+
+* roverd shows all exit codes now ([2de0226](https://github.com/VU-ASE/rover/commit/2de022691173795eac6a63eec9787d554f466958))
+* using mv instead of os.Rename ([696ecc4](https://github.com/VU-ASE/rover/commit/696ecc440505fb39c3ec5cf814b55786b9fb5bf5))
+
 ## [0.10.1](https://github.com/VU-ASE/rover/compare/v0.10.0...v0.10.1) (2025-03-11)
 
 
