@@ -172,8 +172,27 @@
 						<span class="text-secondary-200">Upload from disk</span>
 					</svelte:fragment>
 					<svelte:fragment slot="content">
-						To upload services from disk to this Rover, run
-						<span class="code">roverctl upload</span> in your terminal.
+						<div class="flex flex-col">
+							<p>
+								To upload services from your machine to this Rover, run
+								<span class="code">roverctl upload</span> in your terminal.
+							</p>
+
+							<h2 class="font-bold mt-2">Example: upload your current working directory</h2>
+							<span class="code p-2 mt-1">roverctl upload . --rover &lt;ROVER_NUMBER&gt; </span>
+
+							<h2 class="font-bold mt-2">
+								Example: upload your current working directory with file watching
+							</h2>
+							<span class="code p-2 mt-1"
+								>roverctl upload . --rover &lt;ROVER_NUMBER&gt; --watch
+							</span>
+
+							<h2 class="font-bold mt-2">Example: upload multiple directories</h2>
+							<span class="code p-2 mt-1"
+								>roverctl upload /dir1 /dir2 --rover &lt;ROVER_NUMBER&gt;
+							</span>
+						</div>
 					</svelte:fragment>
 				</AccordionItem>
 				<AccordionItem padding="px-6 py-2" on:click={$fetchService.reset}>
@@ -183,32 +202,44 @@
 						</span>
 					</svelte:fragment>
 					<svelte:fragment slot="summary">
-						<span class="text-secondary-200">Install ASE services</span>
+						<span class="text-secondary-200">Install official pipelines</span>
 					</svelte:fragment>
 					<svelte:fragment slot="content">
-						<div class="flex flex-col gap-2">
-							<p>Install a basic autonomous driving pipeline on your Rover.</p>
-							{#if !$fetchOfficialService.isLoading && !$fetchOfficialService.isSuccess}
-								<button class="btn variant-filled-primary" on:click={installBasicPipeline}
-									>Install latest version</button
-								>
-							{:else}
-								<button class="btn variant-soft-primary" disabled>Install latest version</button>
-							{/if}
+						<div class="flex flex-col gap-2 card variant-outline-primary p-2 px-4">
+							<div class="flex flex-row gap-2 items-center justify-between w-full">
+								<div class="flex flex-col gap-0 items-start">
+									<h2 class="font-bold">Autonomous Driving Pipeline</h2>
+									<p>
+										The famous pipeline that enables your Rover to drive a lap<br /> on NXP cup tracks
+										autonomously. Just install and start!
+									</p>
+								</div>
+								{#if !$fetchOfficialService.isLoading && !$fetchOfficialService.isSuccess}
+									<button class="btn variant-filled-primary" on:click={installBasicPipeline}
+										>Install</button
+									>
+								{:else}
+									<button class="btn variant-soft-primary" disabled>Install</button>
+								{/if}
+							</div>
+
 							{#if $fetchOfficialService.isLoading}
-								<div class="flex flex-row items-center gap-2 mt-0 px-2 text-xs">
+								<div class="flex flex-row items-center gap-2 mt-0 pb-1 text-xs">
 									<Circle size="10" color={colors.gray[200]} />
 									<p>Installing '{$fetchOfficialService.variables}'</p>
 								</div>
 							{:else if $fetchOfficialService.isError}
-								<div class="flex flex-col gap-2 mt-0 px-2 text-xs">
+								<div class="flex flex-col gap-2 mt-0 pb-1 text-xs">
 									<p class="text-error-400">
 										Could not install '{$fetchOfficialService.variables}':
 									</p>
 								</div>
 							{:else if $fetchOfficialService.isSuccess}
-								<div class="flex flex-row items-center gap-2 mt-0 px-2 text-xs text-success-400">
-									<p>Services were installed successfully</p>
+								<div class="flex flex-row items-center gap-2 mt-0 pb-1 text-xs text-success-400">
+									<p>
+										Installed successfully. Enable 'imaging', 'controller' and 'actuator' to get
+										started.
+									</p>
 								</div>
 							{/if}
 						</div>

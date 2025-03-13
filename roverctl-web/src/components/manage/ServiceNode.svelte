@@ -24,14 +24,14 @@
 		<Handle
 			type="source"
 			position={Position.Right}
-			id="center-source"
+			id="source"
 			class="!absolute !transform !translate-x-[-50%] !translate-y-[-50%] !left-[50%] !top-[50%] w-4 h-4 opacity-0"
 			style="pointer-events: none;"
 		/>
 		<Handle
 			type="target"
 			position={Position.Right}
-			id="center-target"
+			id="target"
 			class="!absolute !transform !translate-x-[-50%] !translate-y-[-50%] !left-[50%] !top-[50%] w-4 h-4 opacity-0"
 			style="pointer-events: none;"
 		/>
@@ -43,16 +43,6 @@
 		>
 			<span class="whitespace-nowrap">Unmet dependencies</span>
 		</div> -->
-
-		{#if data.onDelete}
-			<button
-				class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 p-1 bg-red-500 hover:bg-red-600 text-red-200 flex items-center justify-center shadow-md"
-				on:click={() => data.onDelete && data.onDelete()}
-				title="Delete Node"
-			>
-				<RemoveIcon />
-			</button>
-		{/if}
 
 		<div class="flex flex-col p-2 px-4">
 			<div class="flex flex-row items-center gap-1 text-sm">

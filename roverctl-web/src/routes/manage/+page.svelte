@@ -35,6 +35,9 @@
 	);
 </script>
 
-<Navbar />
-<Pipeline />
+<div class="h-screen flex flex-col">
+	<Navbar />
+	<Pipeline />
+</div>
+
 <ErrorOverlay />

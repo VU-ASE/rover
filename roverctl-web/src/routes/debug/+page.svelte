@@ -47,7 +47,8 @@
 				<p class="text-warning-500 font-bold">Debugging is not configured</p>
 			</div>
 			<p class="text-secondary-700">
-				You need to run <span class="code">roverctl</span> with the correct options to enable debugging.
+				You need to run <span class="code">roverctl</span> with the
+				<span class="code">--debug</span> flag to enable debugging.
 			</p>
 		{:else if $connectionStore.isConnecting || $connectionStore.server?.connectionState === 'connecting'}
 			<!-- Spinner -->

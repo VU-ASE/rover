@@ -13,6 +13,7 @@
 
 	import { toasts } from 'svelte-toasts';
 
+	import { SvelteFlowProvider } from '@xyflow/svelte';
 	import type { Edge, Node } from '@xyflow/svelte';
 	import { Circle, DoubleBounce } from 'svelte-loading-spinners';
 	import { config } from '$lib/config';
@@ -52,6 +53,7 @@
 	import { ASE_AUTHOR_IDENTIFIER, TRANSCEIVER_IDENTIFIER } from '$lib/constants';
 	import { compareVersions } from '$lib/utils/versions';
 	import InstallTransceiverModal from './InstallTransceiverModal.svelte';
+	import { serviceConflicts, serviceEqual, serviceIdentifier } from '$lib/utils/service';
 
 	const queryClient = useQueryClient();
 
@@ -62,31 +64,35 @@
 	const nodes: Writable<PipelineNode[]> = writable([]);
 	const edges: Writable<Edge[]> = writable([]);
 
-	const edgesFromEnabledServices = (enabled: PipelineNodeData[]) => {
+	const edgesFromEnabledServices = (enabled: Node<PipelineNodeData>[]) => {
 		// For each dependency, create an edge
 		const newEdges: Edge[] = [];
 		for (const e of enabled) {
-			for (const input of e.service.inputs) {
-				const source = input.service;
-				const target = e.fq.name;
+			const service = e.data.service;
+			const fq = e.data.fq;
 
+			for (const input of service.inputs) {
+				const source = input.service;
+				const target = serviceIdentifier(fq);
 				for (const stream of input.streams) {
 					const id = `${source}-${target}-${stream}`;
 
-					// Check if the target service exists, and if the stream is present
-					if (
-						enabled.find((s) => s.fq.name === target) &&
-						enabled.find((s) => s.fq.name === source)
-					) {
-						// Add if not already present
-						if (!newEdges.find((edge) => edge.id === id)) {
-							newEdges.push({
-								id,
-								source,
-								target,
-								animated: false
-							});
-						}
+					// Find the node that matches the source
+					const sourceNode = enabled.find(
+						(n) =>
+							serviceIdentifier(n.data.fq) === source && n.data.service.outputs.includes(stream)
+					);
+
+					if (sourceNode) {
+						newEdges.push({
+							id: id,
+							source: sourceNode.id,
+							target: e.id, // that is this node
+							data: {
+								label: stream,
+								type: 'input'
+							}
+						});
 					}
 				}
 			}
@@ -124,62 +130,70 @@
 					});
 				}
 			}
-
-			const newNodes: PipelineNode[] = pipeline.data.enabled.map((e) => {
-				// Try to find the service information
-				const service = services.find(
-					(s) =>
-						s.fq.name === e.service.fq.name &&
-						s.fq.author === e.service.fq.author &&
-						s.fq.version === e.service.fq.version
-				);
-				if (!service) {
-					throw new Error(
-						'Service ' +
-							e.service.fq.name +
-							' was enabled but not installed on the Rover (author: ' +
-							e.service.fq.author +
-							', version: ' +
-							e.service.fq.version +
-							')'
-					);
-				}
-
-				return {
-					// Services take the role of "as", when it is set
-					id: e.service.fq.as || e.service.fq.name,
-					position: { x: 0, y: 0 }, // required but later replaced using dagre
-					type: 'service',
-					// These width and height values are hardcoded in the custom node component as well, so they must match
-					width: 200,
-					height: 80,
-					deletable: false,
-					draggable: false,
-					data: {
-						fq: e.service.fq,
-						service: service.service,
-						process: e.process,
-						onDelete: () => removeService(service.fq),
-						onSetActive: () => {
-							// Set the selected service
-							selectedService = service.fq;
-						}
-					}
-				};
-			});
-
-			const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
-			createAndSetGraph(newNodes, newEdges);
-			return pipeline.data;
+			return {
+				pipeline: pipeline.data,
+				services
+			};
 		},
 		{
+			onSuccess: ({ pipeline, services }) => {
+				const newNodes: PipelineNode[] = pipeline.enabled.map((e) => {
+					// Try to find the service information
+					const service = services.find((s) => serviceEqual(s.fq, e.service.fq));
+					if (!service) {
+						throw new Error(
+							'Service ' +
+								e.service.fq.name +
+								' was enabled but not installed on the Rover (author: ' +
+								e.service.fq.author +
+								', version: ' +
+								e.service.fq.version +
+								')'
+						);
+					}
+
+					return generateNode({
+						fq: service.fq,
+						service: service.service
+					});
+				});
+
+				for (const service of newNodes) {
+					addService(service.data);
+				}
+			},
+
 			enabled: true, // run once on mount
 			refetchOnMount: false,
 			staleTime: 1
 		}
 	);
 
+	const generateNode = (service: PipelineNodeData) => {
+		// Create a random id
+		const randomId = Math.random().toString(36).substring(7);
+
+		return {
+			id: randomId,
+			position: { x: 0, y: 0 },
+			type: 'service',
+			width: 200,
+			height: 80,
+			deletable: false,
+			draggable: false,
+			data: {
+				...service,
+				onSetActive: () => {
+					// Set the selected service
+					selectedService = service.fq;
+				}
+			}
+		};
+	};
+
 	const createAndSetGraph = (newNodes: PipelineNode[], newEdges: Edge[]) => {
+		console.log('Was asked to set edges for graph', newNodes, newEdges);
+
 		// Create a daggerable graph to automatically layout the nodes
 		const graph = new dagre.graphlib.Graph();
 		graph.setGraph({ rankdir: 'LR' }); // Top-to-Bottom layout
@@ -215,31 +229,14 @@
 			return;
 		}
 
-		// Check if service is already present
-		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
-			return;
-		}
+		// If there is a conflicting service already enabled, remove it
+		const filteredNodes = $nodes.filter((n) => !serviceConflicts(n.data.fq, service.fq));
 
 		// Add the service to the pipeline
-		const newNodes = [
-			...$nodes,
-			{
-				id: service.fq.as || service.fq.name,
-				position: { x: 0, y: 0 },
-				type: 'service',
-				width: 200,
-				height: 80,
-				deletable: false,
-				draggable: false,
-				data: {
-					...service,
-					onDelete: () => removeService(service.fq)
-				}
-			}
-		];
+		const newNodes = [...filteredNodes, generateNode(service)];
 
 		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
+		const newEdges = edgesFromEnabledServices(newNodes);
 
 		createAndSetGraph(newNodes, newEdges);
 	};
@@ -266,11 +263,6 @@
 		// If a version is specified, use it, otherwise use the latest version
 		const service = sorted.find((s) => s.fq.version === version) || sorted[0];
 
-		// If there is already a service with this name enabled, remove this
-		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
-			removeService(service.fq);
-		}
-
 		// Add the service to the pipeline
 		addService(service);
 	};
@@ -296,21 +288,6 @@
 		selectedService = service.fq;
 	};
 
-	const removeServiceByName = (name: string) => {
-		// Can't modify during execution
-		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
-			return;
-		}
-
-		// Remove the service from the pipeline
-		const newNodes = $nodes.filter((n) => n.data.fq.name !== name);
-
-		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
-
-		createAndSetGraph(newNodes, newEdges);
-	};
-
 	const removeService = (fq: FullyQualifiedService) => {
 		// Can't modify during execution
 		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
@@ -328,9 +305,22 @@
 		const newNodes = $nodes.filter((n) => n.data.fq.name !== fq.name);
 
 		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
+		const newEdges = edgesFromEnabledServices(newNodes);
 
 		createAndSetGraph(newNodes, newEdges);
+	};
+
+	const removeServiceByName = (name: string) => {
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
+
+		// Find the node to remove
+		const node = $nodes.find((n) => n.data.fq.name === name);
+		if (node) {
+			removeService(node.data.fq);
+		}
 	};
 
 	onMount(() => {
@@ -346,7 +336,6 @@
 			}
 
 			const papi = new PipelineApi(config.roverd.api);
-			const sapi = new ServicesApi(config.roverd.api);
 
 			// Fetch enabled services in the pipeline
 			const pipeline = await papi.pipelineGet();
@@ -497,6 +486,53 @@
 			return response.data;
 		},
 		{
+			onSuccess: async () => {
+				try {
+					// Try to fetch the just enabled pipeline
+					if (!config.success) {
+						throw new Error('Configuration could not be loaded');
+					}
+
+					const papi = new PipelineApi(config.roverd.api);
+
+					// Fetch enabled services in the pipeline
+					const pipeline = await papi.pipelineGet();
+
+					// Show a warning about the service that caused the pipeline to crash (if any)
+					for (const enabled of pipeline.data.enabled) {
+						if (enabled.service.exit !== 0) {
+							toasts.add({
+								title: 'Service error',
+								description:
+									"Service '" +
+									enabled.service.fq.name +
+									"' exited with code " +
+									enabled.service.exit +
+									' and crashed the pipeline. Check its logs for more information.',
+								duration: 10000,
+								placement: 'bottom-right',
+								type: 'warning',
+								theme: 'dark',
+								onClick: () => {},
+								onRemove: () => {}
+							});
+						}
+					}
+				} catch (e) {
+					console.error('Could not confirm pipeline execution:', e);
+					toasts.add({
+						title: 'Pipeline error',
+						description:
+							'Pipeline execution was initiated, but could not be confirmed. See console for more information.',
+						duration: 10000,
+						placement: 'bottom-right',
+						type: 'error',
+						theme: 'dark',
+						onClick: () => {},
+						onRemove: () => {}
+					});
+				}
+			},
 			// Invalidate the pipeline query regardless of mutation success or failure
 			onSettled: () => {
 				queryClient.invalidateQueries('pipeline');
@@ -505,7 +541,13 @@
 	);
 
 	const startConfiguredPipeline = async () => {
-		const services = $nodes;
+		let services = $nodes;
+
+		// If debug mode is not enabled make sure to not include any transceiver service
+		if (!$debugActive.data) {
+			services = services.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER);
+		}
+
 		$stopPipeline.reset();
 		$buildService.reset();
 		$savePipeline.reset();
@@ -542,13 +584,11 @@
 				(s) => s.fq.name !== TRANSCEIVER_IDENTIFIER
 			)) {
 				const { name, author, version } = service.fq;
-
 				if (!serviceMap.has(author)) {
 					serviceMap.set(author, new Map());
 				}
 
 				const authorMap = serviceMap.get(author)!;
-
 				if (!authorMap.has(name)) {
 					authorMap.set(name, new Set());
 				}
@@ -557,7 +597,7 @@
 			}
 
 			// Convert map to array, filter results based on search input
-			return Array.from(serviceMap.entries())
+			const groups = Array.from(serviceMap.entries())
 				.map(([author, namesMap]) => {
 					// Filter names based on search input
 					const filteredNames = Array.from(namesMap.entries())
@@ -572,14 +612,26 @@
 										version.toLowerCase().includes(searchTerm)
 								)
 								.sort((a, b) => compareVersions(b, a)); // Sort versions descending
-
 							return filteredVersions.length > 0 ? { name, versions: filteredVersions } : null;
 						})
 						.filter(Boolean) as { name: string; versions: string[] }[];
-
 					return filteredNames.length > 0 ? { author, names: filteredNames } : null;
 				})
 				.filter(Boolean); // Ensure only non-null values are returned
+
+			// Sort by author alphabetically, make sure that vu-ase is always first
+			return groups.sort((a, b) => {
+				if (!a || !b) {
+					return 0;
+				}
+				if (a.author === ASE_AUTHOR_IDENTIFIER) {
+					return -1;
+				}
+				if (b.author === ASE_AUTHOR_IDENTIFIER) {
+					return 1;
+				}
+				return a.author.localeCompare(b.author);
+			});
 		}
 	);
 
@@ -616,7 +668,6 @@
 
 		// strip the protocol from the roverctl configuration
 		const address = passthrough.value.toString().replace(/^https?:\/\//, '');
-		console.log('Checking address', address);
 		return address === config.passthrough.host + ':' + config.passthrough.port;
 	});
 
@@ -691,27 +742,29 @@
 	);
 </script>
 
-<div class="h-[90vh] sm:h-[30vh] overflow-hidden relative">
+<div class="h-[90vh] sm:h-[30vh] overflow-hidden relative shrink-0">
 	<!-- Pipeline flowchart column -->
-	<div class="md:col-span-2 lg:col-span-3 h-full overflow-hidden">
-		<SvelteFlow
-			{nodes}
-			{edges}
-			{nodeTypes}
-			style="background-color: transparent;"
-			proOptions={{ hideAttribution: true }}
-			on:nodeDelete={({ detail }) => {
-				console.log('delete', detail);
-			}}
-		>
-			<Background
-				bgColor={'transparent'}
-				class="bg-transparent"
-				patternColor={colors.slate[500]}
-				gap={20}
-			/>
-			<AutoFit />
-		</SvelteFlow>
+	<div
+		class="md:col-span-2 lg:col-span-3 h-full overflow-hidden"
+		style="touch-action: manipulation;"
+	>
+		<SvelteFlowProvider>
+			<SvelteFlow
+				{nodes}
+				{edges}
+				{nodeTypes}
+				style="background-color: transparent;"
+				proOptions={{ hideAttribution: true }}
+			>
+				<Background
+					bgColor={'transparent'}
+					class="bg-transparent"
+					patternColor={colors.slate[500]}
+					gap={20}
+				/>
+				<AutoFit />
+			</SvelteFlow>
+		</SvelteFlowProvider>
 
 		<!-- Loading Overlay -->
 		{#if $nodesQuery.isLoading}
@@ -953,8 +1006,10 @@
 			</div>
 		</div>
 	{/if}
+</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-8.5rem)] overflow-hidden gap-4 mt-4">
+<div class="w-full px-4 flex-1 min-h-0 overflow-auto py-4">
+	<div class="grid grid-cols-1 lg:grid-cols-5 h-full gap-4">
 		<!-- Sidebar (1/5 width on large screens) -->
 		<div class="flex flex-col h-full gap-4">
 			<div class="card lg:col-span-1 overflow-y-auto flex flex-col h-full">
@@ -1036,9 +1091,19 @@
 														</div>
 													</svelte:fragment>
 													<svelte:fragment slot="summary">
-														<span class="font-mono text-secondary-800">
-															{service.name}
-														</span>
+														<div class="flex flex-row justify-between">
+															{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => s.service.fq.name === service.name && s.service.exit !== 0)}
+																<span class="font-mono text-warning-400 whitespace-nowrap truncate">
+																	{service.name}
+																</span>
+															{:else}
+																<span
+																	class="font-mono text-secondary-800 whitespace-nowrap truncate"
+																>
+																	{service.name}
+																</span>
+															{/if}
+														</div>
 													</svelte:fragment>
 													<svelte:fragment slot="content">
 														{#each service.versions as version}
@@ -1173,6 +1238,20 @@
 					<p class="text-secondary-700">
 						v{selectedService.version.replace('v', '')}
 					</p>
+
+					<!-- todo: currently, this re-iterates many times over the pipeline query data. This could be prevented by extracting this logic in a separate component
+					 and re-using a variable. It is an optimization, but it would also make the code nicer -->
+					{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => selectedService && s.service.exit !== 0 && serviceEqual(s.service.fq, selectedService))}
+						<div class="card variant-soft-warning px-4 py-2 mt-1">
+							<p class="text-warning-400">
+								This service crashed with exit code
+								{$pipelineQuery.data.enabled.find(
+									(s) => selectedService && serviceEqual(s.service.fq, selectedService)
+								)?.service.exit}
+								and caused the pipeline to crash.
+							</p>
+						</div>
+					{/if}
 				</div>
 
 				<TabGroup>
@@ -1207,11 +1286,7 @@
 							<ServiceItem
 								fq={selectedService}
 								process={$pipelineQuery.data?.enabled.find(
-									(e) =>
-										selectedService &&
-										e.service.fq.name === selectedService.name &&
-										e.service.fq.author === selectedService.author &&
-										e.service.fq.version === selectedService.version
+									(e) => selectedService && serviceEqual(e.service.fq, selectedService)
 								)?.process}
 								{tabSet}
 							/>
