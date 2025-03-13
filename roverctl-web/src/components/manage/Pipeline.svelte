@@ -52,6 +52,7 @@
 	import { ASE_AUTHOR_IDENTIFIER, TRANSCEIVER_IDENTIFIER } from '$lib/constants';
 	import { compareVersions } from '$lib/utils/versions';
 	import InstallTransceiverModal from './InstallTransceiverModal.svelte';
+	import { serviceConflicts, serviceEqual, serviceIdentifier } from '$lib/utils/service';
 
 	const queryClient = useQueryClient();
 
@@ -145,27 +146,10 @@
 					);
 				}
 
-				return {
-					// Services take the role of "as", when it is set
-					id: e.service.fq.as || e.service.fq.name,
-					position: { x: 0, y: 0 }, // required but later replaced using dagre
-					type: 'service',
-					// These width and height values are hardcoded in the custom node component as well, so they must match
-					width: 200,
-					height: 80,
-					deletable: false,
-					draggable: false,
-					data: {
-						fq: e.service.fq,
-						service: service.service,
-						process: e.process,
-						onDelete: () => removeService(service.fq),
-						onSetActive: () => {
-							// Set the selected service
-							selectedService = service.fq;
-						}
-					}
-				};
+				return generateNode({
+					fq: service.fq,
+					service: service.service
+				});
 			});
 
 			const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
@@ -178,6 +162,25 @@
 			staleTime: 1
 		}
 	);
+
+	const generateNode = (service: PipelineNodeData) => {
+		return {
+			id: serviceIdentifier(service.fq),
+			position: { x: 0, y: 0 },
+			type: 'service',
+			width: 200,
+			height: 80,
+			deletable: false,
+			draggable: false,
+			data: {
+				...service,
+				onSetActive: () => {
+					// Set the selected service
+					selectedService = service.fq;
+				}
+			}
+		};
+	};
 
 	const createAndSetGraph = (newNodes: PipelineNode[], newEdges: Edge[]) => {
 		// Create a daggerable graph to automatically layout the nodes
@@ -215,28 +218,15 @@
 			return;
 		}
 
-		// Check if service is already present
-		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
-			return;
-		}
+		// If there is a conflicting service already enabled, remove it
+		$nodes.forEach((n) => {
+			if (serviceConflicts(n.data.fq, service.fq)) {
+				removeService(n.data.fq);
+			}
+		});
 
 		// Add the service to the pipeline
-		const newNodes = [
-			...$nodes,
-			{
-				id: service.fq.as || service.fq.name,
-				position: { x: 0, y: 0 },
-				type: 'service',
-				width: 200,
-				height: 80,
-				deletable: false,
-				draggable: false,
-				data: {
-					...service,
-					onDelete: () => removeService(service.fq)
-				}
-			}
-		];
+		const newNodes = [...$nodes, generateNode(service)];
 
 		// Add edges from the new service
 		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
@@ -266,11 +256,6 @@
 		// If a version is specified, use it, otherwise use the latest version
 		const service = sorted.find((s) => s.fq.version === version) || sorted[0];
 
-		// If there is already a service with this name enabled, remove this
-		if ($nodes.some((n) => n.data.fq.name === service.fq.name)) {
-			removeService(service.fq);
-		}
-
 		// Add the service to the pipeline
 		addService(service);
 	};
@@ -296,21 +281,6 @@
 		selectedService = service.fq;
 	};
 
-	const removeServiceByName = (name: string) => {
-		// Can't modify during execution
-		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
-			return;
-		}
-
-		// Remove the service from the pipeline
-		const newNodes = $nodes.filter((n) => n.data.fq.name !== name);
-
-		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
-
-		createAndSetGraph(newNodes, newEdges);
-	};
-
 	const removeService = (fq: FullyQualifiedService) => {
 		// Can't modify during execution
 		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
@@ -333,6 +303,19 @@
 		createAndSetGraph(newNodes, newEdges);
 	};
 
+	const removeServiceByName = (name: string) => {
+		// Can't modify during execution
+		if ($pipelineQuery.data && $pipelineQuery.data.status === 'started') {
+			return;
+		}
+
+		// Find the node to remove
+		const node = $nodes.find((n) => n.data.fq.name === name);
+		if (node) {
+			removeService(node.data.fq);
+		}
+	};
+
 	onMount(() => {
 		// Fetch the pipeline on mount
 		$nodesQuery.refetch();
@@ -346,7 +329,6 @@
 			}
 
 			const papi = new PipelineApi(config.roverd.api);
-			const sapi = new ServicesApi(config.roverd.api);
 
 			// Fetch enabled services in the pipeline
 			const pipeline = await papi.pipelineGet();
@@ -497,6 +479,53 @@
 			return response.data;
 		},
 		{
+			onSuccess: async () => {
+				try {
+					// Try to fetch the just enabled pipeline
+					if (!config.success) {
+						throw new Error('Configuration could not be loaded');
+					}
+
+					const papi = new PipelineApi(config.roverd.api);
+
+					// Fetch enabled services in the pipeline
+					const pipeline = await papi.pipelineGet();
+
+					// Show a warning about the service that caused the pipeline to crash (if any)
+					for (const enabled of pipeline.data.enabled) {
+						if (enabled.service.exit !== 0) {
+							toasts.add({
+								title: 'Service error',
+								description:
+									"Service '" +
+									enabled.service.fq.name +
+									"' exited with code " +
+									enabled.service.exit +
+									' and crashed the pipeline. Check its logs for more information.',
+								duration: 10000,
+								placement: 'bottom-right',
+								type: 'warning',
+								theme: 'dark',
+								onClick: () => {},
+								onRemove: () => {}
+							});
+						}
+					}
+				} catch (e) {
+					console.error('Could not confirm pipeline execution:', e);
+					toasts.add({
+						title: 'Pipeline error',
+						description:
+							'Pipeline execution was initiated, but could not be confirmed. See console for more information.',
+						duration: 10000,
+						placement: 'bottom-right',
+						type: 'error',
+						theme: 'dark',
+						onClick: () => {},
+						onRemove: () => {}
+					});
+				}
+			},
 			// Invalidate the pipeline query regardless of mutation success or failure
 			onSettled: () => {
 				queryClient.invalidateQueries('pipeline');
@@ -1044,9 +1073,19 @@
 														</div>
 													</svelte:fragment>
 													<svelte:fragment slot="summary">
-														<span class="font-mono text-secondary-800">
-															{service.name}
-														</span>
+														<div class="flex flex-row justify-between">
+															{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => s.service.fq.name === service.name && s.service.exit !== 0)}
+																<span class="font-mono text-warning-400 whitespace-nowrap truncate">
+																	{service.name}
+																</span>
+															{:else}
+																<span
+																	class="font-mono text-secondary-800 whitespace-nowrap truncate"
+																>
+																	{service.name}
+																</span>
+															{/if}
+														</div>
 													</svelte:fragment>
 													<svelte:fragment slot="content">
 														{#each service.versions as version}
@@ -1181,6 +1220,20 @@
 					<p class="text-secondary-700">
 						v{selectedService.version.replace('v', '')}
 					</p>
+
+					<!-- todo: currently, this re-iterates many times over the pipeline query data. This could be prevented by extracting this logic in a separate component
+					 and re-using a variable. It is an optimization, but it would also make the code nicer -->
+					{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => selectedService && s.service.exit !== 0 && serviceEqual(s.service.fq, selectedService))}
+						<div class="card variant-soft-warning px-4 py-2 mt-1">
+							<p class="text-warning-400">
+								This service crashed with exit code
+								{$pipelineQuery.data.enabled.find(
+									(s) => selectedService && serviceEqual(s.service.fq, selectedService)
+								)?.service.exit}
+								and caused the pipeline to crash.
+							</p>
+						</div>
+					{/if}
 				</div>
 
 				<TabGroup>
@@ -1215,11 +1268,7 @@
 							<ServiceItem
 								fq={selectedService}
 								process={$pipelineQuery.data?.enabled.find(
-									(e) =>
-										selectedService &&
-										e.service.fq.name === selectedService.name &&
-										e.service.fq.author === selectedService.author &&
-										e.service.fq.version === selectedService.version
+									(e) => selectedService && serviceEqual(e.service.fq, selectedService)
 								)?.process}
 								{tabSet}
 							/>

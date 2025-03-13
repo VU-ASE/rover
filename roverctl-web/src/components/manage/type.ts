@@ -12,7 +12,6 @@ type PipelineNodeData = {
 	// If this service is running/was run before
 	process?: PipelineGet200ResponseEnabledInnerProcess;
 	// Functions to manage state in pipeline
-	onDelete?: () => void;
 	onSetActive?: () => void;
 };
 

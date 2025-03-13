@@ -44,16 +44,6 @@
 			<span class="whitespace-nowrap">Unmet dependencies</span>
 		</div> -->
 
-		{#if data.onDelete}
-			<button
-				class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 p-1 bg-red-500 hover:bg-red-600 text-red-200 flex items-center justify-center shadow-md"
-				on:click={() => data.onDelete && data.onDelete()}
-				title="Delete Node"
-			>
-				<RemoveIcon />
-			</button>
-		{/if}
-
 		<div class="flex flex-col p-2 px-4">
 			<div class="flex flex-row items-center gap-1 text-sm">
 				{#if data.fq.author.toLowerCase() === ASE_AUTHOR_IDENTIFIER}
