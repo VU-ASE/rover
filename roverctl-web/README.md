@@ -1,38 +1,14 @@
-# create-svelte
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3423c459-2abc-4153-a254-4575c8e1f730" alt="Roverctl-web manage screen" width="1073">
+</p>
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+<h1 align="center"><code>roverctl</code></h1>
+<div align="center">
+  <a href="https://github.com/VU-ASE/rover/pkgs/container/roverctl-web">Latest release</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://ase.vu.nl/docs/framework/Software/rover/roverctl/overview">Documentation</a>
+  <br />
+</div>
+<br/>
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+**`roverctl-web` is the web interface that can be used to conveniently manage, tune and debug pipelines and services on the Rover. The tool is packaged as a Docker image that can be run on all platforms. `roverctl` ships `roverctl-web` and will configure all parameters necessary to start this web interface.**
