@@ -43,6 +43,10 @@
 			staleTime: 1,
 			refetchInterval: 5000,
 			onSuccess: (data) => {
+				if (data.status !== 'started') {
+					return;
+				}
+
 				// Check if there are services that are not in the global store
 				const newServices = data.enabled.filter(
 					(e) => !$globalStore.services.has(e.service.fq.name)

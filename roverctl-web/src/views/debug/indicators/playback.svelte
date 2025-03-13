@@ -13,7 +13,7 @@
 
 <div class="card variant-soft p-2 px-4">
 	<div class="flex flex-row items-center justify-between">
-		<div>
+		<div class="flex flex-col items-start">
 			<h2>Stream</h2>
 			{#if $globalStore.paused && $globalStore.carConnected}
 				<p class="text-gray-400 text-sm">Paused</p>
