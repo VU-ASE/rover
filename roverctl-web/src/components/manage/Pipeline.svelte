@@ -130,39 +130,35 @@
 					});
 				}
 			}
-			return {
-				pipeline: pipeline.data,
-				services
-			};
+
+			const newNodes: PipelineNode[] = pipeline.data.enabled.map((e) => {
+				// Try to find the service information
+				const service = services.find((s) => serviceEqual(s.fq, e.service.fq));
+				if (!service) {
+					throw new Error(
+						'Service ' +
+							e.service.fq.name +
+							' was enabled but not installed on the Rover (author: ' +
+							e.service.fq.author +
+							', version: ' +
+							e.service.fq.version +
+							')'
+					);
+				}
+
+				return generateNode({
+					fq: service.fq,
+					service: service.service
+				});
+			});
+
+			// Create edges from the enabled services
+			const newEdges = edgesFromEnabledServices(newNodes);
+			createAndSetGraph(newNodes, newEdges);
+
+			return pipeline.data;
 		},
 		{
-			onSuccess: ({ pipeline, services }) => {
-				const newNodes: PipelineNode[] = pipeline.enabled.map((e) => {
-					// Try to find the service information
-					const service = services.find((s) => serviceEqual(s.fq, e.service.fq));
-					if (!service) {
-						throw new Error(
-							'Service ' +
-								e.service.fq.name +
-								' was enabled but not installed on the Rover (author: ' +
-								e.service.fq.author +
-								', version: ' +
-								e.service.fq.version +
-								')'
-						);
-					}
-
-					return generateNode({
-						fq: service.fq,
-						service: service.service
-					});
-				});
-
-				for (const service of newNodes) {
-					addService(service.data);
-				}
-			},
-
 			enabled: true, // run once on mount
 			refetchOnMount: false,
 			staleTime: 1
