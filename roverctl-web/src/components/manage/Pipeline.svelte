@@ -505,7 +505,13 @@
 	);
 
 	const startConfiguredPipeline = async () => {
-		const services = $nodes;
+		let services = $nodes;
+
+		// If debug mode is not enabled make sure to not include any transceiver service
+		if (!$debugActive.data) {
+			services = services.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER);
+		}
+
 		$stopPipeline.reset();
 		$buildService.reset();
 		$savePipeline.reset();
