@@ -1236,6 +1236,25 @@
 							</p>
 						</div>
 					{/if}
+
+					{#if selectedService.author === ASE_AUTHOR_IDENTIFIER}
+						<div class="card variant-soft-primary px-4 py-2 mt-1">
+							<p class="text-primary-400">
+								<!-- Possibility for XSS by injecting the name into the href? Probably not, because of how svelte handles setting HTML,
+								 but we can always hardcode the available options just to be sure -->
+								This is an official service provided by the ASE team. You can take a look at its
+								<a
+									href={`https://github.com/${ASE_AUTHOR_IDENTIFIER}/${selectedService.name}`}
+									class="underline text-primary-200">source code</a
+								>
+								and its
+								<a
+									href={`https://github.com/${ASE_AUTHOR_IDENTIFIER}/${selectedService.name}/tree/main/docs`}
+									class="underline text-primary-200">documentation</a
+								>.
+							</p>
+						</div>
+					{/if}
 				</div>
 
 				<TabGroup>
