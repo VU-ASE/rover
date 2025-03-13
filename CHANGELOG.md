@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/VU-ASE/rover/compare/v0.11.3...v0.12.0) (2025-03-13)
+
+
+### Features
+
+* link source code and docs for official services ([3ac9131](https://github.com/VU-ASE/rover/commit/3ac9131e4fce750e5475ec18167cf9feb83109c1))
+
+
+### Bug Fixes
+
+* correct timing of service error messages to actual moment of crash ([68f158f](https://github.com/VU-ASE/rover/commit/68f158f9404125399fc18499d855f04f6ab054f0))
+
 ## [0.11.3](https://github.com/VU-ASE/rover/compare/v0.11.2...v0.11.3) (2025-03-13)
 
 
