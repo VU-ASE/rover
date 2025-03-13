@@ -1,10 +1,8 @@
-
-
 <h1 align="center"><code>roverd</code></h1>
 <div align="center">
-  <a href="https://github.com/VU-ASE/roverd/releases/latest">Latest release</a>
+  <a href="https://github.com/VU-ASE/rover/releases/latest">Latest release</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://ase.vu.nl/docs/category/roverd">Documentation</a>
+  <a href="https://ase.vu.nl/docs/framework/Software/rover/roverd/overview">Documentation</a>
   <br />
 </div>
 <br/>
