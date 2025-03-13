@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/VU-ASE/rover/compare/v0.11.2...v0.11.3) (2025-03-13)
+
+
+### Bug Fixes
+
+* roverd not propagating stream outputs to transceiver if no consumer ([0818f38](https://github.com/VU-ASE/rover/commit/0818f38c0b4353bb5078a3c8b904be8a9e5f3c38))
+
 ## [0.11.2](https://github.com/VU-ASE/rover/compare/v0.11.1...v0.11.2) (2025-03-13)
 
 
