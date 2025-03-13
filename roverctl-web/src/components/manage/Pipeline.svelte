@@ -584,13 +584,11 @@
 				(s) => s.fq.name !== TRANSCEIVER_IDENTIFIER
 			)) {
 				const { name, author, version } = service.fq;
-
 				if (!serviceMap.has(author)) {
 					serviceMap.set(author, new Map());
 				}
 
 				const authorMap = serviceMap.get(author)!;
-
 				if (!authorMap.has(name)) {
 					authorMap.set(name, new Set());
 				}
@@ -599,7 +597,7 @@
 			}
 
 			// Convert map to array, filter results based on search input
-			return Array.from(serviceMap.entries())
+			const groups = Array.from(serviceMap.entries())
 				.map(([author, namesMap]) => {
 					// Filter names based on search input
 					const filteredNames = Array.from(namesMap.entries())
@@ -614,14 +612,26 @@
 										version.toLowerCase().includes(searchTerm)
 								)
 								.sort((a, b) => compareVersions(b, a)); // Sort versions descending
-
 							return filteredVersions.length > 0 ? { name, versions: filteredVersions } : null;
 						})
 						.filter(Boolean) as { name: string; versions: string[] }[];
-
 					return filteredNames.length > 0 ? { author, names: filteredNames } : null;
 				})
 				.filter(Boolean); // Ensure only non-null values are returned
+
+			// Sort by author alphabetically, make sure that vu-ase is always first
+			return groups.sort((a, b) => {
+				if (!a || !b) {
+					return 0;
+				}
+				if (a.author === ASE_AUTHOR_IDENTIFIER) {
+					return -1;
+				}
+				if (b.author === ASE_AUTHOR_IDENTIFIER) {
+					return 1;
+				}
+				return a.author.localeCompare(b.author);
+			});
 		}
 	);
 
