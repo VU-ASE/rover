@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/VU-ASE/rover/compare/v0.11.1...v0.11.2) (2025-03-13)
+
+
+### Bug Fixes
+
+* pipeline not loading after viewing debug screen ([67787c4](https://github.com/VU-ASE/rover/commit/67787c480eb8d8c92381433008e21b2297b5b6eb))
+
 ## [0.11.1](https://github.com/VU-ASE/rover/compare/v0.11.0...v0.11.1) (2025-03-13)
 
 
