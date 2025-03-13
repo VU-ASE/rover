@@ -6,7 +6,7 @@ toolchain go1.23.7
 
 require (
 	github.com/VU-ASE/rovercom v1.4.1
-	github.com/VU-ASE/roverrtc v1.2.0
+	github.com/VU-ASE/roverrtc v1.3.0
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/charmbracelet/huh v0.5.2
