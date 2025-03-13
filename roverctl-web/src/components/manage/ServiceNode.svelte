@@ -24,14 +24,14 @@
 		<Handle
 			type="source"
 			position={Position.Right}
-			id="center-source"
+			id="source"
 			class="!absolute !transform !translate-x-[-50%] !translate-y-[-50%] !left-[50%] !top-[50%] w-4 h-4 opacity-0"
 			style="pointer-events: none;"
 		/>
 		<Handle
 			type="target"
 			position={Position.Right}
-			id="center-target"
+			id="target"
 			class="!absolute !transform !translate-x-[-50%] !translate-y-[-50%] !left-[50%] !top-[50%] w-4 h-4 opacity-0"
 			style="pointer-events: none;"
 		/>

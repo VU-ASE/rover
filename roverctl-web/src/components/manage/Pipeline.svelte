@@ -13,6 +13,7 @@
 
 	import { toasts } from 'svelte-toasts';
 
+	import { SvelteFlowProvider } from '@xyflow/svelte';
 	import type { Edge, Node } from '@xyflow/svelte';
 	import { Circle, DoubleBounce } from 'svelte-loading-spinners';
 	import { config } from '$lib/config';
@@ -63,31 +64,35 @@
 	const nodes: Writable<PipelineNode[]> = writable([]);
 	const edges: Writable<Edge[]> = writable([]);
 
-	const edgesFromEnabledServices = (enabled: PipelineNodeData[]) => {
+	const edgesFromEnabledServices = (enabled: Node<PipelineNodeData>[]) => {
 		// For each dependency, create an edge
 		const newEdges: Edge[] = [];
 		for (const e of enabled) {
-			for (const input of e.service.inputs) {
-				const source = input.service;
-				const target = e.fq.name;
+			const service = e.data.service;
+			const fq = e.data.fq;
 
+			for (const input of service.inputs) {
+				const source = input.service;
+				const target = serviceIdentifier(fq);
 				for (const stream of input.streams) {
 					const id = `${source}-${target}-${stream}`;
 
-					// Check if the target service exists, and if the stream is present
-					if (
-						enabled.find((s) => s.fq.name === target) &&
-						enabled.find((s) => s.fq.name === source)
-					) {
-						// Add if not already present
-						if (!newEdges.find((edge) => edge.id === id)) {
-							newEdges.push({
-								id,
-								source,
-								target,
-								animated: false
-							});
-						}
+					// Find the node that matches the source
+					const sourceNode = enabled.find(
+						(n) =>
+							serviceIdentifier(n.data.fq) === source && n.data.service.outputs.includes(stream)
+					);
+
+					if (sourceNode) {
+						newEdges.push({
+							id: id,
+							source: sourceNode.id,
+							target: e.id, // that is this node
+							data: {
+								label: stream,
+								type: 'input'
+							}
+						});
 					}
 				}
 			}
@@ -125,38 +130,39 @@
 					});
 				}
 			}
-
-			const newNodes: PipelineNode[] = pipeline.data.enabled.map((e) => {
-				// Try to find the service information
-				const service = services.find(
-					(s) =>
-						s.fq.name === e.service.fq.name &&
-						s.fq.author === e.service.fq.author &&
-						s.fq.version === e.service.fq.version
-				);
-				if (!service) {
-					throw new Error(
-						'Service ' +
-							e.service.fq.name +
-							' was enabled but not installed on the Rover (author: ' +
-							e.service.fq.author +
-							', version: ' +
-							e.service.fq.version +
-							')'
-					);
-				}
-
-				return generateNode({
-					fq: service.fq,
-					service: service.service
-				});
-			});
-
-			const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
-			createAndSetGraph(newNodes, newEdges);
-			return pipeline.data;
+			return {
+				pipeline: pipeline.data,
+				services
+			};
 		},
 		{
+			onSuccess: ({ pipeline, services }) => {
+				const newNodes: PipelineNode[] = pipeline.enabled.map((e) => {
+					// Try to find the service information
+					const service = services.find((s) => serviceEqual(s.fq, e.service.fq));
+					if (!service) {
+						throw new Error(
+							'Service ' +
+								e.service.fq.name +
+								' was enabled but not installed on the Rover (author: ' +
+								e.service.fq.author +
+								', version: ' +
+								e.service.fq.version +
+								')'
+						);
+					}
+
+					return generateNode({
+						fq: service.fq,
+						service: service.service
+					});
+				});
+
+				for (const service of newNodes) {
+					addService(service.data);
+				}
+			},
+
 			enabled: true, // run once on mount
 			refetchOnMount: false,
 			staleTime: 1
@@ -164,8 +170,11 @@
 	);
 
 	const generateNode = (service: PipelineNodeData) => {
+		// Create a random id
+		const randomId = Math.random().toString(36).substring(7);
+
 		return {
-			id: serviceIdentifier(service.fq),
+			id: randomId,
 			position: { x: 0, y: 0 },
 			type: 'service',
 			width: 200,
@@ -183,6 +192,8 @@
 	};
 
 	const createAndSetGraph = (newNodes: PipelineNode[], newEdges: Edge[]) => {
+		console.log('Was asked to set edges for graph', newNodes, newEdges);
+
 		// Create a daggerable graph to automatically layout the nodes
 		const graph = new dagre.graphlib.Graph();
 		graph.setGraph({ rankdir: 'LR' }); // Top-to-Bottom layout
@@ -219,17 +230,13 @@
 		}
 
 		// If there is a conflicting service already enabled, remove it
-		$nodes.forEach((n) => {
-			if (serviceConflicts(n.data.fq, service.fq)) {
-				removeService(n.data.fq);
-			}
-		});
+		const filteredNodes = $nodes.filter((n) => !serviceConflicts(n.data.fq, service.fq));
 
 		// Add the service to the pipeline
-		const newNodes = [...$nodes, generateNode(service)];
+		const newNodes = [...filteredNodes, generateNode(service)];
 
 		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
+		const newEdges = edgesFromEnabledServices(newNodes);
 
 		createAndSetGraph(newNodes, newEdges);
 	};
@@ -298,7 +305,7 @@
 		const newNodes = $nodes.filter((n) => n.data.fq.name !== fq.name);
 
 		// Add edges from the new service
-		const newEdges = edgesFromEnabledServices(newNodes.map((n) => n.data));
+		const newEdges = edgesFromEnabledServices(newNodes);
 
 		createAndSetGraph(newNodes, newEdges);
 	};
@@ -651,7 +658,6 @@
 
 		// strip the protocol from the roverctl configuration
 		const address = passthrough.value.toString().replace(/^https?:\/\//, '');
-		console.log('Checking address', address);
 		return address === config.passthrough.host + ':' + config.passthrough.port;
 	});
 
@@ -728,25 +734,27 @@
 
 <div class="h-[90vh] sm:h-[30vh] overflow-hidden relative shrink-0">
 	<!-- Pipeline flowchart column -->
-	<div class="md:col-span-2 lg:col-span-3 h-full overflow-hidden">
-		<SvelteFlow
-			{nodes}
-			{edges}
-			{nodeTypes}
-			style="background-color: transparent;"
-			proOptions={{ hideAttribution: true }}
-			on:nodeDelete={({ detail }) => {
-				console.log('delete', detail);
-			}}
-		>
-			<Background
-				bgColor={'transparent'}
-				class="bg-transparent"
-				patternColor={colors.slate[500]}
-				gap={20}
-			/>
-			<AutoFit />
-		</SvelteFlow>
+	<div
+		class="md:col-span-2 lg:col-span-3 h-full overflow-hidden"
+		style="touch-action: manipulation;"
+	>
+		<SvelteFlowProvider>
+			<SvelteFlow
+				{nodes}
+				{edges}
+				{nodeTypes}
+				style="background-color: transparent;"
+				proOptions={{ hideAttribution: true }}
+			>
+				<Background
+					bgColor={'transparent'}
+					class="bg-transparent"
+					patternColor={colors.slate[500]}
+					gap={20}
+				/>
+				<AutoFit />
+			</SvelteFlow>
+		</SvelteFlowProvider>
 
 		<!-- Loading Overlay -->
 		{#if $nodesQuery.isLoading}

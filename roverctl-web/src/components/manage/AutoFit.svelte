@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { useSvelteFlow, useNodes } from '@xyflow/svelte';
+	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
 	import type { FitViewOptions } from '@xyflow/svelte';
 
 	const { fitView } = useSvelteFlow();
 	const nodes = useNodes();
+	const edges = useEdges();
 
 	const fitOptions: FitViewOptions = {
 		maxZoom: 1.2,
@@ -19,6 +20,7 @@
 	// Auto fit view when nodes change
 	$: {
 		if ($nodes.length > 0) {
+			console.log('From autofit, nodes and eges:', $nodes, $edges);
 			fitView(fitOptions);
 		}
 	}
