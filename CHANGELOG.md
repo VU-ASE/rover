@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/VU-ASE/rover/compare/v0.11.0...v0.11.1) (2025-03-13)
+
+
+### Bug Fixes
+
+* do not error on existing connection being reused ([6e357bf](https://github.com/VU-ASE/rover/commit/6e357bfd6dc7c008d09f0717992a3619f7f2240c))
+
 ## [0.11.0](https://github.com/VU-ASE/rover/compare/v0.10.2...v0.11.0) (2025-03-13)
 
 
