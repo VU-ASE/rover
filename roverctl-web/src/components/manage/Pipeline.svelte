@@ -1232,8 +1232,7 @@
 								This service crashed with exit code
 								{$pipelineQuery.data.enabled.find(
 									(s) => selectedService && serviceEqual(s.service.fq, selectedService)
-								)?.service.exit}
-								and caused the pipeline to crash.
+								)?.service.exit}, causing the pipeline to be aborted.
 							</p>
 						</div>
 					{/if}
