@@ -55,6 +55,7 @@ const handleIncomingDataMessage = async (e: MessageEvent<ArrayBuffer>) => {
 			if (!debugMessage || !debugMessage.service || debugMessage.message.length === 0) {
 				throw new Error('Invalid debug message');
 			}
+
 			globalStore.addFrame(debugMessage);
 			return;
 		} catch (e) {

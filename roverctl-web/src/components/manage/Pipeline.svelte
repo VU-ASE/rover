@@ -324,6 +324,7 @@
 		$nodesQuery.refetch();
 	});
 
+	// Periodically fetch pipeline status
 	const pipelineQuery = useQuery(
 		'pipeline',
 		async () => {
@@ -354,6 +355,41 @@
 						onClick: () => {},
 						onRemove: () => {}
 					});
+				}
+
+				// Show a warning about the service that caused the pipeline to crash (if any)
+				for (const enabled of data.enabled) {
+					const previousEnabled = previousData?.enabled.find(
+						(e) => e.service.fq.name === enabled.service.fq.name
+					);
+
+					if (
+						// Service must be crashed
+						enabled.service.exit !== 0 &&
+						// But only send this notification on the first time we know it crashed
+						(!previousEnabled ||
+							previousEnabled.service.exit === 0 || // Service was not crashed before
+							// Or the service was restarted
+							(previousData?.last_start &&
+								data.last_start &&
+								previousData?.last_start < data.last_start))
+					) {
+						toasts.add({
+							title: 'Service error',
+							description:
+								"Service '" +
+								enabled.service.fq.name +
+								"' exited with code " +
+								enabled.service.exit +
+								' and crashed the pipeline. Check its logs for more information.',
+							duration: 10000,
+							placement: 'bottom-right',
+							type: 'warning',
+							theme: 'dark',
+							onClick: () => {},
+							onRemove: () => {}
+						});
+					}
 				}
 			},
 			onError: () => {
@@ -482,53 +518,6 @@
 			return response.data;
 		},
 		{
-			onSuccess: async () => {
-				try {
-					// Try to fetch the just enabled pipeline
-					if (!config.success) {
-						throw new Error('Configuration could not be loaded');
-					}
-
-					const papi = new PipelineApi(config.roverd.api);
-
-					// Fetch enabled services in the pipeline
-					const pipeline = await papi.pipelineGet();
-
-					// Show a warning about the service that caused the pipeline to crash (if any)
-					for (const enabled of pipeline.data.enabled) {
-						if (enabled.service.exit !== 0) {
-							toasts.add({
-								title: 'Service error',
-								description:
-									"Service '" +
-									enabled.service.fq.name +
-									"' exited with code " +
-									enabled.service.exit +
-									' and crashed the pipeline. Check its logs for more information.',
-								duration: 10000,
-								placement: 'bottom-right',
-								type: 'warning',
-								theme: 'dark',
-								onClick: () => {},
-								onRemove: () => {}
-							});
-						}
-					}
-				} catch (e) {
-					console.error('Could not confirm pipeline execution:', e);
-					toasts.add({
-						title: 'Pipeline error',
-						description:
-							'Pipeline execution was initiated, but could not be confirmed. See console for more information.',
-						duration: 10000,
-						placement: 'bottom-right',
-						type: 'error',
-						theme: 'dark',
-						onClick: () => {},
-						onRemove: () => {}
-					});
-				}
-			},
 			// Invalidate the pipeline query regardless of mutation success or failure
 			onSettled: () => {
 				queryClient.invalidateQueries('pipeline');
