@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.11.0](https://github.com/VU-ASE/rover/compare/v0.10.2...v0.11.0) (2025-03-13)
+
+
+### Features
+
+* show which service crashed the pipeline ([8591295](https://github.com/VU-ASE/rover/commit/85912954080cdb6654596702b195fb1c2b064ded))
+
+
+### Bug Fixes
+
+* disable transceiver service when debug mode is not enabled ([46f41e5](https://github.com/VU-ASE/rover/commit/46f41e5f75025b3dd3515852eb42f69f88afccea))
+* improved upload description and example usage ([248002c](https://github.com/VU-ASE/rover/commit/248002c3d1c96494a91577621a270ea0a3a68cea))
+* load list of services from roverd in debug window ([a8099bb](https://github.com/VU-ASE/rover/commit/a8099bb929543b3dfde14b06bc61115c880f3ceb))
+* more helpful messages to enable debug mode ([106e3ea](https://github.com/VU-ASE/rover/commit/106e3ea929bc7943948e77f07074171e4a31ad55))
+* only show services when the pipeline is started (in debug mode) ([e22facf](https://github.com/VU-ASE/rover/commit/e22facf86deb8c7b305238dcc704b6aab7fc741b))
+* service logs cut-off point makes them unreadable ([412a8ee](https://github.com/VU-ASE/rover/commit/412a8ee5eb7520daee8fbef481b0271eadab9470))
+* show logs of last run when selected ([0cca2da](https://github.com/VU-ASE/rover/commit/0cca2dab6e762f6fb8916ed3cce3175f17262ec0))
+* show pipeline edges accurately ([ff53e34](https://github.com/VU-ASE/rover/commit/ff53e3424e6c8644bd943c3d181c080cf69f6a74))
+* sort services alphabetically. Always show vu-ase first ([fb6a58b](https://github.com/VU-ASE/rover/commit/fb6a58b9419af46bb1b06792e548bdc9431fb6da))
+
 ## [0.10.2](https://github.com/VU-ASE/rover/compare/v0.10.1...v0.10.2) (2025-03-12)
 
 
