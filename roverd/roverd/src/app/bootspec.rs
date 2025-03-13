@@ -107,6 +107,25 @@ impl BootSpecs {
                 }
             }
 
+            // If we have a transceiver, it gets all outputs as its inputs
+            if transeiver_service.is_some() {
+                transceiver_inputs.push(Input {
+                    service: service_name.clone(),
+                    streams: outputs
+                        .clone()
+                        .iter()
+                        .map(|s| {
+                            Stream {
+                                name: s.name.clone(),
+                                // Conversely, for inputs, the address should be in the form of tcp://localhost:port instead of tcp://*:port
+                                // (required for zmq connect). So we replace * with localhost.
+                                address: s.address.clone().replace("*", "localhost"),
+                            }
+                        })
+                        .collect(),
+                });
+            }
+
             let mut inputs = vec![];
             for input_stream in s.inputs.iter() {
                 let service_name = &input_stream.service;
@@ -122,14 +141,6 @@ impl BootSpecs {
                             address: address.clone(),
                         });
                     }
-                }
-
-                // If we have a transceiver, it gets all inputs
-                if transeiver_service.is_some() {
-                    transceiver_inputs.push(Input {
-                        service: service_name.clone(),
-                        streams: streams.clone(),
-                    });
                 }
 
                 inputs.push(Input {
