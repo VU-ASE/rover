@@ -15,6 +15,17 @@ curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverc
 
 Alternatively, you can download the pre-built binaries and releases [here](https://github.com/VU-ASE/rover/releases/latest).
 
+## Self-updating
+
+If you already have `roverctl` installed you can update to the latest version directly:
+
+```bash
+# Install latest
+roverctl update roverctl
+# Install specific version (i.e. 1.0.0)
+roverctl update roverctl --version 1.0.0
+```
+
 ## Build from source
 
 To install the repository from source, you can use our Makefile:
