@@ -4,7 +4,7 @@ The `roverctl` utility runs on your own system. You can conveniently install it 
 
 ## Install pre-built binaries (recommended)
 
-Linux and macOS users (both amd64 and arm64) can install our pre-built binaries using our installation script. This script will detect your system and add `roverctl` to your `PATH` automatically:
+Linux and macOS users (both amd64 and arm64) can install our pre-built binaries using the provided installation script. This script will detect your system and add `roverctl` to your `PATH` automatically:
 
 ```bash
 # Install latest
@@ -26,4 +26,4 @@ make build
 ./bin/roverctl
 ```
 
-We provide users with a *.devcontainer* that can be used in VS Code and has all necessary dependencies installed already. If you want to understand which dependencies need to be installed, take a look at the *.devcontainer/Dockerfile*.
+We provide users with a *.devcontainer* that can be used in VS Code and has all necessary dependencies installed already. If you want to understand which dependencies need to be installed, take a look at the [*.devcontainer/Dockerfile*](https://github.com/VU-ASE/rover/blob/main/.devcontainer/roverctl/Dockerfile).
