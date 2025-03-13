@@ -5,7 +5,7 @@
 	import CloseCircle from '~icons/tdesign/close-circle-filled';
 	import WarningIcon from '~icons/si/warning-fill';
 	import { connectionStore } from '$lib/store/connection';
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { globalStore } from '$lib/store';
 	import Service from './service.svelte';
 	import ChartCollection from './sensorcard/chartCollection.svelte';
@@ -18,6 +18,54 @@
 	import BufferSizeIndicator from './indicators/buffer.svelte';
 	import CacheSizeIndicator from './indicators/cache.svelte';
 	import DelayIndicator from './indicators/delay.svelte';
+	import { useQuery } from '@sveltestack/svelte-query';
+	import { config } from '$lib/config';
+	import { PipelineApi } from '$lib/openapi';
+	import { createServiceStore } from '$lib/store/service';
+
+	// Periodically refetch the pipeline so that we can show tunables even for services that do not expose
+	// output data
+	const pipelineQuery = useQuery(
+		'pipeline',
+		async () => {
+			if (!config.success) {
+				throw new Error('Configuration could not be loaded');
+			}
+
+			const papi = new PipelineApi(config.roverd.api);
+
+			// Fetch enabled services in the pipeline
+			const pipeline = await papi.pipelineGet();
+			return pipeline.data;
+		},
+		{
+			keepPreviousData: false,
+			staleTime: 1,
+			refetchInterval: 5000,
+			onSuccess: (data) => {
+				// Check if there are services that are not in the global store
+				const newServices = data.enabled.filter(
+					(e) => !$globalStore.services.has(e.service.fq.name)
+				);
+
+				// Add new services to the global store
+				newServices.forEach((service) => {
+					const name = service.service.fq.name;
+					const newServiceStore = createServiceStore({
+						name: name,
+						pid: -1,
+						endpoints: new Map()
+					});
+
+					$globalStore.services.set(name, newServiceStore);
+				});
+			}
+		}
+	);
+
+	onMount(() => {
+		$pipelineQuery.refetch();
+	});
 </script>
 
 <div class="flex flex-col min-h-screen w-full relative">
@@ -26,7 +74,10 @@
 		<div class="flex-1 flex items-center justify-center">
 			<div class="space-y-2 text-center animate-fade-in animate-fade-out w-full">
 				<h1 class="text-green-500 text-lg font-bold">Connection established</h1>
-				<p class="text-secondary-700">Waiting for incoming debugging data.</p>
+				<p class="text-secondary-700">
+					Waiting for incoming debugging data.<br />
+					(You need to start your pipeline first)
+				</p>
 			</div>
 		</div>
 	{:else}
