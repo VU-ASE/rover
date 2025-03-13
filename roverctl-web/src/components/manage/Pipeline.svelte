@@ -697,7 +697,7 @@
 	);
 </script>
 
-<div class="h-[90vh] sm:h-[30vh] overflow-hidden relative">
+<div class="h-[90vh] sm:h-[30vh] overflow-hidden relative shrink-0">
 	<!-- Pipeline flowchart column -->
 	<div class="md:col-span-2 lg:col-span-3 h-full overflow-hidden">
 		<SvelteFlow
@@ -959,8 +959,10 @@
 			</div>
 		</div>
 	{/if}
+</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-5 h-[calc(70vh-8.5rem)] overflow-hidden gap-4 mt-4">
+<div class="w-full px-4 flex-1 min-h-0 overflow-auto py-4">
+	<div class="grid grid-cols-1 lg:grid-cols-5 h-full gap-4">
 		<!-- Sidebar (1/5 width on large screens) -->
 		<div class="flex flex-col h-full gap-4">
 			<div class="card lg:col-span-1 overflow-y-auto flex flex-col h-full">

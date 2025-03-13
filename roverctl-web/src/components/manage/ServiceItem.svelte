@@ -211,7 +211,7 @@
 					>
 				</div>
 			{/if}
-			<div class=" text-gray-100 font-mono h-full text-sm overflow-y-auto mb-2">
+			<div class=" text-gray-100 font-mono h-full text-sm overflow-y-auto mb-4 pb-2">
 				{#each $logsQuery.data.filter((line, index) => {
 					if (showOnlyLastRun) {
 						// Find the last line that includes "spawned service"
