@@ -183,7 +183,8 @@ impl BootSpecs {
                 inputs: transceiver_inputs,
                 outputs: vec![Stream {
                     name: service_name,
-                    address: tuning.address.clone(),
+                    // For outputs, the address should be in the form of tcp://*:port instead of tcp://localhost:port
+                    address: tuning.address.clone().replace("localhost", "*"),
                 }],
                 configuration: s.0.configuration.clone(),
                 // This might seem weird, but the transceiver itself does not listen to tuning from another service
