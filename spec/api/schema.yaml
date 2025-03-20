@@ -1059,12 +1059,24 @@ components:
       type: object
       description: Returned if a specific key is not found in the configuration in a service.yaml
       required:
-        - "source"
-        - "target"
+        - "key"
       properties:
-        source:
+        key:
           type: string
-        target:
+
+    InvalidKeyTypeError:
+      type: object
+      description: Returned if a specific key is found but has a different type in the configuration in a service.yaml than was supplied as a value
+      required:
+        - "key"
+        - "expected_type"
+        - "actual_type"
+      properties:
+        key:
+          type: string
+        expected_type:
+          type: string
+        actual_type:
           type: string
 
   responses:
