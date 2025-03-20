@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/VU-ASE/rover/compare/v0.12.0...v0.12.1) (2025-03-20)
+
+
+### Bug Fixes
+
+* transceiver output address should use `*` instead of `localhost` ([19264da](https://github.com/VU-ASE/rover/commit/19264dac0d2c18e4ff8485889e4f9dd0dd0fddab))
+
 ## [0.12.0](https://github.com/VU-ASE/rover/compare/v0.11.3...v0.12.0) (2025-03-13)
 
 
