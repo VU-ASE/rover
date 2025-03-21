@@ -41,6 +41,11 @@ pub enum Error {
     StringToFqConversion,
     FailedToSpawnProcess(String),
 
+    // --- Config Updating ---
+    InvalidKey(String),
+    DuplicateKey(String),
+    InvalidKeyType(String),
+
     // Since pipeline is *always* in a valid state, the only
     // error case is a warning in which it is empty, but valid.
     PipelineIsEmpty,

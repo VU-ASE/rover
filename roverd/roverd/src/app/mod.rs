@@ -6,10 +6,11 @@ use rovervalidate::config::{Configuration, ValidatedConfiguration};
 use rovervalidate::pipeline::interface::{Pipeline, RunnablePipeline};
 use rovervalidate::service::{Service, ValidatedService};
 use rovervalidate::validate::Validate;
+use serde_json::Value;
 use service::{Fq, FqBuf, FqBufVec, FqVec};
 use state::{Dormant, Operating, RoverState};
 use std::cmp;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::fs::{self, remove_file};
 use std::io::{BufRead, BufReader, Write};
@@ -1000,6 +1001,83 @@ impl App {
         }
 
         Ok(fqns)
+    }
+
+    pub async fn update_service_config(
+        &self,
+        path_params: &ServicesAuthorServiceVersionConfigurationPostPathParams,
+        config_updates: &Vec<ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+        _: RoverState<Dormant>,
+    ) -> Result<(), Error> {
+        // Convert given service from the path parameters into an Fq that we can use.
+        let fq = FqBuf::from(path_params);
+
+        // Try to get the service's configuration from the file system.
+        let service = self.get_service(fq).await?;
+
+        // We check every incoming "key" with the available "name" from the config
+        let mut unique_keys = HashSet::new();
+        let mut new_service_config = HashMap::new();
+        for item in config_updates {
+            let key = item.key.clone();
+
+            // Check if any incoming key does not exist in the config file on disk
+            for config in service.0.configuration.iter() {
+                if config.name != key {
+                    return Err(Error::InvalidKey(format!(
+                        "Attempted to update key: '{}' which does not exist",
+                        key
+                    )));
+                }
+            }
+
+            // If we already had this key, then there is a duplicate!
+            if !unique_keys.insert(key) {
+                return Err(Error::DuplicateKey(format!(
+                    "There exists a duplicate key in the config update request"
+                )));
+            }
+        }
+
+        let abc = HashMap::new();
+
+        for item in service.0.configuration {
+            abc.insert(item.name, item.value);
+        }
+
+
+        for item in config_updates {
+            let key = item.key.clone();
+
+            let value = serde_json::from_str::<Value>(item.value.0.get())?;
+
+            match value {
+                Value::Number(number) => todo!(),
+                Value::String(_) => todo!(),
+                _ => {
+                    return Err(Error::InvalidKeyType(format!(
+                        "There exists a duplicate key in the config update request"
+                    )))
+                }
+            }
+        }
+
+        // For all keys in config_updates, there must be a matching and unique element in
+        // config where config_update.name == config.key
+
+        // config_updates
+
+        // let mut configs_to_update = HashSet::new();
+
+        // let a = config_updates.iter().all(|config_udpate| {
+        //     configs_on_disk
+        //         .iter()
+        //         .enumerate()
+        //         .find(|(_, config_on_disk)| config_on_disk.name == config_udpate.key)
+        //         .map_or(false, |(idx, _)| configs_to_update.insert(idx))
+        // });
+
+        Ok(())
     }
 }
 

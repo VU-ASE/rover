@@ -46,6 +46,17 @@ pub struct ServicesAuthorServiceGetPathParams {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ServicesAuthorServiceVersionConfigurationPostPathParams {
+    /// The author name
+    pub author: String,
+    /// The service name
+    pub service: String,
+    /// The version of the service
+    pub version: String,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
 pub struct ServicesAuthorServiceVersionDeletePathParams {
     /// The author name
     pub author: String,
@@ -3170,6 +3181,182 @@ impl std::str::FromStr for ServiceStatus {
             "disabled" => std::result::Result::Ok(ServiceStatus::Disabled),
             _ => std::result::Result::Err(format!("Value not valid: {}", s)),
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ServicesAuthorServiceVersionConfigurationPostRequestInner {
+    /// The unique key, corresponding to a configuration key in the service.yaml file
+    #[serde(rename = "key")]
+    pub key: String,
+
+    #[serde(rename = "value")]
+    pub value: models::ServicesAuthorServiceVersionConfigurationPostRequestInnerValue,
+}
+
+impl ServicesAuthorServiceVersionConfigurationPostRequestInner {
+    #[allow(clippy::new_without_default, clippy::too_many_arguments)]
+    pub fn new(
+        key: String,
+        value: models::ServicesAuthorServiceVersionConfigurationPostRequestInnerValue,
+    ) -> ServicesAuthorServiceVersionConfigurationPostRequestInner {
+        ServicesAuthorServiceVersionConfigurationPostRequestInner { key, value }
+    }
+}
+
+/// Converts the ServicesAuthorServiceVersionConfigurationPostRequestInner value to the Query Parameters representation (style=form, explode=false)
+/// specified in https://swagger.io/docs/specification/serialization/
+/// Should be implemented in a serde serializer
+impl std::fmt::Display for ServicesAuthorServiceVersionConfigurationPostRequestInner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let params: Vec<Option<String>> = vec![
+            Some("key".to_string()),
+            Some(self.key.to_string()),
+            // Skipping value in query parameter serialization
+        ];
+
+        write!(
+            f,
+            "{}",
+            params.into_iter().flatten().collect::<Vec<_>>().join(",")
+        )
+    }
+}
+
+/// Converts Query Parameters representation (style=form, explode=false) to a ServicesAuthorServiceVersionConfigurationPostRequestInner value
+/// as specified in https://swagger.io/docs/specification/serialization/
+/// Should be implemented in a serde deserializer
+impl std::str::FromStr for ServicesAuthorServiceVersionConfigurationPostRequestInner {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        /// An intermediate representation of the struct to use for parsing.
+        #[derive(Default)]
+        #[allow(dead_code)]
+        struct IntermediateRep {
+            pub key: Vec<String>,
+            pub value: Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInnerValue>,
+        }
+
+        let mut intermediate_rep = IntermediateRep::default();
+
+        // Parse into intermediate representation
+        let mut string_iter = s.split(',');
+        let mut key_result = string_iter.next();
+
+        while key_result.is_some() {
+            let val = match string_iter.next() {
+                Some(x) => x,
+                None => return std::result::Result::Err("Missing value while parsing ServicesAuthorServiceVersionConfigurationPostRequestInner".to_string())
+            };
+
+            if let Some(key) = key_result {
+                #[allow(clippy::match_single_binding)]
+                match key {
+                    #[allow(clippy::redundant_clone)]
+                    "key" => intermediate_rep.key.push(<String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
+                    #[allow(clippy::redundant_clone)]
+                    "value" => intermediate_rep.value.push(<models::ServicesAuthorServiceVersionConfigurationPostRequestInnerValue as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
+                    _ => return std::result::Result::Err("Unexpected key while parsing ServicesAuthorServiceVersionConfigurationPostRequestInner".to_string())
+                }
+            }
+
+            // Get the next key
+            key_result = string_iter.next();
+        }
+
+        // Use the intermediate representation to return the struct
+        std::result::Result::Ok(ServicesAuthorServiceVersionConfigurationPostRequestInner {
+            key: intermediate_rep.key.into_iter().next().ok_or_else(|| {
+                "key missing in ServicesAuthorServiceVersionConfigurationPostRequestInner"
+                    .to_string()
+            })?,
+            value: intermediate_rep.value.into_iter().next().ok_or_else(|| {
+                "value missing in ServicesAuthorServiceVersionConfigurationPostRequestInner"
+                    .to_string()
+            })?,
+        })
+    }
+}
+
+// Methods for converting between header::IntoHeaderValue<ServicesAuthorServiceVersionConfigurationPostRequestInner> and HeaderValue
+
+#[cfg(feature = "server")]
+impl
+    std::convert::TryFrom<
+        header::IntoHeaderValue<ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+    > for HeaderValue
+{
+    type Error = String;
+
+    fn try_from(
+        hdr_value: header::IntoHeaderValue<
+            ServicesAuthorServiceVersionConfigurationPostRequestInner,
+        >,
+    ) -> std::result::Result<Self, Self::Error> {
+        let hdr_value = hdr_value.to_string();
+        match HeaderValue::from_str(&hdr_value) {
+             std::result::Result::Ok(value) => std::result::Result::Ok(value),
+             std::result::Result::Err(e) => std::result::Result::Err(
+                 format!("Invalid header value for ServicesAuthorServiceVersionConfigurationPostRequestInner - value: {} is invalid {}",
+                     hdr_value, e))
+        }
+    }
+}
+
+#[cfg(feature = "server")]
+impl std::convert::TryFrom<HeaderValue>
+    for header::IntoHeaderValue<ServicesAuthorServiceVersionConfigurationPostRequestInner>
+{
+    type Error = String;
+
+    fn try_from(hdr_value: HeaderValue) -> std::result::Result<Self, Self::Error> {
+        match hdr_value.to_str() {
+             std::result::Result::Ok(value) => {
+                    match <ServicesAuthorServiceVersionConfigurationPostRequestInner as std::str::FromStr>::from_str(value) {
+                        std::result::Result::Ok(value) => std::result::Result::Ok(header::IntoHeaderValue(value)),
+                        std::result::Result::Err(err) => std::result::Result::Err(
+                            format!("Unable to convert header value '{}' into ServicesAuthorServiceVersionConfigurationPostRequestInner - {}",
+                                value, err))
+                    }
+             },
+             std::result::Result::Err(e) => std::result::Result::Err(
+                 format!("Unable to convert header: {:?} to string: {}",
+                     hdr_value, e))
+        }
+    }
+}
+
+/// The value that should be set for this key. Can be either a string or a number, but must match the type in the service.yaml file
+/// One of:
+/// - String
+/// - f64
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ServicesAuthorServiceVersionConfigurationPostRequestInnerValue(
+    pub Box<serde_json::value::RawValue>,
+);
+
+impl validator::Validate for ServicesAuthorServiceVersionConfigurationPostRequestInnerValue {
+    fn validate(&self) -> std::result::Result<(), validator::ValidationErrors> {
+        std::result::Result::Ok(())
+    }
+}
+
+/// Converts Query Parameters representation (style=form, explode=false) to a ServicesAuthorServiceVersionConfigurationPostRequestInnerValue value
+/// as specified in https://swagger.io/docs/specification/serialization/
+/// Should be implemented in a serde deserializer
+impl std::str::FromStr for ServicesAuthorServiceVersionConfigurationPostRequestInnerValue {
+    type Err = serde_json::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        serde_json::from_str(s)
+    }
+}
+
+impl PartialEq for ServicesAuthorServiceVersionConfigurationPostRequestInnerValue {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.get() == other.0.get()
     }
 }
 

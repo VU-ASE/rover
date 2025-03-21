@@ -46,6 +46,10 @@ where
                 .get(services_author_service_version_get::<I, A>)
                 .post(services_author_service_version_post::<I, A>),
         )
+        .route(
+            "/services/:author/:service/:version/configuration",
+            post(services_author_service_version_configuration_post::<I, A>),
+        )
         .route("/shutdown", post(shutdown_post::<I, A>))
         .route("/status", get(status_get::<I, A>))
         .route("/update", post(update_post::<I, A>))
@@ -1391,6 +1395,120 @@ where
                                                   response.body(Body::empty())
                                                 },
                                                 apis::services::ServicesAuthorServiceGetResponse::Status404_EntityNotFound
+                                                => {
+                                                  let mut response = response.status(404);
+                                                  response.body(Body::empty())
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                response.status(500).body(Body::empty())
+                                            },
+                                        };
+
+    resp.map_err(|e| {
+        error!(error = ?e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })
+}
+
+#[derive(validator::Validate)]
+#[allow(dead_code)]
+struct ServicesAuthorServiceVersionConfigurationPostBodyValidator<'a> {
+    #[validate(nested)]
+    body: &'a Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+}
+
+#[tracing::instrument(skip_all)]
+fn services_author_service_version_configuration_post_validation(
+    path_params: models::ServicesAuthorServiceVersionConfigurationPostPathParams,
+    body: Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+) -> std::result::Result<
+    (
+        models::ServicesAuthorServiceVersionConfigurationPostPathParams,
+        Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+    ),
+    ValidationErrors,
+> {
+    path_params.validate()?;
+    let b = ServicesAuthorServiceVersionConfigurationPostBodyValidator { body: &body };
+    b.validate()?;
+
+    Ok((path_params, body))
+}
+/// ServicesAuthorServiceVersionConfigurationPost - POST /services/{author}/{service}/{version}/configuration
+#[tracing::instrument(skip_all)]
+async fn services_author_service_version_configuration_post<I, A>(
+    method: Method,
+    host: Host,
+    cookies: CookieJar,
+    Path(path_params): Path<models::ServicesAuthorServiceVersionConfigurationPostPathParams>,
+    State(api_impl): State<I>,
+    Json(body): Json<Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>>,
+) -> Result<Response, StatusCode>
+where
+    I: AsRef<A> + Send + Sync,
+    A: apis::services::Services,
+{
+    #[allow(clippy::redundant_closure)]
+    let validation = tokio::task::spawn_blocking(move || {
+        services_author_service_version_configuration_post_validation(path_params, body)
+    })
+    .await
+    .unwrap();
+
+    let Ok((path_params, body)) = validation else {
+        return Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(validation.unwrap_err().to_string()))
+            .map_err(|_| StatusCode::BAD_REQUEST);
+    };
+
+    let result = api_impl
+        .as_ref()
+        .services_author_service_version_configuration_post(
+            method,
+            host,
+            cookies,
+            path_params,
+            body,
+        )
+        .await;
+
+    let mut response = Response::builder();
+
+    let resp = match result {
+                                            Ok(rsp) => match rsp {
+                                                apis::services::ServicesAuthorServiceVersionConfigurationPostResponse::Status200_OperationWasSuccessful
+                                                => {
+                                                  let mut response = response.status(200);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionConfigurationPostResponse::Status400_ErrorOccurred
+                                                    (body)
+                                                => {
+                                                  let mut response = response.status(400);
+                                                  {
+                                                    let mut response_headers = response.headers_mut().unwrap();
+                                                    response_headers.insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json").map_err(|e| { error!(error = ?e); StatusCode::INTERNAL_SERVER_ERROR })?);
+                                                  }
+
+                                                  let body_content =  tokio::task::spawn_blocking(move ||
+                                                      serde_json::to_vec(&body).map_err(|e| {
+                                                        error!(error = ?e);
+                                                        StatusCode::INTERNAL_SERVER_ERROR
+                                                      })).await.unwrap()?;
+                                                  response.body(Body::from(body_content))
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionConfigurationPostResponse::Status401_UnauthorizedAccess
+                                                => {
+                                                  let mut response = response.status(401);
+                                                  response.body(Body::empty())
+                                                },
+                                                apis::services::ServicesAuthorServiceVersionConfigurationPostResponse::Status404_EntityNotFound
                                                 => {
                                                   let mut response = response.status(404);
                                                   response.body(Body::empty())

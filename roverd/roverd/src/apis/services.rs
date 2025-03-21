@@ -207,7 +207,6 @@ impl Services for Roverd {
                         build_error_strings.push(format!("{:?}", other_error));
                     }
                 }
-
                 let build_error = BuildError::new(build_error_strings);
 
                 warn!("{:#?}", &build_error);
@@ -270,5 +269,39 @@ impl Services for Roverd {
     ) -> Result<FqnsGetResponse, ()> {
         let fqns = warn_generic!(self.app.get_fqns().await, FqnsGetResponse);
         Ok(FqnsGetResponse::Status200_FullyQualifiedServices(fqns))
+    }
+
+    /// Update service.yaml configuration values of a fully qualified service in-place.
+    ///
+    /// ServicesAuthorServiceVersionConfigurationPost - POST /services/{author}/{service}/{version}/configuration
+    async fn services_author_service_version_configuration_post(
+        &self,
+        _method: Method,
+        _host: Host,
+        _cookies: CookieJar,
+        path_params: models::ServicesAuthorServiceVersionConfigurationPostPathParams,
+        body: Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+    ) -> Result<ServicesAuthorServiceVersionConfigurationPostResponse, ()> {
+        if let Some(rover_state) = self.try_get_dormant().await {
+            match self
+                .app
+                .update_service_config(&path_params, &body, rover_state)
+                .await
+            {
+                Ok(_) => Ok(ServicesAuthorServiceVersionConfigurationPostResponse::Status200_OperationWasSuccessful),
+                Err(e) => {
+                    let error_msg = format!("{:?}", e);
+                    let json_string = serde_json::to_string(&error_msg).unwrap();
+                    let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
+                    Ok(
+                        ServicesAuthorServiceVersionConfigurationPostResponse::Status400_ErrorOccurred(
+                            RoverdError::new("generic".to_string(), RoverdErrorErrorValue(box_raw)),
+                        ),
+                    )
+                },
+            }
+        } else {
+            rover_is_operating!(ServicesAuthorServiceVersionConfigurationPostResponse)
+        }
     }
 }

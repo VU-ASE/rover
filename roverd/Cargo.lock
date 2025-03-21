@@ -1671,7 +1671,7 @@ dependencies = [
 
 [[package]]
 name = "roverd"
-version = "99.99.93"
+version = "6.9.9"
 dependencies = [
  "anyhow",
  "axum",

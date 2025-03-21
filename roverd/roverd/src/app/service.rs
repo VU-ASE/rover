@@ -173,6 +173,18 @@ impl From<&LogsAuthorNameVersionGetPathParams> for FqBuf {
     }
 }
 
+impl From<&ServicesAuthorServiceVersionConfigurationPostPathParams> for FqBuf {
+    fn from(value: &ServicesAuthorServiceVersionConfigurationPostPathParams) -> Self {
+        FqBuf {
+            author: value.author.clone(),
+            name: value.service.clone(),
+            version: value.version.clone(),
+            is_daemon: false,
+            service_as: get_service_as(&value.author, &value.service, &value.version),
+        }
+    }
+}
+
 impl FqBuf {
     pub fn path(&self) -> String {
         if self.is_daemon {
