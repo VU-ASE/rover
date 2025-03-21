@@ -62,6 +62,20 @@ pub enum ServicesAuthorServiceGetResponse {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
+pub enum ServicesAuthorServiceVersionConfigurationPostResponse {
+    /// Operation was successful
+    Status200_OperationWasSuccessful,
+    /// Error occurred
+    Status400_ErrorOccurred(models::RoverdError),
+    /// Unauthorized Access
+    Status401_UnauthorizedAccess,
+    /// Entity not found
+    Status404_EntityNotFound,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+#[allow(clippy::large_enum_variant)]
 pub enum ServicesAuthorServiceVersionDeleteResponse {
     /// The service version was deleted successfully
     Status200_TheServiceVersionWasDeletedSuccessfully(
@@ -175,6 +189,18 @@ pub trait Services {
         cookies: CookieJar,
         path_params: models::ServicesAuthorServiceGetPathParams,
     ) -> Result<ServicesAuthorServiceGetResponse, ()>;
+
+    /// Update service.yaml configuration values of a fully qualified service in-place.
+    ///
+    /// ServicesAuthorServiceVersionConfigurationPost - POST /services/{author}/{service}/{version}/configuration
+    async fn services_author_service_version_configuration_post(
+        &self,
+        method: Method,
+        host: Host,
+        cookies: CookieJar,
+        path_params: models::ServicesAuthorServiceVersionConfigurationPostPathParams,
+        body: Vec<models::ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+    ) -> Result<ServicesAuthorServiceVersionConfigurationPostResponse, ()>;
 
     /// Delete a specific version of a service.
     ///

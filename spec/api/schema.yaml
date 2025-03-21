@@ -629,6 +629,72 @@ paths:
         "404":
           $ref: "#/components/responses/NotFoundError"
 
+  /services/{author}/{service}/{version}/configuration:
+    post:
+      tags:
+        - "Services"
+      summary: "Update service.yaml configuration values of a fully qualified service in-place"
+      parameters:
+        - name: author
+          in: path
+          required: true
+          description: "The author name"
+          schema:
+            type: string
+          example: "vu-ase"
+        - name: service
+          in: path
+          required: true
+          description: "The service name"
+          schema:
+            type: string
+          example: "imaging"
+        - name: version
+          in: path
+          required: true
+          description: "The version of the service"
+          schema:
+            type: string
+          example: "1.0.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              description: An array of key-value objects.
+              items:
+                type: object
+                required:
+                  - key
+                  - value
+                properties:
+                  key:
+                    type: string
+                    description: The unique key, corresponding to a configuration key in the service.yaml file
+                    example: "temperature"
+                  value:
+                    description: The value that should be set for this key. Can be either a string or a number, but must match the type in the service.yaml file
+                    oneOf:
+                      - type: string
+                        example: "high"
+                      - type: number
+                        example: 22.5
+            example:
+              - key: "status"
+                value: "active"
+              - key: "temperature"
+                value: 23.7
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
   #
   #
   # Health
@@ -988,6 +1054,38 @@ components:
           type: string
         target:
           type: string
+    # UndefinedKeyError:
+    #   type: object
+    #   description: Returned if a specific key is not found in the configuration in a service.yaml
+    #   required:
+    #     - "key"
+    #   properties:
+    #     key:
+    #       type: string
+
+    # DuplicateKeyError:
+    #   type: object
+    #   description: Returned if there exist duplicate keys in the request
+    #   required:
+    #     - "key"
+    #   properties:
+    #     key:
+    #       type: string
+
+    # InvalidKeyTypeError:
+    #   type: object
+    #   description: Returned if a specific key is found but has a different type in the configuration in a service.yaml than was supplied as a value
+    #   required:
+    #     - "key"
+    #     - "expected_type"
+    #     - "actual_type"
+    #   properties:
+    #     key:
+    #       type: string
+    #     expected_type:
+    #       type: string
+    #     actual_type:
+    #       type: string
 
   responses:
     # This is the generic case where the operation was successful

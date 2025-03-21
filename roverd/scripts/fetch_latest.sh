@@ -37,3 +37,12 @@ curl -u debix:debix \
         -H 'Content-Type: application/json' \
         -d "{\"url\": \"https://github.com/VU-ASE/$1/releases/latest/download/$1.zip\"}"
 
+curl -u debix:debix \
+    -X 'POST' \
+    "http://192.168.0.112/services/vu-ase/imaging/1.2.1/configuration" \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d "[{\"key\": \"gstreamer-pipeline\", \"value\": \"haram\"}]"
+
+
+

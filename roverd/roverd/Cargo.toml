@@ -1,6 +1,6 @@
 [package]
 name = "roverd"
-version = "11.11.11"
+version = "6.9.9"
 edition = "2021"
 rust-version = "1.76.0"
 build = "src/build.rs"

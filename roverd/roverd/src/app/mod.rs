@@ -6,12 +6,13 @@ use rovervalidate::config::{Configuration, ValidatedConfiguration};
 use rovervalidate::pipeline::interface::{Pipeline, RunnablePipeline};
 use rovervalidate::service::{Service, ValidatedService};
 use rovervalidate::validate::Validate;
+use serde_json::Value;
 use service::{Fq, FqBuf, FqBufVec, FqVec};
 use state::{Dormant, Operating, RoverState};
 use std::cmp;
-use std::collections::HashMap;
-use std::fs::File;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, remove_file};
+use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::io::{Read, Seek, SeekFrom};
 use std::marker::PhantomData;
@@ -247,6 +248,32 @@ impl App {
             serde_yaml::from_str::<rovervalidate::service::Service>(&contents)?.validate()?;
 
         Ok(service)
+    }
+
+    /// Writes the validated service to the corresponding service.yaml on disk.
+    /// If for some reason it doesn't exist, it will error.
+    pub async fn update_service(&self, service: ValidatedService) -> Result<(), Error> {
+        // Check if the service.yaml exists
+        let fq_path = FqBuf::from(&service).path();
+
+        // Convert to a Path and check if it exists
+        let service_path = Path::new(&fq_path);
+        if !service_path.exists() {
+            return Err(Error::ServiceNotFound(fq_path));
+        }
+
+        let contents = serde_yaml::to_string(&service.0)?;
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(fq_path)
+            .map_err(Error::Io)?;
+
+        file.write_all(contents.as_bytes()).map_err(Error::Io)?;
+
+        Ok(())
     }
 
     /// Deletes a service from the filesystem. Note: this only removes it from the final
@@ -657,8 +684,8 @@ impl App {
                                 let mut stats = stats_clone.write().await;
                                 stats.status = PipelineStatus::Startable;
                                 stats.last_restart = Some(time_now!() as i64);
-
                                 info!("child {} exited with status {}", spawned.name, exit_status);
+
 
 
 
@@ -1000,6 +1027,95 @@ impl App {
         }
 
         Ok(fqns)
+    }
+
+    pub async fn update_service_config(
+        &self,
+        path_params: &ServicesAuthorServiceVersionConfigurationPostPathParams,
+        config_updates: &Vec<ServicesAuthorServiceVersionConfigurationPostRequestInner>,
+        _: RoverState<Dormant>,
+    ) -> Result<(), Error> {
+        // Convert given service from the path parameters into an Fq that we can use.
+        let fq = FqBuf::from(path_params);
+
+        // Try to get the service's configuration from the file system.
+        let mut service = self.get_service(fq).await?;
+
+        // We check every incoming "key" with the available "name" from the config
+        let mut unique_keys = HashSet::new();
+        for item in config_updates {
+            let key = item.key.clone();
+
+            // Check if any incoming key does not exist in the config file on disk
+            if !service.0.configuration.iter().any(|item| item.name == key) {
+                return Err(Error::InvalidKey(format!(
+                    "Attempted to update key: '{}' which does not exist",
+                    key
+                )));
+            }
+
+            // If we already had this key, then there is a duplicate!
+            if !unique_keys.insert(key) {
+                return Err(Error::DuplicateKey(
+                    "There exists a duplicate key in the config update request".to_string(),
+                ));
+            }
+        }
+
+        // For all the incoming configuration updates if the types are correct, we can update
+        // the service object.
+        for item in config_updates {
+            let update_key = item.key.clone();
+            let update_value = serde_json::from_str::<Value>(item.value.0.get())?;
+
+            for config in service.0.configuration.iter_mut() {
+                if update_key == config.name {
+                    match &update_value {
+                        Value::Number(n) => {
+                            if let rovervalidate::service::Value::Double(_) = config.value {
+                                if let Some(number) = n.as_f64() {
+                                    // Here we are sure that the incoming json value is a Number,
+                                    // and that the type stored on disk was a double, so we can update
+                                    config.value = rovervalidate::service::Value::Double(number);
+                                } else {
+                                    return Err(Error::InvalidKeyType(format!(
+                                        "Key '{}' is of type Number, however unable to cast it to an f64",
+                                        update_key
+                                    )));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyType(format!(
+                                    "Key '{}' is of type String, however a Number was supplied",
+                                    update_key
+                                )));
+                            }
+                        }
+                        Value::String(s) => {
+                            if let rovervalidate::service::Value::String(_) = config.value {
+                                // Here we are sure that the incoming json value is a String,
+                                // and that the type stored on disk was also a String, so we can update
+                                config.value = rovervalidate::service::Value::String(s.clone())
+                            } else {
+                                return Err(Error::InvalidKeyType(format!(
+                                    "Key '{}' is of type Number, however a String was supplied",
+                                    update_key
+                                )));
+                            }
+                        }
+                        _ => {
+                            return Err(Error::InvalidKeyType(format!(
+                                "The supplied key '{}' was neither a Number or String",
+                                update_key
+                            )));
+                        }
+                    }
+                }
+            }
+        }
+
+        self.update_service(service).await?;
+
+        Ok(())
     }
 }
 
