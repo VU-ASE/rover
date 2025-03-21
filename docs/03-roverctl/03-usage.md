@@ -22,7 +22,7 @@ roverctl --rover 12
 roverctl --host 192.168.0.112
 
 # Open roverctl-web for Rover 12 with a custom username and password
-roverctl --username admin --password welcome123
+roverctl -r 12 --username admin --password welcome123
 ``` 
 
 
@@ -39,7 +39,7 @@ roverctl --rover 12
 roverctl --host 192.168.0.112
 
 # Open roverctl-web for Rover 12 with a custom username and password
-roverctl --username admin --password welcome123
+roverctl -r 12 --username admin --password welcome123
 ```
 
 ## View Build Info
