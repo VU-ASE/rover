@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0](https://github.com/VU-ASE/rover/compare/v0.12.1...v0.13.0) (2025-03-21)
+
+
+### Features
+
+* error types for the configuration endpoint ([016a94b](https://github.com/VU-ASE/rover/commit/016a94bd55a8643d300bf94d1c88c54bdb60512b))
+* implemented in place update API ([44a8c73](https://github.com/VU-ASE/rover/commit/44a8c73ffd2ad93d22056335e78b3a8ff4a5da39))
+
+
+### Bug Fixes
+
+* gitignore was missing readme ([44c64ff](https://github.com/VU-ASE/rover/commit/44c64ffed3c5d317704599bfb95af5ace86af280))
+
 ## [0.12.1](https://github.com/VU-ASE/rover/compare/v0.12.0...v0.12.1) (2025-03-20)
 
 
