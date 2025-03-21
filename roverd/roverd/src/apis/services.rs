@@ -204,7 +204,7 @@ impl Services for Roverd {
                         build_error_strings.append(&mut build_log);
                     }
                     other_error => {
-                        build_error_strings.push(format!("{:?}", other_error));
+                        build_error_strings.push(format!("{:#?}", other_error));
                     }
                 }
                 let build_error = BuildError::new(build_error_strings);
@@ -290,7 +290,8 @@ impl Services for Roverd {
             {
                 Ok(_) => Ok(ServicesAuthorServiceVersionConfigurationPostResponse::Status200_OperationWasSuccessful),
                 Err(e) => {
-                    let error_msg = format!("{:?}", e);
+                    let error_msg = format!("{:#?}", e);
+                    warn!("{:#?}", e);
                     let json_string = serde_json::to_string(&error_msg).unwrap();
                     let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
                     Ok(

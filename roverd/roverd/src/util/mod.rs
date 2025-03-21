@@ -421,7 +421,7 @@ macro_rules! warn_generic {
             Ok(data) => data,
             Err(e) => {
                 warn!("{:#?}", e);
-                let generic_error = GenericError::new(format!("{:?}", e), 1);
+                let generic_error = GenericError::new(format!("{:#?}", e), 1);
                 // todo remove the unwraps and change to actual error
                 let json_string = serde_json::to_string(&generic_error).unwrap();
                 let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();
@@ -443,7 +443,7 @@ macro_rules! error_generic {
             Ok(data) => data,
             Err(e) => {
                 error!("{:#?}", e);
-                let generic_error = GenericError::new(format!("{:?}", e), 1);
+                let generic_error = GenericError::new(format!("{:#?}", e), 1);
                 // todo remove the unwraps and change to actual error
                 let json_string = serde_json::to_string(&generic_error).unwrap();
                 let box_raw = serde_json::value::RawValue::from_string(json_string).unwrap();

@@ -156,7 +156,7 @@ impl Pipeline for Roverd {
                         ));
                     }
                     some_error => {
-                        let some_generic_error = GenericError::new(format!("{:?}", some_error), 1);
+                        let some_generic_error = GenericError::new(format!("{:#?}", some_error), 1);
                         // todo remove the unwraps and change to actual error
                         warn!("{:#?}", &some_generic_error);
                         let json_string = serde_json::to_string(&some_generic_error).unwrap();

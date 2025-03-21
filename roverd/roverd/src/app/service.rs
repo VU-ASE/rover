@@ -186,6 +186,7 @@ impl From<&ServicesAuthorServiceVersionConfigurationPostPathParams> for FqBuf {
 }
 
 impl FqBuf {
+    /// Returns the file path of the associated service.yaml.
     pub fn path(&self) -> String {
         if self.is_daemon {
             format!(
@@ -200,6 +201,7 @@ impl FqBuf {
         }
     }
 
+    /// Returns the file path of the associated log file for the service.
     pub fn log_file(&self) -> String {
         format!(
             "{}/{}-{}-{}.log",
@@ -207,6 +209,7 @@ impl FqBuf {
         )
     }
 
+    /// Returns the file path of the associated build-log file for the service.
     pub fn build_log_file(&self) -> String {
         format!(
             "{}/build-{}-{}-{}.log",
@@ -214,6 +217,8 @@ impl FqBuf {
         )
     }
 
+    /// Returns the directory of the service. This directory contains the code
+    /// and service.yaml definitions.
     pub fn dir(&self) -> String {
         if self.is_daemon {
             format!(
