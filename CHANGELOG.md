@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.0](https://github.com/VU-ASE/rover/compare/v0.14.0...v0.15.0) (2025-03-25)
+
+
+### Features
+
+* calibration command for actuator service ([a549e94](https://github.com/VU-ASE/rover/commit/a549e9499f9b629e89b40ea6db1fc4e1e6f025c4))
+* install command ([955fea9](https://github.com/VU-ASE/rover/commit/955fea970534b51d0e8e31abef62600f776475c1))
+
 ## [0.14.0](https://github.com/VU-ASE/rover/compare/v0.13.0...v0.14.0) (2025-03-25)
 
 
