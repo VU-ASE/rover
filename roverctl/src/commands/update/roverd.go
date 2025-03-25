@@ -27,6 +27,12 @@ func addUpdateRoverd(rootCmd *cobra.Command) {
 		Short: "Self-update roverd",
 		Long:  `Update roverd to the latest version, or the version specified.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Update roverd
+			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
+			if er != nil {
+				return er
+			}
+
 			// If the user specifies a version, update to that version
 			// otherwise check the latest version of both roverctl and roverd
 			if version == "" {
@@ -41,11 +47,6 @@ func addUpdateRoverd(rootCmd *cobra.Command) {
 			version = "v" + strings.TrimPrefix(version, "v")
 			fmt.Printf("Updating roverd to version %s...\n", style.Success.Render(version))
 
-			// Update roverd
-			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
-			if er != nil {
-				return er
-			}
 			api := conn.ToApiClient()
 			update := api.HealthAPI.UpdatePost(
 				context.Background(),

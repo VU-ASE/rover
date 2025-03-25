@@ -106,7 +106,7 @@ func NewRoot() *cobra.Command {
 					fmt.Printf(" %s\n", style.Primary.Render("OR try to match roverctl to the roverd version"))
 					fmt.Printf("   %s\n", style.Gray.Render("roverctl update roverctl -v "+version))
 					fmt.Printf(" %s\n", style.Primary.Render("OR try to match roverd to the roverctl version"))
-					fmt.Printf("   %s\n", style.Gray.Render("roverctl update roverd -v "+version+" "+flagSuffix))
+					fmt.Printf("   %s\n", style.Gray.Render("roverctl update roverd -v "+utils.Version(view_info.Version)+" "+flagSuffix))
 					fmt.Printf(" %s\n", style.Primary.Render("OR force roverctl to run at the roverd version"))
 					fmt.Printf("   %s\n", style.Gray.Render("roverctl --force "+version+" "+flagSuffix))
 
