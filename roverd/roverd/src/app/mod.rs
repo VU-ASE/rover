@@ -903,11 +903,8 @@ impl App {
 
     /// Spawns a separate shell to run the update script
     pub async fn update_rover(&self, version: String, _: RoverState<Dormant>) -> Result<(), Error> {
-        let mut update_cmd = Command::new("sh");
-        update_cmd
-            .arg("-c")
-            .arg("/home/debix/ase/bin/update-roverd")
-            .arg(version);
+        let mut update_cmd = Command::new("/home/debix/ase/bin/update-roverd");
+        update_cmd.arg(version);
 
         match update_cmd.spawn() {
             Ok(_) => (),

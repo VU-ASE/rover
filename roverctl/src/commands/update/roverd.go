@@ -3,7 +3,6 @@ package command_update
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -44,7 +43,7 @@ func addUpdateRoverd(rootCmd *cobra.Command) {
 
 				version = update.LatestVersion
 			}
-			version = "v" + strings.TrimPrefix(version, "v")
+			version = utils.Version(version)
 			fmt.Printf("Updating roverd to version %s...\n", style.Success.Render(version))
 
 			api := conn.ToApiClient()

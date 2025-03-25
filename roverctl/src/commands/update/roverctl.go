@@ -1,10 +1,9 @@
 package command_update
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
@@ -17,10 +16,10 @@ func addUpdateRoverctl(rootCmd *cobra.Command) {
 		Long:  `Update roverctl to the latest version, or the version specified.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if version != "" {
-				version = strings.TrimPrefix(version, "v")
-				utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s v" + version)
+				version = utils.Version(version)
+				utils.ExecuteShellCommand(configuration.ROVERCTL_UPDATE_LATEST_SCRIPT_WITH_VERSION + version)
 			} else {
-				utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash")
+				utils.ExecuteShellCommand(configuration.ROVERCTL_UPDATE_LATEST_SCRIPT)
 			}
 		},
 	}

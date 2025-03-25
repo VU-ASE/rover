@@ -1,0 +1,9 @@
+package configuration
+
+const (
+	ROVERCTL_UPDATE_LATEST_SCRIPT = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash"
+)
+
+var (
+	ROVERCTL_UPDATE_LATEST_SCRIPT_WITH_VERSION = "curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s " // ... followed by vX.Y.Z
+)

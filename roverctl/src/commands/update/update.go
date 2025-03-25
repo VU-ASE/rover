@@ -3,11 +3,11 @@ package command_update
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"github.com/VU-ASE/rover/roverctl/src/style"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
@@ -27,6 +27,12 @@ func Add(rootCmd *cobra.Command) {
 		Short: "Self-update roverctl and roverd",
 		Long:  `Update roverctl and roverd to the latest version, or the version specified.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Update roverd
+			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
+			if er != nil {
+				return er
+			}
+
 			// If the user specifies a version, update to that version
 			// otherwise check the latest version of both roverctl and roverd
 			if version == "" {
@@ -38,14 +44,9 @@ func Add(rootCmd *cobra.Command) {
 
 				version = update.LatestVersion
 			}
-			version = "v" + strings.TrimPrefix(version, "v")
+			version = utils.Version(version)
 			fmt.Printf("Updating roverd and roverctl to version %s\n", style.Success.Render(version))
 
-			// Update roverd
-			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
-			if er != nil {
-				return er
-			}
 			api := conn.ToApiClient()
 			update := api.HealthAPI.UpdatePost(
 				context.Background(),
@@ -64,7 +65,7 @@ func Add(rootCmd *cobra.Command) {
 
 			// Update roverctl
 			fmt.Printf("Updating roverctl...\n")
-			utils.ExecuteShellCommand("curl -fsSL https://raw.githubusercontent.com/VU-ASE/rover/refs/heads/main/roverctl/install.sh | bash -s " + version)
+			utils.ExecuteShellCommand(configuration.ROVERCTL_UPDATE_LATEST_SCRIPT_WITH_VERSION + version)
 			return nil
 		},
 	}
