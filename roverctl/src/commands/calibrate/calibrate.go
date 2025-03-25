@@ -42,6 +42,7 @@ func Add(rootCmd *cobra.Command) {
 			}
 			api := conn.ToApiClient()
 
+			fmt.Printf("%s\n", style.Gray.Render("Preparation"))
 			fmt.Println("Stopping currently active pipeline...")
 			// Try to stop any running pipeline first (best effort)
 			stop := api.PipelineAPI.PipelineStopPost(
@@ -80,6 +81,7 @@ func Add(rootCmd *cobra.Command) {
 				}
 			}
 
+			fmt.Printf("\n%s\n", style.Gray.Render("Actuator target"))
 			// Try to find the actuator service, or install if missing
 			var actuator openapi.FullyQualifiedService
 			if len(actuators) == 0 {
@@ -128,7 +130,7 @@ func Add(rootCmd *cobra.Command) {
 			} else {
 				fmt.Println("Multiple actuators found")
 				for i, a := range actuators {
-					fmt.Printf("%d: %s by %s (%s)\n", i, a.Name, a.Author, a.Version)
+					fmt.Printf("[%d]: %s by %s (%s)\n", i, a.Name, style.Primary.Render(a.Author), a.Version)
 				}
 				i := -1
 				var err error
@@ -138,8 +140,9 @@ func Add(rootCmd *cobra.Command) {
 				}
 				actuator = actuators[i]
 			}
-			fmt.Printf("Selected actuator: %s by %s (%s)\n", actuator.Name, actuator.Author, actuator.Version)
+			fmt.Printf("Selected calibration target: %s by %s (%s)\n", style.Primary.Render(actuator.Name), style.Primary.Render(actuator.Author), actuator.Version)
 
+			fmt.Printf("\n%s\n", style.Gray.Render("Actuator-tester tooling"))
 			// Try to find the actuator-tester service, or install if missing
 			var actuatorTesterService openapi.FullyQualifiedService
 			if len(actuatorTester) == 0 {
@@ -186,9 +189,8 @@ func Add(rootCmd *cobra.Command) {
 			} else if len(actuatorTester) == 1 {
 				actuatorTesterService = actuatorTester[0]
 			} else {
-				fmt.Println("Multiple actuator-testers found")
 				for i, a := range actuatorTester {
-					fmt.Printf("%d: %s by %s (%s)\n", i, a.Name, a.Author, a.Version)
+					fmt.Printf("[%d]: %s by %s (%s)\n", i, a.Name, style.Primary.Render(a.Author), a.Version)
 				}
 				i := -1
 				var err error
@@ -198,9 +200,10 @@ func Add(rootCmd *cobra.Command) {
 				}
 				actuatorTesterService = actuatorTester[i]
 			}
-			fmt.Printf("Selected actuator-tester: %s by %s (%s)\n", actuatorTesterService.Name, actuatorTesterService.Author, actuatorTesterService.Version)
+			fmt.Printf("Selected tooling: %s by %s (%s)\n", style.Primary.Render(actuatorTesterService.Name), style.Primary.Render(actuatorTesterService.Author), actuatorTesterService.Version)
 
 			// Set the UDP port for the actuator tester to listen on
+			fmt.Printf("\n%s\n", style.Gray.Render("Calibration configuration"))
 			actuatorTesterPort := 12345
 			actuatorTesterPortStr := fmt.Sprintf(":%d", actuatorTesterPort) // need this to create a pointer for the API call, not great
 			actuatorTesterPortRequest := api.ServicesAPI.ServicesAuthorServiceVersionConfigurationPost(
