@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
+	"github.com/VU-ASE/rover/roverctl/src/style"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
@@ -37,7 +39,16 @@ func Add(rootCmd *cobra.Command) {
 				return nil
 			}
 
-			fmt.Printf("Pipeline status: %s\n", res.Status)
+			statusStr := style.Gray.Render("unknown")
+			if res.Status == openapi.EMPTY {
+				statusStr = style.Warning.Render("empty")
+			} else if res.Status == openapi.STARTED {
+				statusStr = style.Success.Render("started")
+			} else if res.Status == openapi.STARTABLE {
+				statusStr = style.Primary.Render("startable")
+			}
+
+			fmt.Printf("Pipeline status: %s\n", statusStr)
 			for _, enabled := range res.Enabled {
 				fmt.Println("- " + enabled.Service.Fq.Author + "/" + enabled.Service.Fq.Name + " (" + enabled.Service.Fq.Version + ")")
 			}
