@@ -16,7 +16,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var version = "UNSET"
+// This version variable is overridden at build time using the -ldflags flag
+// See the Makefile and github build-and-release workflow.
+var Version = "UNSET"
 
 type model struct {
 	// If you want to query information about roverd
@@ -73,7 +75,7 @@ _______________(__)_____________(__)_________________`)
 	s += "\n\nPowered by the " + style.Bold.Render("Vrije Universiteit Amsterdam ASE-Team") + ".\nFind more information at " + style.Primary.Render("ase.vu.nl") + "\n"
 
 	s += "\n" + style.Title.Render("Roverctl") + "\n"
-	s += style.Gray.Render("Build version: ") + version + "\n"
+	s += style.Gray.Render("Build version: ") + Version + "\n"
 	s += style.Gray.Render("Author: ") + state.Get().Config.Author + "\n"
 	s += style.Gray.Render("Configuration location: ") + configuration.LocalConfigDir() + "\n"
 	s += style.Gray.Render("Architecture: ") + runtime.GOOS + "/" + runtime.GOARCH + "\n"
@@ -90,7 +92,7 @@ _______________(__)_____________(__)_________________`)
 				s += "\n"
 			}
 			s += style.Gray.Render("Build version: ") + m.remoteInfo.Data.Version
-			if !utils.VersionsEqual(version, m.remoteInfo.Data.Version) {
+			if !utils.VersionsEqual(Version, m.remoteInfo.Data.Version) {
 				s += style.Error.Render(" (mismatch, might be incompatible)")
 			} else {
 				s += style.Success.Render(" (compatible)")

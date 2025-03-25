@@ -3,7 +3,7 @@
 
 BUILD_DIR=bin/
 BINARY_NAME=roverctl
-LDFLAGS := -X 'github.com/VU-ASE/rover/roverctl/src/views/info.version=$(VERSION)'
+LDFLAGS := -X 'github.com/VU-ASE/rover/roverctl/src/views/info.Version=$(VERSION)'
 
 build-open-api:
 	# Check if the OpenAPI schema file exists

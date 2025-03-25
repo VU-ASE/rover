@@ -12,6 +12,7 @@ import (
 	proxy "github.com/VU-ASE/rover/roverctl/src/proxy"
 	style "github.com/VU-ASE/rover/roverctl/src/style"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
+	view_info "github.com/VU-ASE/rover/roverctl/src/views/info"
 
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
 
@@ -71,6 +72,7 @@ func NewRoot() *cobra.Command {
 			version := ""
 			if roverctlVersion == "" {
 				fmt.Print("Connecting to Rover to determine roverctl-web version to use...\n")
+
 				api := conn.ToApiClient()
 				res, _, err := api.HealthAPI.StatusGet(
 					context.Background(),
@@ -79,8 +81,41 @@ func NewRoot() *cobra.Command {
 					fmt.Printf("Failed to connect to Rover: %v", err)
 					return nil
 				}
-				version = "v" + strings.TrimPrefix(res.Version, "v")
-				fmt.Printf("Rover is running roverd version %s\n", style.Success.Render(version))
+				version = utils.Version(res.Version)
+
+				if !utils.VersionsEqual(version, view_info.Version) {
+					fmt.Printf("Rover is running roverd %s but you are running roverctl %s\n", style.Warning.Render(version), style.Warning.Render(utils.Version(view_info.Version)))
+
+					flagSuffix := ""
+					if roverIndex > 0 {
+						flagSuffix = fmt.Sprintf("--rover %d", roverIndex)
+					} else {
+						flagSuffix = fmt.Sprintf("--host %s", roverdHost)
+					}
+
+					if roverdUsername != "debix" {
+						flagSuffix += fmt.Sprintf(" --username %s", roverdUsername)
+					}
+					if roverdPassword != "debix" {
+						flagSuffix += fmt.Sprintf(" --password %s", roverdPassword)
+					}
+
+					fmt.Printf("\nThe following fixes are available:\n")
+					fmt.Printf(" %s\n", style.Primary.Render("Update both roverctl and roverd to the latest version (recommended)"))
+					fmt.Printf("   %s\n", style.Gray.Render("roverctl update "+flagSuffix))
+					fmt.Printf(" %s\n", style.Primary.Render("OR try to match roverctl to the roverd version"))
+					fmt.Printf("   %s\n", style.Gray.Render("roverctl update roverctl -v "+version))
+					fmt.Printf(" %s\n", style.Primary.Render("OR try to match roverd to the roverctl version"))
+					fmt.Printf("   %s\n", style.Gray.Render("roverctl update roverd -v "+version+" "+flagSuffix))
+					fmt.Printf(" %s\n", style.Primary.Render("OR force roverctl to run at the roverd version"))
+					fmt.Printf("   %s\n", style.Gray.Render("roverctl --force "+version+" "+flagSuffix))
+
+					// fmt.Printf("Roverd version %s is incompatible with roverctl-web version %s\n", version, view_info.Version)
+					// fmt.Printf("Please upgrade roverd to version %s or use the --force flag to run roverctl-web at a specific version\n", view_info.Version)
+					return nil
+				} else {
+					fmt.Printf("Rover is running roverd %s\n", style.Success.Render(version))
+				}
 			} else {
 				fmt.Printf("Forcing roverctl-web to run at version %s\n", style.Success.Render(roverctlVersion))
 				version = roverctlVersion
@@ -118,7 +153,7 @@ func NewRoot() *cobra.Command {
 			}
 
 			// Pull roverctl-web
-			fmt.Printf("Found matching roverctl-web image, pulling...\n")
+			fmt.Printf("Pulling roverctl-web %s image...\n", style.Success.Render(version))
 			out, err := dc.ImagePull(ctx, imageRef, image.PullOptions{})
 			if err != nil {
 				fmt.Println("Error pulling image:", err)
@@ -221,7 +256,7 @@ func NewRoot() *cobra.Command {
 
 			go func() {
 				<-sigChan // Wait for Ctrl+C (SIGINT)
-				fmt.Println("\nQuitting roverctl-web gracefully" + style.Gray.Render(" (this may take a few seconds)") + "...")
+				fmt.Println("\nQuitting roverctl-web" + style.Gray.Render(" (this may take a few seconds)") + "...")
 
 				// Stop container with a timeout (graceful shutdown)
 				timeout := 10 // seconds
@@ -249,7 +284,7 @@ func NewRoot() *cobra.Command {
 			return nil
 		},
 	}
-	rootCmd.Flags().IntVarP(&roverIndex, "rover", "r", 0, "The index of the rover to upload to, between 1 and 20")
+	rootCmd.Flags().IntVarP(&roverIndex, "rover", "r", -1, "The index of the rover to upload to, between 1 and 20")
 	rootCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
 	rootCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	rootCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
