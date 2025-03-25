@@ -9,6 +9,7 @@ import (
 
 	commands "github.com/VU-ASE/rover/roverctl/src/commands"
 	command_author "github.com/VU-ASE/rover/roverctl/src/commands/author"
+	command_calibrate "github.com/VU-ASE/rover/roverctl/src/commands/calibrate"
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
 	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
 	command_pipeline "github.com/VU-ASE/rover/roverctl/src/commands/pipeline"
@@ -43,6 +44,7 @@ func run() error {
 	command_info.Add(rootCmd)
 	command_author.Add(rootCmd)
 	command_update.Add(rootCmd)
+	command_calibrate.Add(rootCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {
