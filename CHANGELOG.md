@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.14.0](https://github.com/VU-ASE/rover/compare/v0.13.0...v0.14.0) (2025-03-25)
+
+
+### Features
+
+* pin version dependency between roverctl-roverd and warn if broken ([c8e98dc](https://github.com/VU-ASE/rover/commit/c8e98dcc4b89d079625197e91685f5b085be4bfd))
+
+
+### Bug Fixes
+
+* image push only succeeds on --verbose flag, port checking ([b0d5998](https://github.com/VU-ASE/rover/commit/b0d599895c6cc1f3365eca1aee7ceadbadb6e13e))
+* show correct fix for updating roverd on mismatch ([a49144f](https://github.com/VU-ASE/rover/commit/a49144feec173a050d84a6bfee482bcb7fe7afc3))
+
 ## [0.13.0](https://github.com/VU-ASE/rover/compare/v0.12.1...v0.13.0) (2025-03-21)
 
 
