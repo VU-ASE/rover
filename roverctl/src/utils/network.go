@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"net"
+	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -46,4 +49,38 @@ func GetLocalIP() (string, error) {
 	}
 
 	return "", fmt.Errorf("no local (192.168.x.x) IP address found")
+}
+
+// IsPortAvailable checks if a port is available on the local machine
+func IsPortAvailable(port int) bool {
+	addr := fmt.Sprintf(":%d", port)
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return false // Port is in use or inaccessible
+	}
+	_ = ln.Close()
+	return true
+}
+
+func GetProcessUsingPort(port int) (string, error) {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "darwin", "linux":
+		// Example: lsof -i :8080
+		cmd = exec.Command("lsof", "-i", fmt.Sprintf(":%d", port))
+	default:
+		return "", fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("error running lsof: %v - output: %s", err, out.String())
+	}
+
+	return out.String(), nil
 }

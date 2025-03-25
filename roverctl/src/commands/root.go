@@ -126,7 +126,9 @@ func NewRoot() *cobra.Command {
 			}
 			defer out.Close()
 			if verbose {
-				io.Copy(os.Stdout, out) // Stream pull output to console
+				_, _ = io.Copy(os.Stdout, out) // Stream pull output to console
+			} else {
+				_, _ = io.Copy(io.Discard, out) // Discard pull output, but still wait for it to finish
 			}
 
 			//
@@ -155,11 +157,31 @@ func NewRoot() *cobra.Command {
 				"PUBLIC_PASSTHROUGH_PORT=" + fmt.Sprintf("%d", proxyHttpPort),
 			}
 
+			webPort := 3000
+			webPortStr := fmt.Sprintf("%d", webPort)
 			// Port forwarding (host:container)
 			portBindings := nat.PortMap{
-				"3000/tcp": []nat.PortBinding{
-					{HostIP: "0.0.0.0", HostPort: "3000"},
+				nat.Port(webPortStr + "/tcp"): []nat.PortBinding{
+					{HostIP: "0.0.0.0", HostPort: webPortStr},
 				},
+			}
+
+			// Check if all ports are available
+			ports := []int{webPort}
+			if debugMode {
+				ports = []int{webPort, proxyHttpPort}
+			}
+
+			for _, port := range ports {
+				if !utils.IsPortAvailable(port) {
+					fmt.Printf("Roverctl cannot be started because port %s is in use. \nClose any applications using this port and try again.\n", style.Primary.Render(fmt.Sprintf("%d", port)))
+
+					process, err := utils.GetProcessUsingPort(port)
+					if err == nil {
+						fmt.Printf("%s", style.Error.Render(process))
+					}
+					return nil
+				}
 			}
 
 			// Create a container with the specified image and environment variables
@@ -190,8 +212,8 @@ func NewRoot() *cobra.Command {
 			}
 
 			url := "http://localhost:3000"
-			fmt.Printf("Visit %s to control this Rover!\n", style.Primary.Render(url))
-			utils.OpenBrowser(url)
+			fmt.Printf("Visit %s to control this Rover!\n%s\n", style.Primary.Render(url), style.Gray.Render("Press Ctrl+C to stop roverctl-web gracefully"))
+			_ = utils.OpenBrowser(url)
 
 			// Set up signal handling (to stop container on Ctrl+C)
 			sigChan := make(chan os.Signal, 1)
@@ -199,7 +221,7 @@ func NewRoot() *cobra.Command {
 
 			go func() {
 				<-sigChan // Wait for Ctrl+C (SIGINT)
-				fmt.Println("\nStopping roverctl-web...")
+				fmt.Println("\nQuitting roverctl-web gracefully" + style.Gray.Render(" (this may take a few seconds)") + "...")
 
 				// Stop container with a timeout (graceful shutdown)
 				timeout := 10 // seconds
