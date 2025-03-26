@@ -87,12 +87,12 @@ if ! command -v roverctl &> /dev/null; then
   echo "Added ${INSTALL_DIR} to PATH in $shell_profile. Please restart your shell or run 'source $shell_profile'."
 fi
 
-# Add alias for rover
-shell_profile=$(detect_shell_profile)
-if ! grep -q "alias rover=" "$shell_profile"; then
-  echo "Adding alias 'rover' for 'roverctl'..."
-  echo "alias rover='roverctl'" >> "$shell_profile"
-  echo "Alias added to $shell_profile. Please restart your shell or run 'source $shell_profile'."
+# Create symlink for rover
+if [ ! -L "${INSTALL_DIR}/rover" ]; then
+  echo "Creating symlink 'rover' -> 'roverctl'..."
+  sudo ln -s "${INSTALL_DIR}/roverctl" "${INSTALL_DIR}/rover"
+else
+  echo "Symlink '${INSTALL_DIR}/rover' already exists."
 fi
 
-echo "Installation complete! Run 'roverctl' to get started."
+echo "Installation complete! Run 'roverctl' (or shorthand 'rover') to get started."
