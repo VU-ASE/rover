@@ -6,7 +6,7 @@ export function load({ cookies, url }) {
 
 	if (!hasVisited && url.pathname !== '/dangers') {
 		throw redirect(302, '/dangers');
-	} else if (!hasSeenShortcuts && url.pathname !== '/shortcuts') {
+	} else if (!hasSeenShortcuts && url.pathname !== '/shortcuts' && url.pathname !== '/dangers') {
 		throw redirect(302, '/shortcuts');
 	}
 
