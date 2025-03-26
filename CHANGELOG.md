@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0](https://github.com/VU-ASE/rover/compare/v0.15.0...v0.16.0) (2025-03-26)
+
+
+### Features
+
+* add alias "rover" to roverctl install script ([1ec8389](https://github.com/VU-ASE/rover/commit/1ec83893a0a7458aef2c8b41791c548ffda961df))
+* add incompatibility warning to all endpoints that need it ([126849c](https://github.com/VU-ASE/rover/commit/126849cd89e743d089f2765f7261df24c30fd0eb))
+* add installation location to service info view ([1a0ca7c](https://github.com/VU-ASE/rover/commit/1a0ca7c58c0a9b58ef3a0073babc92470ce99fe1))
+* build command ([ea610eb](https://github.com/VU-ASE/rover/commit/ea610eb0171be57fbfd41ca2991bc6a1d00dedea))
+* improved error printing with multiline support ([8c64c2c](https://github.com/VU-ASE/rover/commit/8c64c2ce5443774ab1571658d5f57e932cb426b1))
+* improved error reporting on upload failure ([b657f17](https://github.com/VU-ASE/rover/commit/b657f17d60bdaf464a2e998ddbb1541fead96141))
+* info command ([478704e](https://github.com/VU-ASE/rover/commit/478704ec6fa6d5998f16da28bf9116df0c3dac45))
+* service delete endpoint ([185362f](https://github.com/VU-ASE/rover/commit/185362f0f91d3af1cac2b0abe58e4741260740f9))
+* shorthand aliasses for most commands ([3c270ce](https://github.com/VU-ASE/rover/commit/3c270ce7e0fbff41f1273a2cedd927f88d24fb99))
+
+
+### Bug Fixes
+
+* display warning if author is not set in info command ([b2c5eaa](https://github.com/VU-ASE/rover/commit/b2c5eaa5e866c87066cdd2eddc1aecd6f680d493))
+
 ## [0.15.0](https://github.com/VU-ASE/rover/compare/v0.14.0...v0.15.0) (2025-03-25)
 
 
