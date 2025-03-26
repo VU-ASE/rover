@@ -27,12 +27,12 @@ func addInit(rootCmd *cobra.Command) {
 		Use:   "init [" + strings.Join(presets, "|") + "]",
 		Short: "Create a new service in your current working directory, based on a template",
 		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 2 {
+			if len(args) != 1 {
 				return fmt.Errorf("Specify a preset to use, one of: %v", strings.Join(presets, ", "))
 			}
 			// Check if the preset is valid
 			for _, preset := range presets {
-				if args[1] == preset {
+				if args[0] == preset {
 					return nil
 				}
 			}
@@ -83,7 +83,7 @@ func addInit(rootCmd *cobra.Command) {
 				return nil
 			}
 
-			preset := args[1]
+			preset := args[0]
 			err = initializeTemplate(preset, name, s.Config.Author, "0.0.1", source)
 			if err != nil {
 				fmt.Printf("Cannot not initialize service: %s\n", err.Error())
