@@ -3,6 +3,7 @@ package command_pipeline
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -52,6 +53,10 @@ func Add(rootCmd *cobra.Command) {
 			fmt.Printf("Pipeline status: %s\n", statusStr)
 			for _, enabled := range res.Enabled {
 				fmt.Println("- " + enabled.Service.Fq.Author + "/" + enabled.Service.Fq.Name + " (" + enabled.Service.Fq.Version + ")")
+			}
+
+			if res.Status == openapi.STARTED {
+				fmt.Printf("Pipeline has been running since %s\n", style.Primary.Render(time.Unix(*res.LastStart/1000, 0).String()))
 			}
 
 			return nil
