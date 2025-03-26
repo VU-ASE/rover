@@ -14,6 +14,9 @@
 
 	import { QueryClient, QueryClientProvider } from '@sveltestack/svelte-query';
 	import { config } from '$lib/config';
+	import { onDestroy, onMount } from 'svelte';
+	import { useEmergencyBrake } from '$lib/queries/pipeline';
+	import KeyboardHandler from '../components/KeyboardHandler.svelte';
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
@@ -28,6 +31,7 @@
 	<title>roverctl-web</title>
 	<svelte:fragment slot="header"></svelte:fragment>
 	<QueryClientProvider client={queryClient}>
+		<KeyboardHandler />
 		{#if config.success}
 			<slot />
 		{:else}

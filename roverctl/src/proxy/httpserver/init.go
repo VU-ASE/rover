@@ -40,6 +40,8 @@ func JSONEndpoint(usage string, handler func(w http.ResponseWriter, r *http.Requ
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")
 
+		log.Debug().Msgf("HTTP endpoint %s called", r.URL.Path)
+
 		if explainPostUsage(w, r, usage) {
 			return
 		}
@@ -88,7 +90,7 @@ func Serve(serverAddress string, s *state.ServerState) error {
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>ASE passthrough</title>
+    <title>ASE debugging proxy</title>
     <style media="all" type="text/css">
         /* -------------------------------------
     GLOBAL RESETS
@@ -459,20 +461,19 @@ func Serve(serverAddress string, s *state.ServerState) error {
                         <tr>
                             <td class="wrapper">
                                 <p>
-                                    The passthrough is <span style="font-weight: bold; color: green;">up and
+                                    The debugging proxy is <span style="font-weight: bold; color: green;">up and
                                         running</span>!
                                 </p>
 
                                 <p><strong>Connect your Rover</strong><br /> Use the <i>transceiver</i> service to
                                     connect
-                                    to this passthrough server. Update the <i>service.yaml</i> and set the value of
+                                    to this debugging proxy server. Update the <i>service.yaml</i> and set the value of
                                     "passthrough-address" to
-                                    the address of this passthrough server. Enable WAN access if you want to connect
-                                    from outside the ASE network.
+                                    the address of this passthrough server. 
                                 </p>
 
                                 <p><strong>View debug information</strong><br /> Use the <i>web-monitor</i> and enter
-                                    the address of the passthrough server to connect.</p>
+                                    the address of the proxy server to connect.</p>
 
                                 <p>For more information, go to the <a href="https://docs.ase.vu.nl">ASE docs page</a>.
                                 </p>
@@ -496,6 +497,7 @@ func Serve(serverAddress string, s *state.ServerState) error {
 
 	// To retrieve an SDP offer (and send back an SDP answer)
 	http.HandleFunc("/client/sdp", JSONEndpoint("[💻 CLIENT ONLY]: Send your SDP offer as a JSON object", func(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+
 		// Parse offer from request body
 		request := rtc.RequestSDP{}
 		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {

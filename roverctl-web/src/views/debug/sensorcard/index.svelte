@@ -31,7 +31,7 @@
 				</svelte:fragment>
 				<svelte:fragment slot="summary">Tuning</svelte:fragment>
 				<svelte:fragment slot="content">
-					<Configuration serviceName={$serviceStore.name} />
+					<Configuration {serviceStore} />
 				</svelte:fragment>
 			</AccordionItem>
 		</Accordion>

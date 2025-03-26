@@ -526,6 +526,32 @@ export type ServiceStatus = typeof ServiceStatus[keyof typeof ServiceStatus];
 /**
  * 
  * @export
+ * @interface ServicesAuthorServiceVersionConfigurationPostRequestInner
+ */
+export interface ServicesAuthorServiceVersionConfigurationPostRequestInner {
+    /**
+     * The unique key, corresponding to a configuration key in the service.yaml file
+     * @type {string}
+     * @memberof ServicesAuthorServiceVersionConfigurationPostRequestInner
+     */
+    'key': string;
+    /**
+     * 
+     * @type {ServicesAuthorServiceVersionConfigurationPostRequestInnerValue}
+     * @memberof ServicesAuthorServiceVersionConfigurationPostRequestInner
+     */
+    'value': ServicesAuthorServiceVersionConfigurationPostRequestInnerValue;
+}
+/**
+ * @type ServicesAuthorServiceVersionConfigurationPostRequestInnerValue
+ * The value that should be set for this key. Can be either a string or a number, but must match the type in the service.yaml file
+ * @export
+ */
+export type ServicesAuthorServiceVersionConfigurationPostRequestInnerValue = number | string;
+
+/**
+ * 
+ * @export
  * @interface ServicesAuthorServiceVersionDelete200Response
  */
 export interface ServicesAuthorServiceVersionDelete200Response {
@@ -698,6 +724,40 @@ export const HealthApiAxiosParamCreator = function (configuration?: Configuratio
     return {
         /**
          * 
+         * @summary Stops any running pipeline and emergency stops the rover.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        emergencyPost: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/emergency`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BasicAuth required
+            // http basic authentication required
+            setBasicAuthToObject(localVarRequestOptions, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Retrieve the health and versioning information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -842,6 +902,18 @@ export const HealthApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Stops any running pipeline and emergency stops the rover.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async emergencyPost(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.emergencyPost(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['HealthApi.emergencyPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Retrieve the health and versioning information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -901,6 +973,15 @@ export const HealthApiFactory = function (configuration?: Configuration, basePat
     return {
         /**
          * 
+         * @summary Stops any running pipeline and emergency stops the rover.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        emergencyPost(options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.emergencyPost(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Retrieve the health and versioning information
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -946,6 +1027,17 @@ export const HealthApiFactory = function (configuration?: Configuration, basePat
  * @extends {BaseAPI}
  */
 export class HealthApi extends BaseAPI {
+    /**
+     * 
+     * @summary Stops any running pipeline and emergency stops the rover.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof HealthApi
+     */
+    public emergencyPost(options?: RawAxiosRequestConfig) {
+        return HealthApiFp(this.configuration).emergencyPost(options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary Retrieve the health and versioning information
@@ -1563,6 +1655,58 @@ export const ServicesApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Update service.yaml configuration values of a fully qualified service in-place
+         * @param {string} author The author name
+         * @param {string} service The service name
+         * @param {string} version The version of the service
+         * @param {Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>} servicesAuthorServiceVersionConfigurationPostRequestInner 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        servicesAuthorServiceVersionConfigurationPost: async (author: string, service: string, version: string, servicesAuthorServiceVersionConfigurationPostRequestInner: Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'author' is not null or undefined
+            assertParamExists('servicesAuthorServiceVersionConfigurationPost', 'author', author)
+            // verify required parameter 'service' is not null or undefined
+            assertParamExists('servicesAuthorServiceVersionConfigurationPost', 'service', service)
+            // verify required parameter 'version' is not null or undefined
+            assertParamExists('servicesAuthorServiceVersionConfigurationPost', 'version', version)
+            // verify required parameter 'servicesAuthorServiceVersionConfigurationPostRequestInner' is not null or undefined
+            assertParamExists('servicesAuthorServiceVersionConfigurationPost', 'servicesAuthorServiceVersionConfigurationPostRequestInner', servicesAuthorServiceVersionConfigurationPostRequestInner)
+            const localVarPath = `/services/{author}/{service}/{version}/configuration`
+                .replace(`{${"author"}}`, encodeURIComponent(String(author)))
+                .replace(`{${"service"}}`, encodeURIComponent(String(service)))
+                .replace(`{${"version"}}`, encodeURIComponent(String(version)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BasicAuth required
+            // http basic authentication required
+            setBasicAuthToObject(localVarRequestOptions, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(servicesAuthorServiceVersionConfigurationPostRequestInner, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete a specific version of a service
          * @param {string} author The author name
          * @param {string} service The service name
@@ -1840,6 +1984,22 @@ export const ServicesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Update service.yaml configuration values of a fully qualified service in-place
+         * @param {string} author The author name
+         * @param {string} service The service name
+         * @param {string} version The version of the service
+         * @param {Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>} servicesAuthorServiceVersionConfigurationPostRequestInner 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async servicesAuthorServiceVersionConfigurationPost(author: string, service: string, version: string, servicesAuthorServiceVersionConfigurationPostRequestInner: Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.servicesAuthorServiceVersionConfigurationPost(author, service, version, servicesAuthorServiceVersionConfigurationPostRequestInner, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ServicesApi.servicesAuthorServiceVersionConfigurationPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Delete a specific version of a service
          * @param {string} author The author name
          * @param {string} service The service name
@@ -1960,6 +2120,19 @@ export const ServicesApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          * 
+         * @summary Update service.yaml configuration values of a fully qualified service in-place
+         * @param {string} author The author name
+         * @param {string} service The service name
+         * @param {string} version The version of the service
+         * @param {Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>} servicesAuthorServiceVersionConfigurationPostRequestInner 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        servicesAuthorServiceVersionConfigurationPost(author: string, service: string, version: string, servicesAuthorServiceVersionConfigurationPostRequestInner: Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.servicesAuthorServiceVersionConfigurationPost(author, service, version, servicesAuthorServiceVersionConfigurationPostRequestInner, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Delete a specific version of a service
          * @param {string} author The author name
          * @param {string} service The service name
@@ -2069,6 +2242,21 @@ export class ServicesApi extends BaseAPI {
      */
     public servicesAuthorServiceGet(author: string, service: string, options?: RawAxiosRequestConfig) {
         return ServicesApiFp(this.configuration).servicesAuthorServiceGet(author, service, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update service.yaml configuration values of a fully qualified service in-place
+     * @param {string} author The author name
+     * @param {string} service The service name
+     * @param {string} version The version of the service
+     * @param {Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>} servicesAuthorServiceVersionConfigurationPostRequestInner 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ServicesApi
+     */
+    public servicesAuthorServiceVersionConfigurationPost(author: string, service: string, version: string, servicesAuthorServiceVersionConfigurationPostRequestInner: Array<ServicesAuthorServiceVersionConfigurationPostRequestInner>, options?: RawAxiosRequestConfig) {
+        return ServicesApiFp(this.configuration).servicesAuthorServiceVersionConfigurationPost(author, service, version, servicesAuthorServiceVersionConfigurationPostRequestInner, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

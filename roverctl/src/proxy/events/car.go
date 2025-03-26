@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	config "github.com/VU-ASE/rover/roverctl/src/proxy/config"
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	peerconnection "github.com/VU-ASE/rover/roverctl/src/proxy/peerconnection"
 	state "github.com/VU-ASE/rover/roverctl/src/proxy/state"
 	pb_control "github.com/VU-ASE/rovercom/packages/go/control"
@@ -32,7 +32,7 @@ func OnCarSDPReceived(sdp rtc.RequestSDP, receivedAt int64, state *state.ServerS
 	log.Debug().Msg("Received SDP offer from car")
 
 	// Add rtc to list of car connections (there can be only one car connection)
-	err = state.ConnectedPeers.Add(config.CarId, rtc, true)
+	err = state.ConnectedPeers.Add(configuration.PROXY_CAR_ID, rtc, true)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func OnCarSDPReceived(sdp rtc.RequestSDP, receivedAt int64, state *state.ServerS
 // Called when a car sends an ICE candidate to the HTTP server
 func OnCarICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, error) {
 	// Get connection from list of connections
-	rtc := state.ConnectedPeers.Get(config.CarId)
+	rtc := state.ConnectedPeers.Get(configuration.PROXY_CAR_ID)
 	if rtc == nil {
 		return nil, fmt.Errorf("Car connection with id %s does not exist", ice.Id)
 	}
@@ -64,10 +64,10 @@ func OnCarICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, err
 		return nil, err
 	}
 
-	log.Debug().Msg("Received ICE candidates from car")
-
 	// Return all candidates to client
 	payload, err := json.Marshal(rtc.GetAllLocalCandidates())
+	log.Debug().Msg("Got all local candidates")
+
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func OnCarSDPReturned(r *rtc.RTC, state *state.ServerState) {
 			log.Debug().Str("label", d.Label()).Msg("Car channel was opened for communication")
 
 			switch d.Label() {
-			case config.ControlChannelLabel:
+			case configuration.PROXY_CONTROL_CHAN_LABEL:
 				registerCarControlMessage(r, d)
-			case config.DataChannelLabel:
+			case configuration.PROXY_DATA_CHAN_LABEL:
 				registerCarDataMessage(r, d, state)
 			default:
 				log.Warn().Str("label", d.Label()).Msg("Unknown car channel was opened for communication")
@@ -107,7 +107,7 @@ func onCarConnectionChange(car *rtc.RTC, state *state.ServerState) func(webrtc.P
 
 		notification := pb_control.ConnectionState{
 			Connected:       s == webrtc.PeerConnectionStateConnected,
-			Client:          config.CarId,
+			Client:          configuration.PROXY_CAR_ID,
 			TimestampOffset: car.TimestampOffset,
 		}
 
@@ -165,7 +165,7 @@ func registerCarDataMessage(car *rtc.RTC, dc *webrtc.DataChannel, state *state.S
 
 		// Forward the message to all clients
 		state.ConnectedPeers.ForEach(func(id string, r *rtc.RTC) {
-			if id == config.CarId {
+			if id == configuration.PROXY_CAR_ID {
 				return
 			}
 

@@ -25,13 +25,15 @@
 	import { errorToText } from '$lib/errors';
 	import SendIcon from '~icons/ic/baseline-send';
 
-	export let serviceName: string;
+	import type { ServiceStore } from '$lib/store/service';
+
+	export let serviceStore: ServiceStore;
 
 	// Data structure to keep track of the tuning data already sent out
 	const sentData = createMapStore<string, string | number>();
 	const tuningData = createMapStore<string, string | number>();
 
-	const serviceQuery = useQuery(['configuration', serviceName], async () => {
+	const serviceQuery = useQuery(['configuration', $serviceStore.realName], async () => {
 		if (!config.success) {
 			throw new Error('Configuration could not be loaded');
 		}
@@ -40,7 +42,7 @@
 		const sapi = new ServicesApi(config.roverd.api);
 
 		const s = await papi.pipelineGet();
-		const e = s.data.enabled.find((e) => e.service.fq.name === serviceName);
+		const e = s.data.enabled.find((e) => e.service.fq.name === $serviceStore.realName);
 		if (!e) {
 			throw new Error('Service not found');
 		}

@@ -20,7 +20,6 @@
 	// Auto fit view when nodes change
 	$: {
 		if ($nodes.length > 0) {
-			console.log('From autofit, nodes and eges:', $nodes, $edges);
 			fitView(fitOptions);
 		}
 	}
