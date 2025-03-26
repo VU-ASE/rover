@@ -6,7 +6,6 @@ REPO="VU-ASE/rover"
 INSTALL_DIR="/usr/local/bin"
 VERSION="$1"
 
-# Function to detect OS
 detect_os() {
   uname_out="$(uname -s)"
   case "${uname_out}" in
@@ -16,7 +15,6 @@ detect_os() {
   esac
 }
 
-# Function to detect architecture
 detect_arch() {
   uname_arch="$(uname -m)"
   case "${uname_arch}" in
@@ -36,11 +34,9 @@ detect_shell_profile() {
   esac
 }
 
-# Detect OS and architecture
+
 detect_os
 detect_arch
-
-# Construct the binary name
 binary_name="roverctl-${os}-${arch}"
 
 # Determine which version to install
