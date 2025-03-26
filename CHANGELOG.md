@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/VU-ASE/rover/compare/v0.18.0...v0.18.1) (2025-03-26)
+
+
+### Bug Fixes
+
+* infinite redirect ([0f63b01](https://github.com/VU-ASE/rover/commit/0f63b019402c498c496f4cec1bbf9f483de3065a))
+
 ## [0.18.0](https://github.com/VU-ASE/rover/compare/v0.17.0...v0.18.0) (2025-03-26)
 
 
