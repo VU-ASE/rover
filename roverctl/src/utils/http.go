@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/VU-ASE/rover/roverctl/src/openapi"
 )
 
 func ParseHTTPError(err error, htt *http.Response) error {
@@ -21,7 +24,25 @@ func ParseHTTPError(err error, htt *http.Response) error {
 		if err != nil {
 			return fmt.Errorf("Failed to read http response body: %v", err)
 		} else {
-			return fmt.Errorf("%s", PrettyJSON(httpRes))
+			content := PrettyJSON(httpRes)
+
+			// If we can parse this as a generic error message, do so
+			// and show a cleaner error message
+			var roverdError openapi.RoverdError
+			err = roverdError.UnmarshalJSON(httpRes)
+			if err == nil {
+				genericError := roverdError.ErrorValue.GenericError
+				if genericError != nil {
+					content = fmt.Sprintf("generic error, code %d\n", genericError.Code)
+					content += genericError.Message
+				}
+			}
+
+			// Try to actually print the \n characters
+			unescaped := strings.ReplaceAll(content, `\n`, "\n")
+			unescaped = strings.ReplaceAll(unescaped, `\"`, "\"")
+
+			return fmt.Errorf("%s", unescaped)
 		}
 	} else {
 		return fmt.Errorf("Operation failed: %v", err)
