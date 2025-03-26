@@ -74,9 +74,14 @@ func (m model) View() string {
 _______________(__)_____________(__)_________________`)
 	s += "\n\nPowered by the " + style.Bold.Render("Vrije Universiteit Amsterdam ASE-Team") + ".\nFind more information at " + style.Primary.Render("ase.vu.nl") + "\n"
 
+	author := state.Get().Config.Author
+	if author == "" {
+		author = style.Warning.Render("not set")
+	}
+
 	s += "\n" + style.Title.Render("Roverctl") + "\n"
 	s += style.Gray.Render("Build version: ") + Version + "\n"
-	s += style.Gray.Render("Author: ") + state.Get().Config.Author + "\n"
+	s += style.Gray.Render("Author: ") + author + "\n"
 	s += style.Gray.Render("Configuration location: ") + configuration.LocalConfigDir() + "\n"
 	s += style.Gray.Render("Architecture: ") + runtime.GOOS + "/" + runtime.GOARCH + "\n"
 
