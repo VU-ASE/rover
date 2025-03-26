@@ -20,8 +20,9 @@ func Add(rootCmd *cobra.Command) {
 
 	// services command
 	var servicesCmd = &cobra.Command{
-		Use:   "services",
-		Short: "Fetch the currently installed services",
+		Use:     "services",
+		Aliases: []string{"service", "svc", "s"},
+		Short:   "Fetch the currently installed services",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
@@ -57,6 +58,7 @@ func Add(rootCmd *cobra.Command) {
 
 	addInstall(servicesCmd)
 	addDelete(servicesCmd)
+	addInit(servicesCmd)
 
 	rootCmd.AddCommand(servicesCmd)
 }

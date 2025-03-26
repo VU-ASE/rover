@@ -18,9 +18,9 @@ func Add(rootCmd *cobra.Command) {
 
 	// info command
 	var infoCmd = &cobra.Command{
-		Use:   "author",
-		Short: "Set the author name used for service uploads",
-		Long:  `Set the author name used for service uploads`,
+		Use:     "author",
+		Aliases: []string{"a"},
+		Short:   "Set the author name used for service uploads",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := state.Get()
 			if s == nil {

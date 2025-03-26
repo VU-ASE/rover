@@ -20,8 +20,9 @@ func addReset(rootCmd *cobra.Command) {
 
 	// pipeline command
 	var infoCmd = &cobra.Command{
-		Use:   "reset",
-		Short: "Reset the currently active pipeline",
+		Use:     "reset",
+		Aliases: []string{"r"},
+		Short:   "Reset the currently active pipeline",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {

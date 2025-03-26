@@ -1,4 +1,4 @@
-package command_service_init
+package command_services
 
 import (
 	"fmt"
@@ -17,14 +17,14 @@ import (
 
 var presets = []string{"go", "c", "python"}
 
-func Add(rootCmd *cobra.Command) {
+func addInit(rootCmd *cobra.Command) {
 	// General flags
 	var name string
 	var source string
 
 	// services command
 	var infoCmd = &cobra.Command{
-		Use:   "service init [" + strings.Join(presets, "|") + "]",
+		Use:   "init [" + strings.Join(presets, "|") + "]",
 		Short: "Create a new service in your current working directory, based on a template",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {

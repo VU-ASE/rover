@@ -22,8 +22,9 @@ func Add(rootCmd *cobra.Command) {
 	// Upload command
 	var watch bool
 	var uploadCmd = &cobra.Command{
-		Use:   "upload <PATHS>",
-		Short: "Upload specified service folders to a Rover",
+		Use:     "upload <PATHS>",
+		Aliases: []string{"u", "sync"},
+		Short:   "Upload specified service folders to a Rover",
 		Long: `The upload command allows you to upload one or more service folders to the Rover. 
 You can optionally specify the --watch flag to enable file watch and upload.`,
 		Args: func(cmd *cobra.Command, args []string) error {

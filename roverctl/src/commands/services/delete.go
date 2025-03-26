@@ -21,8 +21,9 @@ func addDelete(rootCmd *cobra.Command) {
 
 	// services command
 	var infoCmd = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete a fully qualified service from the Rover",
+		Use:     "delete",
+		Aliases: []string{"d"},
+		Short:   "Delete a fully qualified service from the Rover",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 3 {
 				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> <version>")

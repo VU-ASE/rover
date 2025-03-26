@@ -21,8 +21,9 @@ func addInstall(rootCmd *cobra.Command) {
 
 	// services command
 	var infoCmd = &cobra.Command{
-		Use:   "install",
-		Short: "Install a service from a given URL onto the Rover",
+		Use:     "install",
+		Aliases: []string{"i"},
+		Short:   "Install a service from a given URL onto the Rover",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {

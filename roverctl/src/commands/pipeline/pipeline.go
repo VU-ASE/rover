@@ -21,8 +21,9 @@ func Add(rootCmd *cobra.Command) {
 
 	// pipeline command
 	var infoCmd = &cobra.Command{
-		Use:   "pipeline",
-		Short: "Get the currently active pipeline",
+		Use:     "pipeline",
+		Aliases: []string{"pipe", "p", "pi", "pl"},
+		Short:   "Get the currently active pipeline",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {

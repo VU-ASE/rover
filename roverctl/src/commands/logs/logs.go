@@ -22,9 +22,10 @@ func Add(rootCmd *cobra.Command) {
 
 	// logs command
 	var infoCmd = &cobra.Command{
-		Use:   "logs <author> <name> <version>",
-		Short: "View logs for a fully qualified service",
-		Long:  `View a specified number of log lines from a service fully qualified by its author, name and version`,
+		Use:     "logs <author> <name> <version>",
+		Aliases: []string{"log", "l"},
+		Short:   "View logs for a fully qualified service",
+		Long:    `View a specified number of log lines from a service fully qualified by its author, name and version`,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 3 {
 				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> <version>")

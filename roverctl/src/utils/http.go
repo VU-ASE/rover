@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/VU-ASE/rover/roverctl/src/openapi"
+	"github.com/VU-ASE/rover/roverctl/src/style"
 )
 
 func ParseHTTPError(err error, htt *http.Response) error {
@@ -42,7 +43,7 @@ func ParseHTTPError(err error, htt *http.Response) error {
 			unescaped := strings.ReplaceAll(content, `\n`, "\n")
 			unescaped = strings.ReplaceAll(unescaped, `\"`, "\"")
 
-			return fmt.Errorf("%s", unescaped)
+			return fmt.Errorf("%s", style.Error.Render(unescaped))
 		}
 	} else {
 		return fmt.Errorf("Operation failed: %v", err)
