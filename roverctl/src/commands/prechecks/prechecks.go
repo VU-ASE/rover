@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
+	view_incompatible "github.com/VU-ASE/rover/roverctl/src/views/incompatible"
 
 	"github.com/spf13/cobra"
 )
@@ -33,5 +34,7 @@ func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost strin
 		Username:   roverdUsername,
 		Password:   roverdPassword,
 	}
+	view_incompatible.WarnOnIncompatible(conn)
+
 	return &conn, nil
 }

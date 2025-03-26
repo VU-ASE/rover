@@ -1,9 +1,8 @@
-package command_pipeline
+package command_services
 
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -13,52 +12,41 @@ import (
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
-func Add(rootCmd *cobra.Command) {
+func addInstall(rootCmd *cobra.Command) {
 	// General flags
 	var roverIndex int
 	var roverdHost string
 	var roverdUsername string
 	var roverdPassword string
 
-	// pipeline command
+	// services command
 	var infoCmd = &cobra.Command{
-		Use:     "pipeline",
-		Aliases: []string{"pipe", "p", "pi", "pl"},
-		Short:   "Get the currently active pipeline",
+		Use:   "install",
+		Short: "Install a service from a given URL onto the Rover",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
 				return er
 			}
 			api := conn.ToApiClient()
+			if len(args) != 1 {
+				return fmt.Errorf("Specify the ZIP URL of the service to install")
+			}
 
-			pipeline := api.PipelineAPI.PipelineGet(
+			fmt.Printf("Attempting to install service on Rover...\n")
+			fetch := api.ServicesAPI.FetchPost(
 				context.Background(),
 			)
-			res, http, err := pipeline.Execute()
+			fetch = fetch.FetchPostRequest(openapi.FetchPostRequest{
+				Url: args[0],
+			})
+			res, http, err := fetch.Execute()
 			if err != nil {
-				fmt.Printf("Could not fetch pipeline: %s\n", utils.ParseHTTPError(err, http))
+				fmt.Printf("Could not install service: %s\n", utils.ParseHTTPError(err, http))
 				return nil
 			}
 
-			statusStr := style.Gray.Render("unknown")
-			if res.Status == openapi.EMPTY {
-				statusStr = style.Warning.Render("empty")
-			} else if res.Status == openapi.STARTED {
-				statusStr = style.Success.Render("started")
-			} else if res.Status == openapi.STARTABLE {
-				statusStr = style.Primary.Render("startable")
-			}
-
-			fmt.Printf("Pipeline status: %s\n", statusStr)
-			for _, enabled := range res.Enabled {
-				fmt.Println("- " + enabled.Service.Fq.Author + "/" + enabled.Service.Fq.Name + " (" + enabled.Service.Fq.Version + ")")
-			}
-
-			if res.Status == openapi.STARTED {
-				fmt.Printf("Pipeline has been running since %s\n", style.Primary.Render(time.Unix(*res.LastStart/1000, 0).String()))
-			}
-
+			fmt.Printf("Installed service %s by %s (%s)\n", style.Primary.Render(res.Fq.Name), style.Primary.Render(res.Fq.Author), (res.Fq.Version))
 			return nil
 		},
 	}
@@ -67,10 +55,5 @@ func Add(rootCmd *cobra.Command) {
 	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 
-	addStart(infoCmd)
-	addStop(infoCmd)
-	addReset(infoCmd)
-	addEnable(infoCmd)
-	addDisable(infoCmd)
 	rootCmd.AddCommand(infoCmd)
 }

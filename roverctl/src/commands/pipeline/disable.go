@@ -21,8 +21,9 @@ func addDisable(rootCmd *cobra.Command) {
 
 	// pipeline command
 	var infoCmd = &cobra.Command{
-		Use:   "disable <author> <name> [<version>]",
-		Short: "Disable a service in the pipeline",
+		Use:     "disable <author> <name> [<version>]",
+		Aliases: []string{"d"},
+		Short:   "Disable a service in the pipeline",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> [<version>]")

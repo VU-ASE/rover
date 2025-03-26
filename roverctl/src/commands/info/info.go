@@ -18,9 +18,10 @@ func Add(rootCmd *cobra.Command) {
 
 	// info command
 	var infoCmd = &cobra.Command{
-		Use:   "info",
-		Short: "View roverctl and roverd information",
-		Long:  `Display build and connection information for roverctl, and roverd if a rover is specified.`,
+		Use:     "info",
+		Aliases: []string{"i", "version", "about", "v"},
+		Short:   "View roverctl and roverd information",
+		Long:    `Display build and connection information for roverctl, and roverd if a rover is specified.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Ignore errors
 			conn, _ := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)

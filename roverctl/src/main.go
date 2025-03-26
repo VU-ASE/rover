@@ -11,10 +11,8 @@ import (
 	command_author "github.com/VU-ASE/rover/roverctl/src/commands/author"
 	command_calibrate "github.com/VU-ASE/rover/roverctl/src/commands/calibrate"
 	command_info "github.com/VU-ASE/rover/roverctl/src/commands/info"
-	command_install "github.com/VU-ASE/rover/roverctl/src/commands/install"
 	command_logs "github.com/VU-ASE/rover/roverctl/src/commands/logs"
 	command_pipeline "github.com/VU-ASE/rover/roverctl/src/commands/pipeline"
-	command_service_init "github.com/VU-ASE/rover/roverctl/src/commands/service_init"
 	command_services "github.com/VU-ASE/rover/roverctl/src/commands/services"
 
 	command_ssh "github.com/VU-ASE/rover/roverctl/src/commands/ssh"
@@ -38,7 +36,6 @@ func run() error {
 	rootCmd := commands.NewRoot()
 	command_pipeline.Add(rootCmd)
 	command_services.Add(rootCmd)
-	command_service_init.Add(rootCmd)
 	command_upload.Add(rootCmd)
 	command_logs.Add(rootCmd)
 	command_ssh.Add(rootCmd)
@@ -46,7 +43,6 @@ func run() error {
 	command_author.Add(rootCmd)
 	command_update.Add(rootCmd)
 	command_calibrate.Add(rootCmd)
-	command_install.Add(rootCmd)
 
 	err = rootCmd.Execute()
 	if err != nil {

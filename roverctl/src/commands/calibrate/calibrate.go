@@ -33,8 +33,9 @@ func Add(rootCmd *cobra.Command) {
 
 	// pipeline command
 	var infoCmd = &cobra.Command{
-		Use:   "calibrate",
-		Short: "Calibrate an actuator service",
+		Use:     "calibrate",
+		Aliases: []string{"cal", "c", "ca", "cali", "trim"},
+		Short:   "Calibrate an actuator service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {

@@ -1,28 +1,35 @@
-package command_pipeline
+package command_services
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
-	openapi "github.com/VU-ASE/rover/roverctl/src/openapi"
+	"github.com/VU-ASE/rover/roverctl/src/style"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
-func addReset(rootCmd *cobra.Command) {
+func addBuild(rootCmd *cobra.Command) {
 	// General flags
 	var roverIndex int
 	var roverdHost string
 	var roverdUsername string
 	var roverdPassword string
 
-	// pipeline command
+	// services command
 	var infoCmd = &cobra.Command{
-		Use:     "reset",
-		Aliases: []string{"r"},
-		Short:   "Reset the currently active pipeline",
+		Use:     "build",
+		Aliases: []string{"compile", "b"},
+		Short:   "Build a service on the Rover",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 3 {
+				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> <version>")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
@@ -30,26 +37,24 @@ func addReset(rootCmd *cobra.Command) {
 			}
 			api := conn.ToApiClient()
 
-			// Try to stop first (best effort)
-			stop := api.PipelineAPI.PipelineStopPost(
-				context.Background(),
-			)
-			_, _ = stop.Execute()
-			// Save an empty pipeline
-			pipeline := api.PipelineAPI.PipelinePost(
-				context.Background(),
-			)
-			pipeline = pipeline.PipelinePostRequestInner(
-				[]openapi.PipelinePostRequestInner{},
-			)
+			author := args[0]
+			name := args[1]
+			version := strings.TrimPrefix(args[2], "v") // should pass "1.0.0" instead of "v1.0.0"
 
-			http, err := pipeline.Execute()
+			fmt.Printf("Attempting to build service on Rover...\n")
+			service := api.ServicesAPI.ServicesAuthorServiceVersionPost(
+				context.Background(),
+				author,
+				name,
+				version,
+			)
+			http, err := service.Execute()
 			if err != nil {
-				fmt.Printf("Could not reset pipeline: %s\n", utils.ParseHTTPError(err, http))
+				fmt.Printf("Could not build service: %s\n", utils.ParseHTTPError(err, http))
 				return nil
 			}
 
-			fmt.Printf("Pipeline reset\n")
+			fmt.Printf("Built service %s/%s (%s)\n", style.Primary.Render(author), style.Primary.Render(name), (version))
 			return nil
 		},
 	}
@@ -57,5 +62,6 @@ func addReset(rootCmd *cobra.Command) {
 	infoCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
 	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
+
 	rootCmd.AddCommand(infoCmd)
 }
