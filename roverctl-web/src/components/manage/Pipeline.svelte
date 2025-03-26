@@ -26,6 +26,7 @@
 		type PipelineGet200ResponseEnabledInnerService,
 		type ServicesAuthorServiceVersionGet200Response
 	} from '$lib/openapi';
+
 	import colors from 'tailwindcss/colors';
 	import Navbar from '../../components/Navbar.svelte';
 	import { Accordion, AccordionItem, Modal, Tab, TabGroup } from '@skeletonlabs/skeleton';
@@ -54,6 +55,7 @@
 	import { compareVersions } from '$lib/utils/versions';
 	import InstallTransceiverModal from './InstallTransceiverModal.svelte';
 	import { serviceConflicts, serviceEqual, serviceIdentifier } from '$lib/utils/service';
+	import { useBuildService, useSavePipeline, useStartPipeline } from '$lib/queries/pipeline';
 
 	const queryClient = useQueryClient();
 
@@ -482,48 +484,11 @@
 		}
 	);
 
-	const buildService = useMutation('buildService', async (fq: FullyQualifiedService) => {
-		if (!config.success) {
-			throw new Error('Configuration could not be loaded');
-		}
+	const buildService = useBuildService();
 
-		const sapi = new ServicesApi(config.roverd.api);
-		const response = await sapi.servicesAuthorServiceVersionPost(fq.author, fq.name, fq.version);
-		return response.data;
-	});
+	const startPipeline = useStartPipeline();
 
-	const savePipeline = useMutation('savePipeline', async (services: PipelineNodeData[]) => {
-		if (!config.success) {
-			throw new Error('Configuration could not be loaded');
-		}
-
-		const papi = new PipelineApi(config.roverd.api);
-		const response = await papi.pipelinePost(
-			services.map((s) => ({
-				fq: s.fq
-			}))
-		);
-		return response.data;
-	});
-
-	const startPipeline = useMutation(
-		'startPipeline',
-		async () => {
-			if (!config.success) {
-				throw new Error('Configuration could not be loaded');
-			}
-
-			const papi = new PipelineApi(config.roverd.api);
-			const response = await papi.pipelineStartPost();
-			return response.data;
-		},
-		{
-			// Invalidate the pipeline query regardless of mutation success or failure
-			onSettled: () => {
-				queryClient.invalidateQueries('pipeline');
-			}
-		}
-	);
+	const savePipeline = useSavePipeline();
 
 	const startConfiguredPipeline = async () => {
 		let services = $nodes;
