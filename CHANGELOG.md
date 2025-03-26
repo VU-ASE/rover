@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.18.0](https://github.com/VU-ASE/rover/compare/v0.17.0...v0.18.0) (2025-03-26)
+
+
+### Features
+
+* keyboard shortcuts for emergency, stopping pipelin and debug pause ([ad50f10](https://github.com/VU-ASE/rover/commit/ad50f1014705f1631c973928ff06922c74733514))
+
+
+### Bug Fixes
+
+* incorrect number of arguments for service init script ([49981a0](https://github.com/VU-ASE/rover/commit/49981a094084063c1f584caf0f3df2a25e13aeca))
+* merge service name and service "as" name in tuning overview ([3675c0e](https://github.com/VU-ASE/rover/commit/3675c0e5159f0e503c8ff65a596c5f757263a9c5))
+* proxy server deadlock on repeated transceiver crashes ([577a1a2](https://github.com/VU-ASE/rover/commit/577a1a29775debc7e75526abbc9f799e9b3db0ec))
+* retain debug toggle information and don't show unusable tuning ([9d78947](https://github.com/VU-ASE/rover/commit/9d789474196bc613cea17b1da0a775e8669e9d12))
+* show service crash exit code on transition from started to stopped ([e43cb26](https://github.com/VU-ASE/rover/commit/e43cb260ef1df98869502afda7731fe188257beb))
+
 ## [0.17.0](https://github.com/VU-ASE/rover/compare/v0.16.0...v0.17.0) (2025-03-26)
 
 
