@@ -1,18 +1,18 @@
-package command_install
+package command_services
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	command_prechecks "github.com/VU-ASE/rover/roverctl/src/commands/prechecks"
-	"github.com/VU-ASE/rover/roverctl/src/openapi"
 	"github.com/VU-ASE/rover/roverctl/src/style"
 	utils "github.com/VU-ASE/rover/roverctl/src/utils"
 )
 
-func Add(rootCmd *cobra.Command) {
+func addDelete(rootCmd *cobra.Command) {
 	// General flags
 	var roverIndex int
 	var roverdHost string
@@ -21,31 +21,38 @@ func Add(rootCmd *cobra.Command) {
 
 	// services command
 	var infoCmd = &cobra.Command{
-		Use:   "install",
-		Short: "Install a service from a given URL onto the Rover",
+		Use:   "delete",
+		Short: "Delete a fully qualified service from the Rover",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 3 {
+				return fmt.Errorf("exactly one fully qualified service must be provided in the form <author> <name> <version>")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
 				return er
 			}
 			api := conn.ToApiClient()
-			if len(args) != 1 {
-				return fmt.Errorf("Specify the ZIP URL of the service to install")
-			}
 
-			fetch := api.ServicesAPI.FetchPost(
+			author := args[0]
+			name := args[1]
+			version := strings.TrimPrefix(args[2], "v") // should pass "1.0.0" instead of "v1.0.0"
+
+			delete := api.ServicesAPI.ServicesAuthorServiceVersionDelete(
 				context.Background(),
+				author,
+				name,
+				version,
 			)
-			fetch = fetch.FetchPostRequest(openapi.FetchPostRequest{
-				Url: args[0],
-			})
-			res, http, err := fetch.Execute()
+			_, http, err := delete.Execute()
 			if err != nil {
-				fmt.Printf("Could not install service: %s\n", utils.ParseHTTPError(err, http))
+				fmt.Printf("Could not delete service: %s\n", utils.ParseHTTPError(err, http))
 				return nil
 			}
 
-			fmt.Printf("Installed service %s by %s (%s)\n", style.Primary.Render(res.Fq.Name), style.Primary.Render(res.Fq.Author), style.Primary.Render(res.Fq.Version))
+			fmt.Printf("Deleted %s by %s (%s)\n", style.Primary.Render(name), style.Primary.Render(author), (version))
 			return nil
 		},
 	}

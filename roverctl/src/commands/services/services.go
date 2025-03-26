@@ -19,7 +19,7 @@ func Add(rootCmd *cobra.Command) {
 	var lines int
 
 	// services command
-	var infoCmd = &cobra.Command{
+	var servicesCmd = &cobra.Command{
 		Use:   "services",
 		Short: "Fetch the currently installed services",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,11 +49,14 @@ func Add(rootCmd *cobra.Command) {
 			return nil
 		},
 	}
-	infoCmd.Flags().IntVarP(&roverIndex, "rover", "r", 0, "The index of the rover to upload to, between 1 and 20")
-	infoCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
-	infoCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
-	infoCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
-	infoCmd.Flags().IntVarP(&lines, "lines", "l", 50, "The number of log lines to display")
+	servicesCmd.Flags().IntVarP(&roverIndex, "rover", "r", 0, "The index of the rover to upload to, between 1 and 20")
+	servicesCmd.Flags().StringVarP(&roverdHost, "host", "", "", "The roverd endpoint to connect to (if not using --rover)")
+	servicesCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
+	servicesCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
+	servicesCmd.Flags().IntVarP(&lines, "lines", "l", 50, "The number of log lines to display")
 
-	rootCmd.AddCommand(infoCmd)
+	addInstall(servicesCmd)
+	addDelete(servicesCmd)
+
+	rootCmd.AddCommand(servicesCmd)
 }
