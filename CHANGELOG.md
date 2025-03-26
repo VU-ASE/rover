@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.0](https://github.com/VU-ASE/rover/compare/v0.16.0...v0.17.0) (2025-03-26)
+
+
+### Features
+
+* emergency command ([2b883cd](https://github.com/VU-ASE/rover/commit/2b883cd7ded78acf211950161ec854884722badd))
+* install script with symlink instead of alias ([22ccd67](https://github.com/VU-ASE/rover/commit/22ccd6786c112cbde2979064db8ae6ef89fd5c46))
+* shutdown command ([4a124b7](https://github.com/VU-ASE/rover/commit/4a124b7ddec97a31e733b064745a4374e4cd71fc))
+
 ## [0.16.0](https://github.com/VU-ASE/rover/compare/v0.15.0...v0.16.0) (2025-03-26)
 
 
