@@ -187,11 +187,8 @@
 		});
 		// Bypass cors :(
 		const releaseZip = await $downloadFile.mutateAsync(`https://corsproxy.io?url=${release.url}`);
-		console.log('zip release was downloaded', releaseZip);
 		const modifiedZip = await $adjustServiceYamlInZip.mutateAsync(releaseZip);
-		console.log('modified zip ready', modifiedZip);
 		await $uploadZipToRover.mutateAsync(modifiedZip);
-		console.log('zip uploaded to rover');
 		$enableMutation.reset();
 		$enableMutation.mutate();
 

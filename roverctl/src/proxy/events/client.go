@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	config "github.com/VU-ASE/rover/roverctl/src/proxy/config"
+	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	peerconnection "github.com/VU-ASE/rover/roverctl/src/proxy/peerconnection"
 	state "github.com/VU-ASE/rover/roverctl/src/proxy/state"
 
@@ -61,10 +61,9 @@ func OnClientICEReceived(ice rtc.RequestICE, state *state.ServerState) ([]byte, 
 
 	// Add to list of remote candidates
 	if err := rtc.Pc.AddICECandidate(ice.Candidate); err != nil {
+		log.Err(err).Msg("Could not add ICE candidate to client connection")
 		return nil, err
 	}
-
-	log.Debug().Msg("Received ICE candidates from client")
 
 	// Return all candidates to client
 	payload, err := json.Marshal(rtc.GetAllLocalCandidates())
@@ -88,9 +87,9 @@ func OnClientSDPReturned(r *rtc.RTC, state *state.ServerState) {
 			log.Debug().Str("label", d.Label()).Msg("Client channel was opened for communication")
 
 			switch d.Label() {
-			case config.ControlChannelLabel:
+			case configuration.PROXY_CONTROL_CHAN_LABEL:
 				registerClientControlMessage(r, d, state)
-			case config.DataChannelLabel:
+			case configuration.PROXY_DATA_CHAN_LABEL:
 				registerClientDataMessage(r, d, state)
 			default:
 				log.Warn().Str("label", d.Label()).Msg("Unknown client channel was opened for communication")
@@ -113,7 +112,7 @@ func onClientConnectionChange(client *rtc.RTC, state *state.ServerState) func(we
 		} else if s == webrtc.PeerConnectionStateConnected {
 			// Check if there already is a car connected, and send its car state if so
 			state.Lock.RLock()
-			car := state.ConnectedPeers.Get(config.CarId)
+			car := state.ConnectedPeers.Get(configuration.PROXY_CAR_ID)
 			state.Lock.RUnlock()
 			if car == nil {
 				return
@@ -161,7 +160,7 @@ func registerClientDataMessage(client *rtc.RTC, dc *webrtc.DataChannel, state *s
 		log.Debug().Int("length", len(msg.Data)).Msg("Forwarding data: client --> rover")
 
 		// Thank you for the message, we just forward it to the car who can parse it and act accordingly
-		car := state.ConnectedPeers.Get(config.CarId)
+		car := state.ConnectedPeers.Get(configuration.PROXY_CAR_ID)
 		if car == nil {
 			// No car to forward to, let the client know
 			notification := pb_control.ControlError{

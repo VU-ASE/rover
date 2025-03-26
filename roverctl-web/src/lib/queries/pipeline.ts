@@ -2,6 +2,7 @@ import { config } from '$lib/config';
 import { HealthApi, PipelineApi, ServicesApi, type FullyQualifiedService } from '$lib/openapi';
 import { useMutation, useQueryClient } from '@sveltestack/svelte-query';
 import type { PipelineNodeData } from '../../components/manage/type';
+import { globalStore } from '$lib/store';
 
 /**
  * The query "hooks" are placed in this file since they are reused among multiple views and shortcuts,
@@ -26,6 +27,10 @@ const useStartPipeline = () => {
 			// Invalidate the pipeline query regardless of mutation success or failure
 			onSettled: () => {
 				queryClient.invalidateQueries('pipeline');
+			},
+			onSuccess: () => {
+				// Reset the debugging data, we now have a new pipeline
+				globalStore.reset();
 			}
 		}
 	);

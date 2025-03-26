@@ -17,6 +17,8 @@ github.com/VU-ASE/roverrtc v1.2.0 h1:IPOQwWUeBjkUVHsnaJmOhPlV9jyz9GGfMnM15PFvDWo
 github.com/VU-ASE/roverrtc v1.2.0/go.mod h1:J7rhlXX7fompQBiYcJEUI55ErDf+9TxwGgNJQWJ6HfE=
 github.com/VU-ASE/roverrtc v1.3.0 h1:sSzNMf8cSyQB58e6d4HUN9mtsvpGXPUSdR/ew9iUSZA=
 github.com/VU-ASE/roverrtc v1.3.0/go.mod h1:J7rhlXX7fompQBiYcJEUI55ErDf+9TxwGgNJQWJ6HfE=
+github.com/VU-ASE/roverrtc v1.3.1 h1:lVtYHalFimhaikM56KU+gvqaAMbQGz0MYEsbMQAIgbc=
+github.com/VU-ASE/roverrtc v1.3.1/go.mod h1:J7rhlXX7fompQBiYcJEUI55ErDf+9TxwGgNJQWJ6HfE=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
 github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=

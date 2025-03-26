@@ -53,19 +53,21 @@ type GlobalState = {
 	))[];
 };
 
+const defaultState: GlobalState = {
+	paused: null,
+	millisecondsPreserved: 10 * 1000,
+	scrubOffsetMilliseconds: 0,
+	services: new Map(),
+	carConnected: false,
+	carOffset: 0,
+	cameraFeeds: [],
+	fullscreenMode: false,
+	tuning: undefined,
+	tuningOverrides: []
+};
+
 const createGlobalStore = () => {
-	const store = writable<GlobalState>({
-		paused: null,
-		millisecondsPreserved: 10 * 1000,
-		scrubOffsetMilliseconds: 0,
-		services: new Map(),
-		carConnected: false,
-		carOffset: 0,
-		cameraFeeds: [],
-		fullscreenMode: false,
-		tuning: undefined,
-		tuningOverrides: []
-	});
+	const store = writable<GlobalState>(defaultState);
 	const { subscribe, update, set } = store;
 
 	return {
@@ -285,6 +287,9 @@ const createGlobalStore = () => {
 					tuningOverrides: tuningOverrides
 				};
 			});
+		},
+		reset: () => {
+			set(defaultState);
 		}
 	};
 };

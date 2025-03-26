@@ -190,8 +190,6 @@
 	};
 
 	const createAndSetGraph = (newNodes: PipelineNode[], newEdges: Edge[]) => {
-		console.log('Was asked to set edges for graph', newNodes, newEdges);
-
 		// Create a daggerable graph to automatically layout the nodes
 		const graph = new dagre.graphlib.Graph();
 		graph.setGraph({ rankdir: 'LR' }); // Top-to-Bottom layout
