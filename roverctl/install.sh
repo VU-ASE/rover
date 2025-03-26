@@ -87,4 +87,12 @@ if ! command -v roverctl &> /dev/null; then
   echo "Added ${INSTALL_DIR} to PATH in $shell_profile. Please restart your shell or run 'source $shell_profile'."
 fi
 
+# Add alias for rover
+shell_profile=$(detect_shell_profile)
+if ! grep -q "alias rover=" "$shell_profile"; then
+  echo "Adding alias 'rover' for 'roverctl'..."
+  echo "alias rover='roverctl'" >> "$shell_profile"
+  echo "Alias added to $shell_profile. Please restart your shell or run 'source $shell_profile'."
+fi
+
 echo "Installation complete! Run 'roverctl' to get started."
