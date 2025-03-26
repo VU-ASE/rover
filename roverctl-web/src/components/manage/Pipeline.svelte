@@ -359,20 +359,12 @@
 
 				// Show a warning about the service that caused the pipeline to crash (if any)
 				for (const enabled of data.enabled) {
-					const previousEnabled = previousData?.enabled.find(
-						(e) => e.service.fq.name === enabled.service.fq.name
-					);
-
 					if (
 						// Service must be crashed
 						enabled.service.exit !== 0 &&
-						// But only send this notification on the first time we know it crashed
-						(!previousEnabled ||
-							previousEnabled.service.exit === 0 || // Service was not crashed before
-							// Or the service was restarted
-							(previousData?.last_start &&
-								data.last_start &&
-								previousData?.last_start < data.last_start))
+						// Only show toast on the transition from running -> stopped/invalid
+						previousData?.status === 'started' &&
+						data.status !== previousData.status
 					) {
 						toasts.add({
 							title: 'Service error',
@@ -1069,7 +1061,7 @@
 													</svelte:fragment>
 													<svelte:fragment slot="summary">
 														<div class="flex flex-row justify-between">
-															{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => s.service.fq.name === service.name && s.service.exit !== 0)}
+															{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => s.service.fq.author === group.author && s.service.fq.name === service.name && s.service.exit !== 0)}
 																<span class="font-mono text-warning-400 whitespace-nowrap truncate">
 																	{service.name}
 																</span>
