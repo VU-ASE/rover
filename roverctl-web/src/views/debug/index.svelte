@@ -20,9 +20,11 @@
 	import DelayIndicator from './indicators/delay.svelte';
 	import { useQuery } from '@sveltestack/svelte-query';
 	import { config } from '$lib/config';
-	import { PipelineApi } from '$lib/openapi';
+	import { PipelineApi, ServicesApi } from '$lib/openapi';
 	import { createServiceStore } from '$lib/store/service';
 	import { serviceIdentifier } from '$lib/utils/service';
+	import { TRANSCEIVER_IDENTIFIER } from '$lib/constants';
+	import { derived, writable } from 'svelte/store';
 
 	// Periodically refetch the pipeline so that we can show tunables even for services that do not expose
 	// output data
@@ -70,14 +72,96 @@
 		}
 	);
 
+	// Track if debug has been active once, so that we do not close the screen if the pipeline is stopped
+	const debugHasBeenActive = writable(false);
+	// Debug mode is active when:
+	// - a transceiver service is enabled
+	// - this transceiver service has the same passthrough server specified as the roverctl configuration
+	// - roverctl-web was started with debug info environment variables
+	const debugActive = derived(
+		[pipelineQuery],
+		([$pipelineQuery], set) => {
+			// Async function to compute debugActive state
+			const checkDebug = async () => {
+				if (
+					!$pipelineQuery.isSuccess ||
+					$pipelineQuery.data.status !== 'started' ||
+					!config.success ||
+					!config.passthrough
+				) {
+					set(false);
+					return;
+				}
+
+				const enabled = $pipelineQuery.data.enabled;
+
+				const transceiver = enabled.find((n) => n.service.fq.name === TRANSCEIVER_IDENTIFIER);
+				if (!transceiver) {
+					set(false);
+					return;
+				}
+
+				const fq = transceiver.service.fq;
+				try {
+					const sapi = new ServicesApi(config.roverd.api);
+					const service = await sapi.servicesAuthorServiceVersionGet(
+						fq.author,
+						fq.name,
+						fq.version
+					);
+
+					if (!service) {
+						set(false);
+						return;
+					}
+
+					const passthrough = service.data.configuration.find(
+						(c) => c.name === 'passthrough-address' && c.type === 'string'
+					);
+					if (!passthrough) {
+						set(false);
+						return;
+					}
+
+					const address = passthrough.value.toString().replace(/^https?:\/\//, '');
+					const expected = config.passthrough.host + ':' + config.passthrough.port;
+
+					const res = address === expected;
+					console.log('Debug mode active:', res);
+					set(res);
+					if (res) {
+						debugHasBeenActive.set(true);
+					}
+				} catch (error) {
+					console.error('Error checking debug mode', error);
+					set(false);
+				}
+			};
+
+			checkDebug();
+		},
+		false // initial value
+	);
+
 	onMount(() => {
+		console.log('Debug screen mounted');
 		$pipelineQuery.refetch();
 	});
 </script>
 
 <div class="flex flex-col min-h-screen w-full relative">
 	<!-- Main Content -->
-	{#if $globalStore.services.size <= 0}
+	{#if !$debugHasBeenActive && !$debugActive}
+		<div class="flex-1 flex items-center justify-center">
+			<div class="space-y-2 text-center animate-fade-in animate-fade-out w-full">
+				<h1 class="text-warning-500 text-lg font-bold">No pipeline running in debug mode</h1>
+				<p class="text-secondary-700">
+					Start a pipeline in debug mode<br />
+					and return here to see the debugging data.
+				</p>
+			</div>
+		</div>
+	{:else if $globalStore.services.size <= 0}
 		<div class="flex-1 flex items-center justify-center">
 			<div class="space-y-2 text-center animate-fade-in animate-fade-out w-full">
 				<h1 class="text-green-500 text-lg font-bold">Connection established</h1>
@@ -139,7 +223,7 @@
 	{/if}
 </div>
 
-{#if $globalStore.services.size > 0}
+{#if $globalStore.services.size > 0 && $debugHasBeenActive}
 	<div class="absolute bottom-0 left-0 w-full card bg-gray-700">
 		<PlaybackSlider />
 	</div>

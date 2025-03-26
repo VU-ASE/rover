@@ -492,7 +492,7 @@
 		let services = $nodes;
 
 		// If debug mode is not enabled make sure to not include any transceiver service
-		if (!$debugActive.data) {
+		if (!$debugActive) {
 			services = services.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER);
 		}
 
@@ -587,37 +587,66 @@
 	// - a transceiver service is enabled
 	// - this transceiver service has the same passthrough server specified as the roverctl configuration
 	// - roverctl-web was started with debug info environment variables
-	const debugActive = useQuery(['debugActive', $nodes], async () => {
-		if (!config.success || !config.passthrough) {
-			return false;
-		}
+	export const debugActive = derived(
+		[nodes],
+		([$nodes], set) => {
+			// Async function to compute debugActive state
+			const checkDebug = async () => {
+				console.log('Trying to determine if debug mode is active');
 
-		const transceiver = $nodes.find((n) => n.data.fq.name === TRANSCEIVER_IDENTIFIER);
-		if (!transceiver) {
-			return false;
-		}
+				if (!config.success || !config.passthrough) {
+					console.log('No, config not valid');
+					set(false);
+					return;
+				}
 
-		const fq = transceiver.data.fq;
+				const transceiver = $nodes.find((n) => n.data.fq.name === TRANSCEIVER_IDENTIFIER);
+				if (!transceiver) {
+					console.log('No, no transceiver service found', $nodes);
+					set(false);
+					return;
+				}
 
-		// Query the service API to get the configuration for this transceiver
-		const sapi = new ServicesApi(config.roverd.api);
-		const service = await sapi.servicesAuthorServiceVersionGet(fq.author, fq.name, fq.version);
-		if (!service) {
-			return false;
-		}
+				const fq = transceiver.data.fq;
 
-		// Find the "passthrough-address" configuration key
-		const passthrough = service.data.configuration.find(
-			(c) => c.name === 'passthrough-address' && c.type === 'string'
-		);
-		if (!passthrough) {
-			return false;
-		}
+				try {
+					const sapi = new ServicesApi(config.roverd.api);
+					const service = await sapi.servicesAuthorServiceVersionGet(
+						fq.author,
+						fq.name,
+						fq.version
+					);
 
-		// strip the protocol from the roverctl configuration
-		const address = passthrough.value.toString().replace(/^https?:\/\//, '');
-		return address === config.passthrough.host + ':' + config.passthrough.port;
-	});
+					if (!service) {
+						console.log('No, service not found');
+						set(false);
+						return;
+					}
+
+					const passthrough = service.data.configuration.find(
+						(c) => c.name === 'passthrough-address' && c.type === 'string'
+					);
+					if (!passthrough) {
+						console.log('No, passthrough address not found');
+						set(false);
+						return;
+					}
+
+					const address = passthrough.value.toString().replace(/^https?:\/\//, '');
+					const expected = config.passthrough.host + ':' + config.passthrough.port;
+
+					console.log('Comparing', address, expected);
+					set(address === expected);
+				} catch (error) {
+					console.error('Error checking debug mode', error);
+					set(false);
+				}
+			};
+
+			checkDebug();
+		},
+		false // initial value
+	);
 
 	const disableDebugMode = () => {
 		// Remove the transceiver service
@@ -759,7 +788,7 @@
 						<div class="flex flex-row gap-4 items-center">
 							<SlideToggle
 								name="slider-small"
-								checked={!!$debugActive.data}
+								checked={!!$debugActive}
 								background="bg-surface-400"
 								active="bg-primary-600"
 								size="sm"
@@ -796,7 +825,7 @@
 						<div class="flex flex-row gap-4 items-center">
 							<SlideToggle
 								name="slider-small"
-								checked={!!$debugActive.data}
+								checked={!!$debugActive}
 								background="bg-surface-400"
 								active="bg-primary-600"
 								size="sm"
@@ -833,16 +862,16 @@
 						<div class="flex flex-row gap-4 items-center">
 							<SlideToggle
 								name="slider-small"
-								checked={!!$debugActive.data}
+								checked={!!$debugActive}
 								background="bg-surface-400"
 								active="bg-primary-600"
 								size="sm"
-								disabled={$debugActive.isLoading || $enableDebugMode.isLoading}
+								disabled={$enableDebugMode.isLoading}
 								on:click={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
 
-									if (!!$debugActive.data) {
+									if (!!$debugActive) {
 										disableDebugMode();
 									} else {
 										$enableDebugMode.mutate();
@@ -881,7 +910,7 @@
 						<div class="flex flex-row gap-4 items-center">
 							<SlideToggle
 								name="slider-small"
-								checked={!!$debugActive.data}
+								checked={!!$debugActive}
 								background="bg-surface-400"
 								active="bg-primary-600"
 								size="sm"
