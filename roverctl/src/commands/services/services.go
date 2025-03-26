@@ -59,6 +59,8 @@ func Add(rootCmd *cobra.Command) {
 	addInstall(servicesCmd)
 	addDelete(servicesCmd)
 	addInit(servicesCmd)
+	addInfo(servicesCmd)
+	addBuild(servicesCmd)
 
 	rootCmd.AddCommand(servicesCmd)
 }

@@ -21,9 +21,8 @@ func addInstall(rootCmd *cobra.Command) {
 
 	// services command
 	var infoCmd = &cobra.Command{
-		Use:     "install",
-		Aliases: []string{"i"},
-		Short:   "Install a service from a given URL onto the Rover",
+		Use:   "install",
+		Short: "Install a service from a given URL onto the Rover",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conn, er := command_prechecks.Perform(cmd, args, roverIndex, roverdHost, roverdUsername, roverdPassword)
 			if er != nil {
@@ -34,6 +33,7 @@ func addInstall(rootCmd *cobra.Command) {
 				return fmt.Errorf("Specify the ZIP URL of the service to install")
 			}
 
+			fmt.Printf("Attempting to install service on Rover...\n")
 			fetch := api.ServicesAPI.FetchPost(
 				context.Background(),
 			)
