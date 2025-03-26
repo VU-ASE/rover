@@ -59,8 +59,9 @@ func addInfo(rootCmd *cobra.Command) {
 			if builtAt == nil {
 				fmt.Printf("%s\n", style.Gray.Render("This service has not been built yet"))
 			} else {
-				fmt.Printf("%s\n", style.Gray.Render("This service was last built at ")+style.Primary.Render(time.Unix(*res.BuiltAt/1000, 0).String()))
+				fmt.Printf("%s\n", ("This service was last built at ")+style.Primary.Render(time.Unix(*res.BuiltAt/1000, 0).String()))
 			}
+			fmt.Printf("Installation directory: %s\n", style.Primary.Render("/home/debix/.rover/"+author+"/"+name+"/"+version))
 
 			if len(res.Configuration) > 0 {
 				fmt.Printf("%s\n", style.Gray.Render("\nConfigurable options:"))
