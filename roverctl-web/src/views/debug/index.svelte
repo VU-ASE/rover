@@ -22,6 +22,7 @@
 	import { config } from '$lib/config';
 	import { PipelineApi } from '$lib/openapi';
 	import { createServiceStore } from '$lib/store/service';
+	import { serviceIdentifier } from '$lib/utils/service';
 
 	// Periodically refetch the pipeline so that we can show tunables even for services that do not expose
 	// output data
@@ -54,9 +55,11 @@
 
 				// Add new services to the global store
 				newServices.forEach((service) => {
-					const name = service.service.fq.name;
+					const name = serviceIdentifier(service.service.fq); // this is the name as roverd renders it (taking into account the "as" field of a service)
+					const realName = service.service.fq.name; // this is the name as the service is registered (without "as")
 					const newServiceStore = createServiceStore({
 						name: name,
+						realName: realName,
 						pid: -1,
 						endpoints: new Map()
 					});

@@ -4,7 +4,7 @@
  */
 
 import { get, writable } from 'svelte/store';
-import { createServiceStore, type ServiceStore } from './service';
+import { type ServiceStore } from './service';
 import { DebugOutput } from 'ase-rovercom/gen/debug/debug';
 import { SensorOutput } from 'ase-rovercom/gen/outputs/wrapper';
 import { TuningState } from 'ase-rovercom/gen/tuning/tuning';
@@ -128,17 +128,20 @@ const createGlobalStore = () => {
 			// Is this service already in the global state?
 			const serviceStore = val.services.get(service.name);
 			if (!serviceStore) {
-				update((oldState) => {
-					const newState = { ...oldState };
-					const newService = createServiceStore({
-						name: service.name,
-						pid: -1,
-						endpoints: new Map()
-					});
-					newService.addFrame(endpoint, sentAt, parsedData);
-					newState.services.set(service.name, newService);
-					return newState;
-				});
+				// update((oldState) => {
+				// 	const newState = { ...oldState };
+				// 	const newService = createServiceStore({
+				// 		// Name and display name are the same, because that is all
+				// 		name: service.name,
+				// 		displayName: service.name,
+				// 		pid: -1,
+				// 		endpoints: new Map()
+				// 	});
+				// 	newService.addFrame(endpoint, sentAt, parsedData);
+				// 	newState.services.set(service.name, newService);
+				// 	return newState;
+				// });
+				console.error('Received debug data from a service  not found in global state', service);
 			} else {
 				serviceStore.addFrame(endpoint, sentAt, parsedData);
 			}

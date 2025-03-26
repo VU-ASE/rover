@@ -16,6 +16,7 @@ type ServiceState = Omit<ServiceIdentifier, 'endpoints'> & {
 			streams: Map<number, SensorStreamStore>;
 		}
 	>;
+	realName: string; // name as unmodified by the "as" field
 };
 
 const createServiceStore = (service: ServiceState) => {
