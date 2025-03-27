@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.2](https://github.com/VU-ASE/rover/compare/v0.18.1...v0.18.2) (2025-03-27)
+
+
+### Bug Fixes
+
+* emergency stop ([2b7bdf8](https://github.com/VU-ASE/rover/commit/2b7bdf85012d4b5e736a5bf3543a7f5856bc9855))
+* roverctl --force warning message ([5384c70](https://github.com/VU-ASE/rover/commit/5384c704cac253524bc7d433d4b260602e1c3632))
+
 ## [0.18.1](https://github.com/VU-ASE/rover/compare/v0.18.0...v0.18.1) (2025-03-26)
 
 
