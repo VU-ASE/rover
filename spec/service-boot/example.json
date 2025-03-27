@@ -32,13 +32,13 @@
     ],
     "configuration": [{
             "name": "max-iterations",
-            "type": "float",
+            "type": "number",
             "tunable": true,
             "value": 100
         },
         {
             "name": "speed",
-            "type": "float",
+            "type": "number",
             "tunable": false,
             "value": 1.5
         },
