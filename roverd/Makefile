@@ -90,3 +90,10 @@ loc:
 	@cd rovervalidate/src && find . -name '*.rs' | xargs wc -l
 	@echo 
 
+
+generate-visualizations:
+	@mkdir -p media
+	@cargo modules dependencies --no-externs --no-fns --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-modules.svg
+	@cargo modules dependencies --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-externs.svg
+
+	
