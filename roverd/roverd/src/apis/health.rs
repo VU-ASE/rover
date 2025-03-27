@@ -167,6 +167,9 @@ impl Health for Roverd {
             let _ = warn_generic!(self.app.stop(rover_state).await, EmergencyPostResponse);
         }
 
+        // Wait a short while to make sure that the pipeline has stopped, before we attempt to reset
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+
         warn_generic!(self.app.emergency_stop_rover().await, EmergencyPostResponse);
         Ok(EmergencyPostResponse::Status200_OperationWasSuccessful)
     }

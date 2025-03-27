@@ -35,6 +35,8 @@ USER dev
 
 # Rust Install
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN /home/dev/.cargo/bin/rustup install 1.85.1
+RUN /home/dev/.cargo/bin/rustup default 1.85.1
 RUN /home/dev/.cargo/bin/rustup target add aarch64-unknown-linux-gnu
 
 # OpenAPI-cli install
@@ -49,9 +51,6 @@ COPY --chown=dev:dev .devcontainer/roverd/scripts/ssh_config /home/dev/.ssh/conf
 
 # Visualize Rust Repo Dependencies
 RUN sudo apt install -y graphviz
-RUN /home/dev/.cargo/bin/rustup install 1.85.1
-RUN /home/dev/.cargo/bin/rustup default 1.85.1
 RUN /home/dev/.cargo/bin/cargo install cargo-modules
 
-# Clean up
-# RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
