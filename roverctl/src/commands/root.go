@@ -148,7 +148,7 @@ func NewRoot() *cobra.Command {
 			// Check if image exists
 			_, err = dc.DistributionInspect(ctx, imageRef, encodedAuth)
 			if err != nil {
-				fmt.Printf("No matching roverctl-web image found for roverd version %s. Upgrade roverd to ensure compatibility or use the --force flag to use a specific version.\n", version)
+				fmt.Printf("No matching roverctl-web image found for roverd version %s.\n%s %s\n", version, style.Gray.Render("You can find available releases at"), style.Primary.Render("https://github.com/VU-ASE/rover/releases"))
 				return nil
 			}
 

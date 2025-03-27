@@ -98,7 +98,7 @@ _______________(__)_____________(__)_________________`)
 			}
 			s += style.Gray.Render("Build version: ") + m.remoteInfo.Data.Version
 			if !utils.VersionsEqual(Version, m.remoteInfo.Data.Version) {
-				s += style.Error.Render(" (mismatch, might be incompatible)")
+				s += style.Error.Render(" (mismatch, incompatible)")
 			} else {
 				s += style.Success.Render(" (compatible)")
 			}

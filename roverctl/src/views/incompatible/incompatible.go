@@ -23,6 +23,9 @@ func WarnOnIncompatible(conn configuration.RoverConnection) {
 
 	// Check if the versions are compatible
 	if !utils.VersionsEqual(res.Version, view_info.Version) {
-		fmt.Printf("%s roverctl (%s) and roverd (%s) have incompatible installations. Run %s to resolve.\n", style.Warning.Bold(true).Render("Warning!"), utils.Version(view_info.Version), utils.Version(res.Version), style.Primary.Render("roverctl update"))
+		s := style.Warning.Bold(true).Render("WARNING!") + " " + style.Warning.Render("roverctl ("+utils.Version(view_info.Version)+") and roverd ("+utils.Version(res.Version)+") are incompatible") + "\n"
+		s += "         -> run " + style.Primary.Render("roverctl update") + " to resolve\n\n"
+
+		fmt.Print(s)
 	}
 }
