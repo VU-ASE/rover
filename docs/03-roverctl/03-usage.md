@@ -25,6 +25,43 @@ roverctl --host 192.168.0.112
 roverctl -r 12 --username admin --password welcome123
 ``` 
 
+## Emergency Reset a Rover
+
+If you lost control of a Rover you can stop the current pipeline and reset the motors and servo to a safe state using the `emergency` command.
+
+:::tip[Shorthands]
+
+Available shorthands are `roverctl e` and `roverctl reset`.
+
+:::
+
+### Example Usage
+```bash
+# Reset Rover 12
+roverctl emergency -r 12
+
+# Reset a Rover at 192.168.0.112
+roverctl emergency --host 192.168.0.112
+```
+
+## Calibrate a Rover
+
+To correct for hardware error in the servo (noticeable when steering), you can use the `calibrate` command.
+
+:::note[Recalibration]
+
+Every time you install a new `actuator` service, you will need to recalibrate it.
+
+:::
+
+### Example Usage
+```bash
+# Calibrate Rover 12
+roverctl calibrate -r 12
+
+# Calibrate a Rover at 192.168.0.112
+roverctl calibrate --host 192.168.0.112
+```
 
 ## Open `roverctl-web`
 
@@ -74,7 +111,7 @@ roverctl service init go --name my-distance-sensor --source github.com/ielaajezd
 
 ## Upload a Service
 
-Service directories can be uploaded to the Rover using the `roverctl upload` command. You can specify a Rover as shown [above](#specify-a-rover). You can upload one or multiple directories simultaneously and enable a file watcher to continuously sync your local changes to the Rover.
+Service directories can be uploaded to the Rover using the `roverctl upload` command. You can specify a Rover as shown [above](#specify-a-rover). You can upload one or multiple directories simultaneously and enable a file watcher to continuously sync your local changes to the Rover. You can find more information about the installation directory [here](https://ase.vu.nl/docs/framework/glossary/service#rover-installation-directory).
 
 ### Example Usage
 ```bash
@@ -89,6 +126,58 @@ roverctl upload /dir1 /dir2 -r 12
 
 # Upload multiple direcotires to a Rover at 192.168.0.112
 roverctl upload /dir1 /dir2 --host 192.168.0.112
+```
+
+## Describe a Service
+
+After [uploading](#upload-a-service) to the Rover, you can query its status using the `service info` command using its [fully qualified name](https://ase.vu.nl/docs/framework/glossary/service#fully-qualified-name-fqn).
+
+### Example Usage
+```bash
+# View info about the imaging service by vu-ase, version 1.2.3 installed on Rover 12
+roverctl service info vu-ase imaging 1.2.3 -r 12
+
+# View info about the imaging service by vu-ase, version 1.2.3 installed on the Rover at 192.168.0.112
+roverctl service info vu-ase imaging 1.2.3 --host 192.168.0.112
+```
+
+## Build a Service
+
+After [uploading](#upload-a-service) to the Rover, you can use `service build` to run the build command specified in its *service.yaml* by using its [fully qualified name](https://ase.vu.nl/docs/framework/glossary/service#fully-qualified-name-fqn). If a build fails, you will be presented the build logs (STDERR and STDOUT). More information on the build-time environment can be found [here](https://ase.vu.nl/docs/framework/glossary/service#build-time-and-runtime).
+
+### Example Usage
+```bash
+# Build the imaging service by vu-ase, version 1.2.3 installed on Rover 12
+roverctl service build vu-ase imaging 1.2.3 -r 12
+
+# Build the imaging service by vu-ase, version 1.2.3 installed on the Rover at 192.168.0.112
+roverctl service build vu-ase imaging 1.2.3 --host 192.168.0.112
+```
+
+## Delete a Service
+
+Installed services can be deleted from the Rover by using the `service delete` command and the service's [fully qualified name](https://ase.vu.nl/docs/framework/glossary/service#fully-qualified-name-fqn).
+
+### Example Usage
+```bash
+# Delete the imaging service by vu-ase, version 1.2.3 installed on Rover 12
+roverctl service delete vu-ase imaging 1.2.3 -r 12
+
+# Delete the imaging service by vu-ase, version 1.2.3 installed on the Rover at 192.168.0.112
+roverctl service delete vu-ase imaging 1.2.3 --host 192.168.0.112
+```
+
+## Install a Service From URL
+
+Instead of [uploading](#upload-a-service) a service to the Rover, you can install any service by specifying a URL to a valid service directory published as ZIP file. The Rover must be connected to the Internet to succeed.
+
+### Example Usage
+```bash
+# Install a service from github onto Rover 12
+roverctl service install https://github.com/VU-ASE/imaging/releases/download/v1.2.2/imaging.zip -r 12
+
+# Install a service from github onto the Rover at 192.168.0.112
+roverctl service install https://github.com/VU-ASE/imaging/releases/download/v1.2.2/imaging.zip --host 192.168.0.112
 ```
 
 ## View Pipeline
@@ -164,4 +253,28 @@ roverctl logs vu-ase imaging 1.2.3 -r 12
 
 # View logs for the vu-ase imaging service (version 1.2.3) of a Rover at 192.168.0.112
 roverctl logs vu-ase imaging 1.2.3 --host 192.168.0.112
+```
+
+## Empty a Pipeline
+To reset the active pipeline, you can use the `pipeline reset` command. This is **not** the same as an [emergency reset](#emergency-reset-a-rover).
+
+### Example Usage
+```bash
+# Reset the pipeline of Rover 12
+roverctl pipeline reset -r 12
+
+# Reset the pipeline of a Rover at 192.168.0.112
+roverctl pipeline reset --host 192.168.0.112
+```
+
+## Shutdown a Rover
+To safely shut down a Rover, you can use the `shutdown` command.
+
+### Example Usage
+```bash
+# Shutdown Rover 12
+roverctl shutdown -r 12
+
+# Shutdown a Rover at 192.168.0.112
+roverctl shutdown --host 192.168.0.112
 ```
