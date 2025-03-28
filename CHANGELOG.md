@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.3](https://github.com/VU-ASE/rover/compare/v0.18.2...v0.18.3) (2025-03-28)
+
+
+### Bug Fixes
+
+* added service-template for cpp ([cf5fd0c](https://github.com/VU-ASE/rover/commit/cf5fd0c04b646dfef25138bbbb54220c03a2722e))
+
 ## [0.18.2](https://github.com/VU-ASE/rover/compare/v0.18.1...v0.18.2) (2025-03-27)
 
 
