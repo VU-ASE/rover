@@ -214,7 +214,7 @@ roverctl pipeline stop --host 192.168.0.112
 
 ## View Services
 
-To view the currently installed servies on the Rover, you can use the `roverctl services` command. You can specify a Rover as shown [above](#specify-a-rover). 
+To view the currently installed services on the Rover, you can use the `roverctl services` command. You can specify a Rover as shown [above](#specify-a-rover). 
 
 ### Example Usage
 ```bash
@@ -223,6 +223,19 @@ roverctl services -r 12
 
 # View the servies installed on a Rover at 192.168.0.112
 roverctl services --host 192.168.0.112
+```
+
+## View a Specific Service
+
+To view information about a specific service installed on the Rover, you can use the `roverctl services info` command. You can specify a Rover as shown [above](#specify-a-rover). 
+
+### Example Usage
+```bash
+# View service information about the "controller" service by "vu-ase" version 1.0.0 installed on Rover 12
+roverctl services info vu-ase controller 1.0.0 -r 12
+
+# View service information about the "controller" service by "vu-ase" version 1.0.0 installed on a Rover at 192.168.0.112
+roverctl services info vu-ase controller 1.0.0 --host 192.168.0.112
 ```
 
 ## Enable or Disable Services
