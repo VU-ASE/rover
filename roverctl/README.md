@@ -8,3 +8,4 @@
 <br/>
 
 **`roverctl` is a command-line interface (CLI) that provides you with everything you need to develop and work with ASE Rover services and pipelines. Interaction is based on connecting to a `roverd` instance, which comes preinstalled on your Rover. To enable roverctl-web (the web interface to control a Rover), Docker needs to be installed.**
+
