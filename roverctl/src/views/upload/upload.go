@@ -195,7 +195,7 @@ func (m model) View() string {
 
 		if !ok {
 			s += (pathStr) + " -> " + m.rover.Identifier + style.Gray.Render(" (unknown)") + "\n"
-			s += style.Warning.Render("✗ No valid service.yaml file found in this directory") + "\n" + style.Gray.Render("Check out ") + style.Primary.Render("https://ase.vu.nl/docs/tutorials/Fundamental%20Concepts/services") + style.Gray.Render(" to understand service.yaml requirements") + "\n\n"
+			s += style.Warning.Render("✗ No valid service.yaml file found in this directory") + "\n" + style.Gray.Render("Check out ") + style.Primary.Render("https://ase.vu.nl/docs/framework/glossary/service") + style.Gray.Render(" to understand service.yaml requirements") + "\n\n"
 			continue
 		}
 		s += (pathStr) + " -> " + (m.rover.Identifier + style.Gray.Render(" (/home/debix/.rover/"+st.Config.Author+"/"+info.Name+"/"+info.Version+")")) + "\n"
