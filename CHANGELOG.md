@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.4](https://github.com/VU-ASE/rover/compare/v0.18.3...v0.18.4) (2025-03-30)
+
+
+### Bug Fixes
+
+* correct link if upload fails ([d229edb](https://github.com/VU-ASE/rover/commit/d229edbeca49c5684dd881e97dc9d02bf9cbb9fc))
+
 ## [0.18.3](https://github.com/VU-ASE/rover/compare/v0.18.2...v0.18.3) (2025-03-28)
 
 
