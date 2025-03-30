@@ -3,6 +3,7 @@
 	import DebugIcon from '~icons/ix/chart-curve-spline';
 	import WifiIcon from '~icons/material-symbols/wifi';
 	import WifiOffIcon from '~icons/material-symbols/wifi-off';
+	import KeyboardIcon from '~icons/tdesign/keyboard-filled';
 
 	import { Circle } from 'svelte-loading-spinners';
 	import { config } from '$lib/config';
@@ -88,6 +89,13 @@
 		<a href="/debug" class={`${activeClass('debug')} p-1 px-2 flex flex-row items-center gap-1`}>
 			<DebugIcon class="text-sm" />
 			<p class="">debug</p>
+		</a>
+		<a
+			href="/shortcuts"
+			class={`${activeClass('debug')} p-1 px-2 flex flex-row items-center gap-1`}
+		>
+			<KeyboardIcon class="text-sm" />
+			<p class="">shortcuts</p>
 		</a>
 	</div>
 </div>
