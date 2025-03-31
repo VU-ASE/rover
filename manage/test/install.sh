@@ -18,8 +18,6 @@ fi
 number="$1"
 mode="$2"
 
-roverctl update roverd -r "$number"
-
 if [[ "$mode" == "normal" ]]; then
     echo "Installing normal pipeline"
     roverctl author --set tester
