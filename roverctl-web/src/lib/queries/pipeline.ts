@@ -1,40 +1,12 @@
 import { config } from '$lib/config';
 import { HealthApi, PipelineApi, ServicesApi, type FullyQualifiedService } from '$lib/openapi';
-import { useMutation, useQueryClient } from '@sveltestack/svelte-query';
+import { useMutation } from '@sveltestack/svelte-query';
 import type { PipelineNodeData } from '../../components/manage/type';
-import { globalStore } from '$lib/store';
 
 /**
  * The query "hooks" are placed in this file since they are reused among multiple views and shortcuts,
  * and we want only a single source of truth for them.
  */
-
-const useStartPipeline = () => {
-	const queryClient = useQueryClient();
-
-	return useMutation(
-		'startPipeline',
-		async () => {
-			if (!config.success) {
-				throw new Error('Configuration could not be loaded');
-			}
-
-			const papi = new PipelineApi(config.roverd.api);
-			const response = await papi.pipelineStartPost();
-			return response.data;
-		},
-		{
-			// Invalidate the pipeline query regardless of mutation success or failure
-			onSettled: () => {
-				queryClient.invalidateQueries('pipeline');
-			},
-			onSuccess: () => {
-				// Reset the debugging data, we now have a new pipeline
-				globalStore.reset();
-			}
-		}
-	);
-};
 
 const useBuildService = () => {
 	return useMutation('buildService', async (fq: FullyQualifiedService) => {
@@ -76,4 +48,4 @@ const useEmergencyBrake = () => {
 	});
 };
 
-export { useStartPipeline, useBuildService, useSavePipeline, useEmergencyBrake };
+export { useBuildService, useSavePipeline, useEmergencyBrake };

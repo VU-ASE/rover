@@ -10,6 +10,7 @@
 	import CheckmarkIcon from '~icons/heroicons/check-badge-20-solid';
 	import UserIcon from '~icons/heroicons/user-20-solid';
 	import PowerOffIcon from '~icons/ic/round-power';
+	import toast from 'svelte-french-toast';
 
 	import { toasts } from 'svelte-toasts';
 
@@ -55,7 +56,8 @@
 	import { compareVersions } from '$lib/utils/versions';
 	import InstallTransceiverModal from './InstallTransceiverModal.svelte';
 	import { serviceConflicts, serviceEqual, serviceIdentifier } from '$lib/utils/service';
-	import { useBuildService, useSavePipeline, useStartPipeline } from '$lib/queries/pipeline';
+	import { useBuildService, useSavePipeline } from '$lib/queries/pipeline';
+	import { globalStore } from '$lib/store';
 
 	const queryClient = useQueryClient();
 
@@ -342,15 +344,26 @@
 			onSuccess: (data) => {
 				const previousData = $pipelineQuery.data;
 				if (previousData && previousData.enabled.length > 0 && data.enabled.length <= 0) {
-					toasts.add({
-						title: 'Pipeline reset',
-						description: 'The existing pipeline was emptied by roverd',
-						duration: 10000,
-						placement: 'bottom-right',
-						type: 'info',
-						theme: 'dark',
-						onClick: () => {},
-						onRemove: () => {}
+					toast('Pipeline was reset by Roverd', {
+						position: 'bottom-right',
+						duration: 10000
+					});
+				}
+
+				if (previousData?.status === 'started' && data.status !== 'started') {
+					toast('ℹ️ Pipeline stopped', {
+						position: 'bottom-right',
+						duration: 4000
+					});
+				} else if ($startPipeline.isSuccess && data.status !== 'started') {
+					toast.error('Pipeline stopped immediately after starting', {
+						position: 'bottom-right',
+						duration: 4000
+					});
+				} else if (previousData?.status !== 'started' && data.status === 'started') {
+					toast.success('Pipeline started', {
+						position: 'bottom-right',
+						duration: 4000
 					});
 				}
 
@@ -379,6 +392,10 @@
 							onRemove: () => {}
 						});
 					}
+				}
+
+				if ($startPipeline.isSuccess) {
+					$startPipeline.reset();
 				}
 			},
 			onError: () => {
@@ -473,11 +490,32 @@
 
 	const buildService = useBuildService();
 
-	const startPipeline = useStartPipeline();
+	const startPipeline = useMutation(
+		'startPipeline',
+		async () => {
+			if (!config.success) {
+				throw new Error('Configuration could not be loaded');
+			}
+
+			const papi = new PipelineApi(config.roverd.api);
+			const response = await papi.pipelineStartPost();
+			return response.data;
+		},
+		{
+			// Invalidate the pipeline query regardless of mutation success or failure
+			onSettled: () => {
+				queryClient.invalidateQueries('pipeline');
+			},
+			onSuccess: () => {
+				// Reset the debugging data, we now have a new pipeline
+				globalStore.reset();
+			}
+		}
+	);
 
 	const savePipeline = useSavePipeline();
 
-	const startConfiguredPipeline = async () => {
+	const startConfiguredPipeline = useMutation('startConfiguredPipeline', async () => {
 		let services = $nodes;
 
 		if (!$debugActive) {
@@ -494,16 +532,10 @@
 		await Promise.all(services.map((n) => $buildService.mutateAsync(n.data.fq)));
 		await $savePipeline.mutateAsync(services.map((n) => n.data));
 		await $startPipeline.mutateAsync();
-	};
+	});
 
 	// The active tab selected for service information
 	let tabSet: number = 0;
-	let pipelineStarting = false;
-	$: pipelineStarting =
-		$stopPipeline.isLoading ||
-		$startPipeline.isLoading ||
-		$buildService.isLoading ||
-		$savePipeline.isLoading;
 
 	let searchInput = writable('');
 	// Organize available services per author, name and version
@@ -822,7 +854,7 @@
 						</div>
 
 						<button
-							on:click={startConfiguredPipeline}
+							on:click={() => $startConfiguredPipeline.mutate()}
 							type="button"
 							class="btn text-primary-500"
 							disabled
@@ -869,10 +901,10 @@
 						</div>
 
 						<button
-							on:click={startConfiguredPipeline}
+							on:click={() => $startConfiguredPipeline.mutate()}
 							type="button"
 							class="btn text-primary-500"
-							disabled={pipelineStarting}
+							disabled={$startConfiguredPipeline.isLoading}
 						>
 							<StartIcon />
 							<span>Start execution</span>
@@ -932,7 +964,7 @@
 
 				<div class="flex flex-col">
 					<button
-						on:click={startConfiguredPipeline}
+						on:click={() => $startConfiguredPipeline.mutate()}
 						type="button"
 						class="btn text-primary-500"
 						disabled
@@ -957,7 +989,7 @@
 
 				<div class="flex flex-col">
 					<button
-						on:click={startConfiguredPipeline}
+						on:click={() => $startConfiguredPipeline.mutate()}
 						type="button"
 						class="btn text-primary-500"
 						disabled

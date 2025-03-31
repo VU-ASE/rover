@@ -5,6 +5,7 @@
 	import { browser } from '$app/environment';
 	import { ToastContainer, FlatToast } from 'svelte-toasts';
 	import WarningIcon from '~icons/ix/warning-filled';
+	import { Toaster } from 'svelte-french-toast';
 
 	initializeStores();
 	// Floating UI for Popups
@@ -32,6 +33,7 @@
 	<svelte:fragment slot="header"></svelte:fragment>
 	<QueryClientProvider client={queryClient}>
 		<KeyboardHandler />
+
 		{#if config.success}
 			<slot />
 		{:else}
@@ -59,6 +61,7 @@
 	<ToastContainer placement="bottom-right" let:data>
 		<FlatToast {data} />
 	</ToastContainer>
+	<Toaster />
 
 	<div class="absolute bottom-0 right-0 w-[25vw] h-[30vh] pr-10 z-[-1] opacity-10 flex items-end">
 		<img src="/rover-top.svg" alt="ASE/Rover top view as background pattern" class="w-full" />

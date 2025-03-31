@@ -48,6 +48,7 @@
     "@floating-ui/dom": "1.6.12",
     "@iconify-icons/bx": "^1.2.6",
     "@paralleldrive/cuid2": "^2.2.2",
+    "@svelte-kit/svelte-toast": "^0.9.7",
     "@sveltestack/svelte-query": "^1.6.0",
     "@xyflow/svelte": "^0.1.30",
     "ase-rovercom": "https://gitpkg.vercel.app/VU-ASE/rovercom/packages/typescript?v1.7.0",
@@ -58,6 +59,7 @@
     "js-yaml": "^4.1.0",
     "jszip": "^3.10.1",
     "strip-ansi": "^7.1.0",
+    "svelte-french-toast": "^1.2.0",
     "svelte-persisted-store": "^0.12.0",
     "svelte-toasts": "^1.1.2"
   }
