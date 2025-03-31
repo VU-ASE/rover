@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0](https://github.com/VU-ASE/rover/compare/v0.18.4...v0.19.0) (2025-03-31)
+
+
+### Features
+
+* add shortcuts item in navbar ([5aea4d3](https://github.com/VU-ASE/rover/commit/5aea4d3c7ec4458cd4aa6feb79e62398d5c1d860))
+* use mDNS to resolve hostnames, allow proxy IP override ([2cb436e](https://github.com/VU-ASE/rover/commit/2cb436e2038e2ef1e5d722913f0d794ce9d60bfe))
+
 ## [0.18.4](https://github.com/VU-ASE/rover/compare/v0.18.3...v0.18.4) (2025-03-30)
 
 
