@@ -92,7 +92,7 @@
 		</a>
 		<a
 			href="/shortcuts"
-			class={`${activeClass('debug')} p-1 px-2 flex flex-row items-center gap-1`}
+			class={`${activeClass('shortcuts')} p-1 px-2 flex flex-row items-center gap-1`}
 		>
 			<KeyboardIcon class="text-sm" />
 			<p class="">shortcuts</p>
