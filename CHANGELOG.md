@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/VU-ASE/rover/compare/v0.21.0...v1.0.0) (2025-03-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* release rover v1.0.0
+
+### Features
+
+* release rover v1.0.0 ([292c229](https://github.com/VU-ASE/rover/commit/292c22939aeb4b8592c2dbe8ac1566c350d83b1a))
+
 ## [0.21.0](https://github.com/VU-ASE/rover/compare/v0.20.0...v0.21.0) (2025-03-31)
 
 
