@@ -195,11 +195,9 @@
 		graph.setGraph({ rankdir: 'LR' }); // Top-to-Bottom layout
 		graph.setDefaultEdgeLabel(() => ({}));
 
-		// Add nodes to graph, don't include the transceiver node in the layout, but do add it to the existing nodes
+		// Add nodes to graph
 		newNodes.forEach((node) => {
-			if (node.data.fq.name !== TRANSCEIVER_IDENTIFIER) {
-				graph.setNode(node.id, { width: node.width, height: node.height });
-			}
+			graph.setNode(node.id, { width: node.width, height: node.height });
 		});
 
 		// Add edges to graph
@@ -211,8 +209,7 @@
 		// Apply computed positions
 		const positionedNodes = newNodes.map((node) => ({
 			...node,
-			position:
-				node.data.fq.name !== TRANSCEIVER_IDENTIFIER ? { ...graph.node(node.id) } : { x: 0, y: 0 }
+			position: { ...graph.node(node.id) }
 		}));
 
 		nodes.set(positionedNodes);
@@ -483,9 +480,8 @@
 	const startConfiguredPipeline = async () => {
 		let services = $nodes;
 
-		// If debug mode is not enabled make sure to not include any transceiver service
 		if (!$debugActive) {
-			services = services.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER);
+			services = services;
 		}
 
 		$stopPipeline.reset();
@@ -520,9 +516,7 @@
 			const serviceMap = new Map<string, Map<string, Set<string>>>();
 
 			// Exclude transceiver services always
-			for (const service of $servicesQuery.data.filter(
-				(s) => s.fq.name !== TRANSCEIVER_IDENTIFIER
-			)) {
+			for (const service of $servicesQuery.data) {
 				const { name, author, version } = service.fq;
 				if (!serviceMap.has(author)) {
 					serviceMap.set(author, new Map());
@@ -802,7 +796,7 @@
 					</div>
 				</div>
 			</div>
-		{:else if $nodes.filter((n) => n.data.fq.name !== TRANSCEIVER_IDENTIFIER).length === 0}
+		{:else if $nodes.length === 0}
 			<div class="w-full card p-2 px-4">
 				<div class="flex flex-row justify-between items-center w-full">
 					<div class="flex flex-col">
