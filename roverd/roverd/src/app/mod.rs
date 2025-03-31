@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use axum_extra::extract::Multipart;
+use daemons::DaemonManager;
 use openapi::models::*;
 use process::{PipelineStats, Process, SpawnedProcess};
 use rovervalidate::config::{Configuration, ValidatedConfiguration};
@@ -24,6 +25,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, Pid, ProcessRefreshKind, RefreshKind, System};
 use tokio::process::Command;
 use tokio::select;
+use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::{broadcast, broadcast::Sender, Mutex, RwLock};
 use tracing::{error, info, warn};
 
@@ -49,11 +51,62 @@ pub struct Roverd {
     /// Run-time data structures of the Rover, interacts with the file system
     /// and spawns processes, so must be read/write locked.
     pub app: App,
+
+    pub daemon_manager: Option<DaemonManager>,
 }
 
 impl Roverd {
+    pub async fn shutdown_callback(&self) {
+        let mut sigterm = signal(SignalKind::terminate()).unwrap();
+        let mut sigint = signal(SignalKind::interrupt()).unwrap();
+
+        tokio::select! {
+            _ = sigterm.recv() => {
+                info!("graceful shutdown: received SIGTERM signal");
+            }
+            _ = sigint.recv() => {
+                info!("graceful shutdown: received SIGINT signal");
+            }
+        }
+
+        let operating_rover: RoverState<Operating> = RoverState {
+            _ignore: PhantomData,
+        };
+
+        match self.app.stop(operating_rover).await {
+            Ok(_) => {
+                info!("stopped pipeline")
+            }
+            Err(e) => match e {
+                Error::PipelineIsEmpty | Error::NoRunningServices => {
+                    info!("pipeline was already empty")
+                }
+                _ => {
+                    info!("failed to stop pipeline")
+                }
+            },
+        }
+
+        if let Some(d) = &self.daemon_manager {
+            info!("shutting down daemons");
+            d.shutdown_tx.send(()).ok();
+        } else {
+            info!("no daemons started in the first place");
+        }
+    }
+
     pub async fn new() -> Result<Self, Error> {
-        let info = info::Info::new();
+        let mut info = info::Info::new();
+
+        // Initialize daemons, if that's not possible the roverd is unrecoverable
+        let daemon_manager = match DaemonManager::new().await {
+            Ok(d) => Some(d),
+            Err(e) => {
+                error!("unable to start daemons: {:?}", e);
+                info.status = DaemonStatus::Unrecoverable;
+                None
+            }
+        };
 
         let roverd = Self {
             info,
@@ -75,6 +128,7 @@ impl Roverd {
                         .with_memory(MemoryRefreshKind::everything()),
                 ))),
             },
+            daemon_manager,
         };
 
         // Validate the pipeline found in the yaml file, if it is not valid

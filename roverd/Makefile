@@ -68,7 +68,7 @@ build-arm: lint version-update gen-open-api
 	@echo ">>> "
 	cargo build --target=aarch64-unknown-linux-gnu --release
 
-TEST_ROVER=rover12
+TEST_ROVER=rover01
 
 dev-arm: build-arm
 	scp ./target/aarch64-unknown-linux-gnu/release/roverd $(TEST_ROVER):/tmp/

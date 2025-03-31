@@ -1,12 +1,9 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, Context};
 use axum::extract::{DefaultBodyLimit, Request, State};
 use axum::http::{self, StatusCode};
 use axum::middleware::{self, Next};
 use axum::response::Response;
 use base64::Engine;
-use daemons::DaemonManager;
 use openapi::models::DaemonStatus;
 use tower_http::cors::CorsLayer;
 use tracing::{error, info, warn};
@@ -129,46 +126,63 @@ async fn main() -> Result<(), error::Error> {
     info!("logging initialized");
 
     // All app initialization happens in new()
-    let mut roverd = Roverd::new().await?;
+    let roverd = Roverd::new().await?;
 
-    // If our daemons are downloaded
-    match DaemonManager::new().await {
-        Ok(d) => {
-            let daemon_manager = Arc::new(d);
-            let dm_arc = Arc::clone(&daemon_manager);
+    // Hand-off to axum with a max upload limit of 100MB
+    let router = openapi::server::new(roverd.clone())
+        .layer(middleware::from_fn_with_state(roverd.clone(), auth_wrapper))
+        .layer(CorsLayer::permissive())
+        .layer(DefaultBodyLimit::max(100000000));
 
-            // Hand-off to axum with a max upload limit of 100MB
-            let router = openapi::server::new(roverd.clone())
-                .layer(middleware::from_fn_with_state(roverd, auth_wrapper))
-                .layer(CorsLayer::permissive())
-                .layer(DefaultBodyLimit::max(100000000));
+    let listener = tokio::net::TcpListener::bind(LISTEN_ADDRESS).await.unwrap();
 
-            let listener = tokio::net::TcpListener::bind(LISTEN_ADDRESS).await.unwrap();
+    info!("listening on {}", LISTEN_ADDRESS);
 
-            info!("listening on {}", LISTEN_ADDRESS);
+    axum::serve(listener, router)
+        .with_graceful_shutdown(async move {
+            roverd.shutdown_callback().await;
+        })
+        .await
+        .context("axum error")?;
 
-            axum::serve(listener, router)
-                .with_graceful_shutdown(async move {
-                    dm_arc.shutdown_signal().await;
-                })
-                .await
-                .context("axum error")?;
-        }
-        Err(e) => {
-            error!("unable to start daemons: {:?}", e);
-            roverd.info.status = DaemonStatus::Unrecoverable;
+    // // If our daemons are downloaded
+    // match DaemonManager::new().await {
+    //     Ok(d) => {
+    //         let daemon_manager = Arc::new(d);
+    //         let dm_arc = Arc::clone(&daemon_manager);
 
-            // Hand-off to axum with a max upload limit of 100MB
-            let router = openapi::server::new(roverd.clone())
-                .layer(middleware::from_fn_with_state(roverd, auth_wrapper))
-                .layer(CorsLayer::permissive())
-                .layer(DefaultBodyLimit::max(100000000));
+    //         // Hand-off to axum with a max upload limit of 100MB
+    //         let router = openapi::server::new(roverd.clone())
+    //             .layer(middleware::from_fn_with_state(roverd.clone(), auth_wrapper))
+    //             .layer(CorsLayer::permissive())
+    //             .layer(DefaultBodyLimit::max(100000000));
 
-            let listener = tokio::net::TcpListener::bind(LISTEN_ADDRESS).await.unwrap();
+    //         let listener = tokio::net::TcpListener::bind(LISTEN_ADDRESS).await.unwrap();
 
-            axum::serve(listener, router).await.context("axum error")?;
-        }
-    }
+    //         info!("listening on {}", LISTEN_ADDRESS);
+
+    //         axum::serve(listener, router)
+    //             .with_graceful_shutdown(async move {
+    //                 roverd.shutdown_callback().await;
+    //             })
+    //             .await
+    //             .context("axum error")?;
+    //     }
+    //     Err(e) => {
+    //         error!("unable to start daemons: {:?}", e);
+    //         roverd.info.status = DaemonStatus::Unrecoverable;
+
+    //         // Hand-off to axum with a max upload limit of 100MB
+    //         let router = openapi::server::new(roverd.clone())
+    //             .layer(middleware::from_fn_with_state(roverd, auth_wrapper))
+    //             .layer(CorsLayer::permissive())
+    //             .layer(DefaultBodyLimit::max(100000000));
+
+    //         let listener = tokio::net::TcpListener::bind(LISTEN_ADDRESS).await.unwrap();
+
+    //         axum::serve(listener, router).await.context("axum error")?;
+    //     }
+    // }
 
     info!("roverd main exiting");
     Ok(())

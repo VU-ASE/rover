@@ -12,7 +12,6 @@ use openapi::models::ProcessStatus;
 use rovervalidate::{config::Validate, service::Service};
 use tokio::{
     process::Command,
-    signal::unix::{signal, SignalKind},
     sync::{broadcast, RwLock},
     time::sleep,
 };
@@ -30,7 +29,7 @@ use super::{
 
 #[derive(Debug, Clone)]
 pub struct DaemonManager {
-    shutdown_tx: broadcast::Sender<()>,
+    pub shutdown_tx: broadcast::Sender<()>,
     restart_coutner: Arc<RwLock<usize>>,
 }
 
@@ -41,26 +40,6 @@ pub struct DaemonManager {
 impl DaemonManager {
     pub async fn new() -> Result<Self, Error> {
         let shutdown_tx = broadcast::channel::<()>(1).0;
-
-        // Set up signal handler
-        let shutdown_tx_clone = shutdown_tx.clone();
-        tokio::spawn(async move {
-            let mut sigterm = signal(SignalKind::terminate()).unwrap();
-            let mut sigint = signal(SignalKind::interrupt()).unwrap();
-
-            tokio::select! {
-                _ = sigterm.recv() => {
-                    info!("received SIGTERM signal");
-                }
-                _ = sigint.recv() => {
-                    info!("received SIGINT signal");
-                }
-            }
-
-            info!("sending shutdown and waiting 1 seconds...");
-            let _ = shutdown_tx_clone.send(()).ok();
-            sleep(Duration::from_secs(1)).await;
-        });
 
         // First make sure the daemons are installed, this can fail which will
         // put roverd in a non operational state.
@@ -262,21 +241,5 @@ impl DaemonManager {
         }
 
         Ok(())
-    }
-
-    pub async fn shutdown_signal(&self) {
-        let mut sigterm = signal(SignalKind::terminate()).unwrap();
-        let mut sigint = signal(SignalKind::interrupt()).unwrap();
-
-        tokio::select! {
-            _ = sigterm.recv() => {
-                info!("graceful shutdown: received SIGTERM signal");
-            }
-            _ = sigint.recv() => {
-                info!("graceful shutdown: received SIGINT signal");
-            }
-        }
-
-        self.shutdown_tx.send(()).ok();
     }
 }
