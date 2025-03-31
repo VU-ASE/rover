@@ -12,8 +12,6 @@
 	import PowerOffIcon from '~icons/ic/round-power';
 	import toast from 'svelte-french-toast';
 
-	import { toasts } from 'svelte-toasts';
-
 	import { SvelteFlowProvider } from '@xyflow/svelte';
 	import type { Edge, Node } from '@xyflow/svelte';
 	import { Circle, DoubleBounce } from 'svelte-loading-spinners';
@@ -344,24 +342,28 @@
 			onSuccess: (data) => {
 				const previousData = $pipelineQuery.data;
 				if (previousData && previousData.enabled.length > 0 && data.enabled.length <= 0) {
-					toast('Pipeline was reset by Roverd', {
+					toast('Pipeline was reset by roverd', {
+						icon: '🫥',
 						position: 'bottom-right',
-						duration: 10000
+						duration: 4000
 					});
 				}
 
 				if (previousData?.status === 'started' && data.status !== 'started') {
-					toast('ℹ️ Pipeline stopped', {
+					toast('Pipeline stopped', {
+						icon: '🟥',
 						position: 'bottom-right',
 						duration: 4000
 					});
 				} else if ($startPipeline.isSuccess && data.status !== 'started') {
-					toast.error('Pipeline stopped immediately after starting', {
+					toast('Pipeline stopped immediately', {
+						icon: '⚠️',
 						position: 'bottom-right',
 						duration: 4000
 					});
 				} else if (previousData?.status !== 'started' && data.status === 'started') {
-					toast.success('Pipeline started', {
+					toast('Pipeline started', {
+						icon: '🟩',
 						position: 'bottom-right',
 						duration: 4000
 					});
@@ -376,21 +378,17 @@
 						previousData?.status === 'started' &&
 						data.status !== previousData.status
 					) {
-						toasts.add({
-							title: 'Service error',
-							description:
-								"Service '" +
+						toast(
+							"Service '" +
 								enabled.service.fq.name +
-								"' exited with code " +
-								enabled.service.exit +
-								' and crashed the pipeline. Check its logs for more information.',
-							duration: 10000,
-							placement: 'bottom-right',
-							type: 'warning',
-							theme: 'dark',
-							onClick: () => {},
-							onRemove: () => {}
-						});
+								"' crashed with exit code " +
+								enabled.service.exit,
+							{
+								icon: '🟧',
+								position: 'bottom-right',
+								duration: 10000
+							}
+						);
 					}
 				}
 
@@ -401,15 +399,10 @@
 			onError: () => {
 				const previousSuccess = $pipelineQuery.isSuccess;
 				if (previousSuccess) {
-					toasts.add({
-						title: 'Pipeline error',
-						description: 'An error occurred while fetching the pipeline status',
-						duration: 10000,
-						placement: 'bottom-right',
-						type: 'error',
-						theme: 'dark',
-						onClick: () => {},
-						onRemove: () => {}
+					toast('Could not fetch pipeline status', {
+						icon: '⚠️',
+						position: 'bottom-right',
+						duration: 10000
 					});
 				}
 			}

@@ -5,7 +5,7 @@
 	import { globalStore } from '$lib/store';
 	import { useMutation, useQueryClient } from '@sveltestack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
-	import { toasts } from 'svelte-toasts';
+	import toast from 'svelte-french-toast';
 
 	const queryClient = useQueryClient();
 	const emergencyBrake = useEmergencyBrake();
@@ -35,55 +35,30 @@
 			$emergencyBrake
 				.mutateAsync()
 				.then(() => {
-					toasts.add({
-						title: 'Emergency Reset Applied',
-						description: 'Rover was reset',
-						duration: 10000,
-						placement: 'bottom-right',
-						type: 'info',
-						theme: 'dark',
-						onClick: () => {},
-						onRemove: () => {}
+					toast('Emergency reset applied ', {
+						icon: '🚨',
+						position: 'bottom-right',
+						duration: 4000
 					});
 				})
 				.catch((error) => {
-					toasts.add({
-						title: 'Emergency Reset Failed',
-						description: error.message,
-						duration: 10000,
-						placement: 'bottom-right',
-						type: 'error',
-						theme: 'dark',
-						onClick: () => {},
-						onRemove: () => {}
+					console.error('Error applying emergency reset:', error);
+					toast('Could not apply emergency reset', {
+						icon: '⚠️',
+						position: 'bottom-right',
+						duration: 10000
 					});
 				});
 		} else if ((event.ctrlKey || event.metaKey) && event.key === 's') {
 			event.preventDefault();
-			$stopPipeline.mutateAsync().then(() => {
-				toasts.add({
-					title: 'Pipeline Stopped',
-					description: 'The pipeline was stopped',
-					duration: 10000,
-					placement: 'bottom-right',
-					type: 'info',
-					theme: 'dark',
-					onClick: () => {},
-					onRemove: () => {}
-				});
-			});
+			$stopPipeline.mutateAsync();
 		} else if ((event.ctrlKey || event.metaKey) && event.key === 'p') {
 			event.preventDefault();
 			globalStore.pauseStream();
-			toasts.add({
-				title: 'Debug collection Paused',
-				description: 'New frames will be discarded',
-				duration: 10000,
-				placement: 'bottom-right',
-				type: 'info',
-				theme: 'dark',
-				onClick: () => {},
-				onRemove: () => {}
+			toast('Debug collection paused', {
+				icon: '⏸️',
+				position: 'bottom-right',
+				duration: 4000
 			});
 		}
 	}
