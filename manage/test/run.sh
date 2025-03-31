@@ -49,3 +49,9 @@ elif [[ "$mode" == "safe" ]]; then
     # Query pipeline
     roverctl pipeline -r "$number"
 fi
+
+# Wait for any key to be pressed
+echo "Press any key to stop the pipeline..."
+read -n 1 -s
+echo "Stopping pipeline..."
+roverctl pipeline stop -r "$number"

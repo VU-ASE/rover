@@ -230,10 +230,36 @@ func Add(rootCmd *cobra.Command) {
 			}
 			fmt.Printf("Set UDP port to %d for actuator-tester\n", actuatorTesterPort)
 
+			// Reset the actuator trim to 0, otherwise the calibration will be impacted by the previous trim
+			trimRequestReset := api.ServicesAPI.ServicesAuthorServiceVersionConfigurationPost(
+				context.Background(),
+				actuator.Author,
+				actuator.Name,
+				actuator.Version,
+			)
+			trimReset := float32(0.0)
+			trimRequestReset = trimRequestReset.ServicesAuthorServiceVersionConfigurationPostRequestInner(
+				[]openapi.ServicesAuthorServiceVersionConfigurationPostRequestInner{
+					{
+						Key: "servo-trim", // see: https://github.com/VU-ASE/actuator/blob/main/service.yaml
+						Value: openapi.ServicesAuthorServiceVersionConfigurationPostRequestInnerValue{
+							Float32: &trimReset,
+						},
+					},
+				},
+			)
+			http, err = trimRequestReset.Execute()
+			if err != nil {
+				fmt.Printf("Could not reset trim value to 0 for actuator: %s\n", utils.ParseHTTPError(err, http))
+				return nil
+			}
+			fmt.Printf("Reset actuator trim value to 0\n")
+
 			//
 			// At this point, we have:
 			// - an actuator service installed and selected for trimming
 			// - the actuator-tester service installed and configured to listen on a UDP port in our control
+			// - the actuator service configured to have a trim value of 0
 			// now, set up the actuator-tester --> actuator pipeline to start calibrating the actuators
 			//
 
