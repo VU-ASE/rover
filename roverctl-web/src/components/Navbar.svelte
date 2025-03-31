@@ -31,7 +31,7 @@
 		}
 	);
 
-	const activeClass = (p: 'manage' | 'debug') => {
+	const activeClass = (p: 'manage' | 'debug' | 'shortcuts') => {
 		return p === page ? 'card variant-soft-primary' : 'card variant-soft-surface';
 	};
 </script>
