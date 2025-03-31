@@ -18,6 +18,8 @@ fi
 number="$1"
 mode="$2"
 
+roverctl update roverd -r "$number"
+
 if [[ "$mode" == "normal" ]]; then
     echo "Installing normal pipeline"
     roverctl author --set tester
@@ -27,7 +29,7 @@ if [[ "$mode" == "normal" ]]; then
     # Install controller
     roverctl service install https://github.com/VU-ASE/controller/releases/download/v1.4.2/controller.zip -r "$number"
     # Install actuator
-    roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.1/actuator.zip -r "$number"
+    roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.2/actuator.zip -r "$number"
 
 elif [[ "$mode" == "safe" ]]; then
     echo "Installing safe pipeline"
@@ -41,5 +43,5 @@ elif [[ "$mode" == "safe" ]]; then
     # Install imaging 
     roverctl service install https://github.com/VU-ASE/imaging/releases/download/v1.2.4/imaging.zip -r "$number"
     # Install actuator
-    roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.1/actuator.zip -r "$number"
+    roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.2/actuator.zip -r "$number"
 fi
