@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.21.0](https://github.com/VU-ASE/rover/compare/v0.20.0...v0.21.0) (2025-03-31)
+
+
+### Features
+
+* unified toasts ([ded557b](https://github.com/VU-ASE/rover/commit/ded557be905b07b688a2fe9f6098a028543ec8bb))
+
+
+### Bug Fixes
+
+* auto-update roverd in test ([9b53863](https://github.com/VU-ASE/rover/commit/9b53863f55a2baf712b25f46099b1d2bbd7b7ff3))
+* do not reset calibration value for normal pipeline testing ([be21d46](https://github.com/VU-ASE/rover/commit/be21d462d992f50a90e93b473417e6a0f026b3f3))
+* do not show "shortcuts" tab as active on debugpage ([822b084](https://github.com/VU-ASE/rover/commit/822b084f1a15a00c34a12a162d8c618e61bc5c65))
+* do NOT update roverd in the test script ([b5f1cb0](https://github.com/VU-ASE/rover/commit/b5f1cb0ea34f527117f6aee6a8d071002786c52d))
+* navbar type error ([d66c700](https://github.com/VU-ASE/rover/commit/d66c70009adc0a222eba5967af53d168de2f44af))
+* use mdns for tests ([bb59b70](https://github.com/VU-ASE/rover/commit/bb59b70cbbbc7e8a31fdf4e93a85f63346c22e5f))
+
 ## [0.20.0](https://github.com/VU-ASE/rover/compare/v0.19.0...v0.20.0) (2025-03-31)
 
 
