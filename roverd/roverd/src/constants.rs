@@ -32,5 +32,5 @@ pub const DISPLAY_FETCH_URL: &str =
 pub const BATTERY_FETCH_URL: &str =
     "https://github.com/VU-ASE/battery/releases/latest/download/battery.zip";
 
-// Any downloads made by roverd will timeout after 10 seconds
-pub const DOWNLOAD_TIMEOUT: u64 = 10;
+// Any downloads made by roverd will timeout after 30 seconds
+pub const DOWNLOAD_TIMEOUT: u64 = 30;
