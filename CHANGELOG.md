@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.20.0](https://github.com/VU-ASE/rover/compare/v0.19.0...v0.20.0) (2025-03-31)
+
+
+### Features
+
+* helpful toasts and warning messages when pipeline starts/stops ([27074f6](https://github.com/VU-ASE/rover/commit/27074f67ca459497ca9105b6ec2c419f70a2d49b))
+* reset calibration values on trimming ([ec8eb15](https://github.com/VU-ASE/rover/commit/ec8eb15b7efc09a2b245a1424f21fb4bb51beb9d))
+* show transceiver in roverctl-web ([be2cb92](https://github.com/VU-ASE/rover/commit/be2cb9274d7bed0c2d4e890b33018c8f82fbd652))
+
+
+### Bug Fixes
+
+* more lenient timeouts for roverd downloads ([a89b302](https://github.com/VU-ASE/rover/commit/a89b302fd97b48ce176d1f27becee737a67ac803))
+* roverd shutsdown pipeline on termination ([83ea1dc](https://github.com/VU-ASE/rover/commit/83ea1dce347970d9a265472b62a18031177b46eb))
+
 ## [0.19.0](https://github.com/VU-ASE/rover/compare/v0.18.4...v0.19.0) (2025-03-31)
 
 
