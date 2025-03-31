@@ -24,7 +24,10 @@ func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost strin
 			return nil, fmt.Errorf("rover index must be between 1 and 20")
 		}
 		identifier = fmt.Sprintf("rover %d", roverIndex)
-		host = fmt.Sprintf("192.168.0.%d", roverIndex+100)
+
+		// Pad number to two digits and use mDNS to resolve the rover's hostname
+		host = fmt.Sprintf("rover%02d.local", roverIndex)
+		// host = fmt.Sprintf("192.168.0.%d", roverIndex+100)
 	}
 
 	// Create connection

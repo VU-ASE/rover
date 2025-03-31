@@ -28,3 +28,5 @@ bin
 
 # We don't want to include the spec as it should be stored in single source of truth Roverd, not in this repo
 spec
+
+manage/safe-controller

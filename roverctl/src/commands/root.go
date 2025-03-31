@@ -38,6 +38,7 @@ func NewRoot() *cobra.Command {
 	var debugMode bool         // enable proxy server and inject its IP into roverctl-web
 	var verbose bool           // show debug logs
 	var roverctlVersion string // force roverctl at a specific version
+	var proxyIp string         // if a custom IP is specified, use that instead of the detected local IP
 	var rootCmd = &cobra.Command{
 		Use:   "roverctl",
 		Short: "CLI to manage a Rover",
@@ -172,10 +173,16 @@ func NewRoot() *cobra.Command {
 
 			proxyHost := ""
 			if debugMode {
-				proxyHost, err = utils.GetLocalIP()
-				if err != nil {
-					fmt.Println("Failed to get local IP necessary for debugging:", err)
-					return nil
+				if proxyIp != "" {
+					proxyHost = proxyIp
+					fmt.Printf("Binding proxy server to custom IP %s\n", proxyHost)
+				} else {
+					fmt.Printf("Detecting local IP address...\n")
+					proxyHost, err = utils.GetLocalIP()
+					if err != nil {
+						fmt.Printf("Failed to detect local IP. Specify one manually with the --proxy-ip flag (%s)", err.Error())
+						return nil
+					}
 				}
 				fmt.Printf("Using local IP %s for debugging\n", proxyHost)
 			}
@@ -289,6 +296,7 @@ func NewRoot() *cobra.Command {
 	rootCmd.Flags().StringVarP(&roverdUsername, "username", "u", "debix", "The username to use to connect to the roverd endpoint")
 	rootCmd.Flags().StringVarP(&roverdPassword, "password", "p", "debix", "The password to use to connect to the roverd endpoint")
 	rootCmd.Flags().BoolVarP(&debugMode, "debug", "d", false, "Enable debug/tuning mode")
+	rootCmd.Flags().StringVarP(&proxyIp, "proxy-ip", "", "", "Override the locally detected IP address to bind the proxy server to")
 	rootCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Show verbose output")
 	rootCmd.Flags().StringVarP(&roverctlVersion, "force", "f", "", "Force roverctl-web to run at a specific version")
 
