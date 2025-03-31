@@ -25,7 +25,7 @@ if [[ "$mode" == "normal" ]]; then
 
     # Enable all services (order is important)
     roverctl pipeline enable vu-ase imaging 1.2.4 -r "$number"
-    roverctl pipeline enable vu-ase controller 1.4.2 -r "$number"
+    roverctl pipeline enable vu-ase controller 1.5.0 -r "$number"
     roverctl pipeline enable vu-ase actuator 1.3.2 -r "$number"
 
     # Start the pipeline

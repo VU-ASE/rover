@@ -25,7 +25,7 @@ if [[ "$mode" == "normal" ]]; then
     # Install imaging 
     roverctl service install https://github.com/VU-ASE/imaging/releases/download/v1.2.4/imaging.zip -r "$number"
     # Install controller
-    roverctl service install https://github.com/VU-ASE/controller/releases/download/v1.4.2/controller.zip -r "$number"
+    roverctl service install https://github.com/VU-ASE/controller/releases/download/v1.5.0/controller.zip -r "$number"
     # Install actuator
     # roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.2/actuator.zip -r "$number"
 
