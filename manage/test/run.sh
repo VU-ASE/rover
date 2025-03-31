@@ -54,4 +54,4 @@ fi
 echo "Press any key to stop the pipeline..."
 read -n 1 -s
 echo "Stopping pipeline..."
-roverctl pipeline stop -r "$number"
+roverctl emergency -r "$number"

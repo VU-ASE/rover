@@ -27,7 +27,7 @@ if [[ "$mode" == "normal" ]]; then
     # Install controller
     roverctl service install https://github.com/VU-ASE/controller/releases/download/v1.4.2/controller.zip -r "$number"
     # Install actuator
-    roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.2/actuator.zip -r "$number"
+    # roverctl service install https://github.com/VU-ASE/actuator/releases/download/v1.3.2/actuator.zip -r "$number"
 
 elif [[ "$mode" == "safe" ]]; then
     echo "Installing safe pipeline"
