@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/VU-ASE/rover/compare/v1.0.1...v1.0.2) (2025-04-01)
+
+
+### Bug Fixes
+
+* quick internet check before updating daemons ([e92f3ca](https://github.com/VU-ASE/rover/commit/e92f3ca5a63c4ef7c5071ccccd888486572de8ee))
+
 ## [1.0.1](https://github.com/VU-ASE/rover/compare/v1.0.1...v1.0.1) (2025-04-01)
 
 
