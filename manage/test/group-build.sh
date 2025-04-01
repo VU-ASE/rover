@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define the IP range and corresponding rover names
-start_ip=101
-end_ip=120
+start_ip=1
+end_ip=20
 base_ip="192.168.0."
 
 # Create a temporary directory for storing results
@@ -17,7 +17,7 @@ check_rover() {
     local rover_host_name=$(printf "rover%02d.local" "$rover_index")
     local result_file="$tmp_dir/$i.result"
 
-    roverctl emergency -r "$i"
+    ./all.sh "$i" safe build
 }
 
 # Launch all checks in parallel
