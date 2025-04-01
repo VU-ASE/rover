@@ -41,28 +41,50 @@ impl DaemonManager {
     pub async fn new() -> Result<Self, Error> {
         let shutdown_tx = broadcast::channel::<()>(1).0;
 
+        let addr = "1.1.1.1".parse().unwrap();
+        let data = [1, 2, 3, 4];
+        let timeout = Duration::from_secs(2);
+        let options = ping_rs::PingOptions {
+            ttl: 128,
+            dont_fragment: true,
+        };
+        let result = ping_rs::send_ping(&addr, timeout, &data, Some(&options));
+        let active_internet = result.is_ok();
+        if active_internet {
+            info!("internet connection present");
+        } else {
+            warn!("internet connection not present");
+        }
+
         // First make sure the daemons are installed, this can fail which will
         // put roverd in a non operational state.
         let display_download = async move {
-            match download_and_install_service(&DISPLAY_FETCH_URL.to_string(), true).await {
-                Ok(fq) => Ok(fq),
-                Err(e) => {
-                    warn!("was not able to get latest daemon at {}", DISPLAY_FETCH_URL);
-                    warn!("{:?}", e);
-                    find_latest_daemon("vu-ase", "display")
+            if active_internet {
+                match download_and_install_service(&DISPLAY_FETCH_URL.to_string(), true).await {
+                    Ok(fq) => {
+                        return Ok(fq);
+                    }
+                    Err(e) => {
+                        warn!("was not able to get latest daemon at {}", DISPLAY_FETCH_URL);
+                        warn!("{:?}", e);
+                    }
                 }
             }
+            find_latest_daemon("vu-ase", "display")
         };
 
         let battery_download = async move {
-            match download_and_install_service(&BATTERY_FETCH_URL.to_string(), true).await {
-                Ok(fq) => Ok(fq),
-                Err(e) => {
-                    warn!("was not able to get latest daemon at {}", BATTERY_FETCH_URL);
-                    warn!("{:?}", e);
-                    find_latest_daemon("vu-ase", "battery")
+            if active_internet {
+                match download_and_install_service(&BATTERY_FETCH_URL.to_string(), true).await {
+                    Ok(fq) => return Ok(fq),
+                    Err(e) => {
+                        warn!("was not able to get latest daemon at {}", BATTERY_FETCH_URL);
+                        warn!("{:?}", e);
+                    }
                 }
             }
+
+            find_latest_daemon("vu-ase", "battery")
         };
 
         let (display_result, battery_result) = tokio::join!(display_download, battery_download);
