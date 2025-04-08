@@ -28,6 +28,8 @@ roverctl update roverctl --version 1.0.0
 
 ## Build from source
 
+If you cannot or do not want to install the pre-built binaries (see above), you can build `roverctl` from source.
+
 To install the repository from source, you can use our Makefile:
 ```bash
 git clone https://github.com/VU-ASE/rover.git
