@@ -67,10 +67,7 @@ flex flex-row items-center justify-start space-x-4"
 
 		<p class="text-secondary-700 mt-2">
 			You can (and should) read the full document
-			<a
-				href="https://ase.vu.nl/docs/tutorials/First%20Steps/dangers"
-				class="underline text-primary-400">here</a
-			>
+			<a href="https://ase.vu.nl/docs/tutorials/dangers" class="underline text-primary-400">here</a>
 		</p>
 
 		<button class="btn variant-soft-error mt-2" on:click={accept}> I understand </button>
