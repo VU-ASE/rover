@@ -93,6 +93,14 @@ const getParametersFromFrame = (frame: TimestampedSensorOutput) => {
 			) as [string, number][])
 		];
 	}
+	if (frame.sensorData.genericIntScalar) {
+		entries = [[frame.sensorData.genericIntScalar.key, frame.sensorData.genericIntScalar.value]];
+	}
+	if (frame.sensorData.genericFloatScalar) {
+		entries = [
+			[frame.sensorData.genericFloatScalar.key, frame.sensorData.genericFloatScalar.value]
+		];
+	}
 	if (frame.sensorData.imuOutput) {
 		entries = [
 			...(Object.entries(frame.sensorData.imuOutput).filter(
