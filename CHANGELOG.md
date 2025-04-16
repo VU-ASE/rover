@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/VU-ASE/rover/compare/v1.0.2...v1.1.0) (2025-04-16)
+
+
+### Features
+
+* add debug support for generic int and generic float outputs ([5aedcee](https://github.com/VU-ASE/rover/commit/5aedceeac5edb627eb88800bef03e55bd383bb4a))
+* add debugging support for energy sensor ([8885bdb](https://github.com/VU-ASE/rover/commit/8885bdba785e50a8bd01cba568563fddc96ef381))
+
+
+### Bug Fixes
+
+* broken link on dangers page ([be18f8a](https://github.com/VU-ASE/rover/commit/be18f8a3a3a22294b55df68761db780dae353495))
+
 ## [1.0.2](https://github.com/VU-ASE/rover/compare/v1.0.1...v1.0.2) (2025-04-01)
 
 
