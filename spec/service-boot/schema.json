@@ -10,6 +10,12 @@
             "example": "controller",
             "pattern": "^[a-z]+(-[a-z]+)*$"
         },
+        "as": {
+            "type": "string",
+            "description": "Optional alias for the service (only lowercase letters and hyphens)",
+            "example": "controller",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
         "version": {
             "type": "string",
             "description": "The specific version of the service",
