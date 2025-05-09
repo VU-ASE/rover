@@ -1,6 +1,6 @@
 {
     "name": "my-controller",
-    "as": "controller"
+    "as": "controller",
     "version": "1.0.1",
     "inputs": [{
             "service": "imaging",

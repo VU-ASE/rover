@@ -133,7 +133,8 @@
         }
     },
     "required": [
-        "service",
+        "name",
+        "version",
         "inputs",
         "outputs",
         "configuration",
