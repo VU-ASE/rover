@@ -71,8 +71,8 @@ jobs:
                   name: roverctl-binaries
                   path: roverctl/bin/*
 
-    build-roverd:
-        name: Build roverd
+    build-rust-binaries:
+        name: Build roverd and rover-local
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
@@ -93,15 +93,28 @@ jobs:
               run: |
                   docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f .devcontainer/roverd/Dockerfile .
                   docker run -e VERSION=${VERSION} --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work/roverd'
+                  docker run -e VERSION=${VERSION} --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build -C /home/dev/work/roverd'
 
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-            - name: Save roverd artifact
+            - name: Save roverd artifact (arm only)
               uses: actions/upload-artifact@v4
               with:
                   name: roverd-binary
                   path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
+            
+            - name: Save rover-local-arm64 artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: rover-local-binary-arm64
+                  path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/rover-local"
+            
+            - name: Save rover-local-amd64 artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: rover-local-binary-amd64
+                  path: "${{ github.workspace }}/roverd/target/release/rover-local"
 
     build-roverctl-web:
         name: Build roverctl-web
@@ -147,7 +160,7 @@ jobs:
         name: Upload release assets
         needs:
             - build-roverctl
-            - build-roverd
+            - build-rust-binaries
             - build-roverctl-web
         runs-on: ubuntu-latest
         steps:
@@ -181,6 +194,30 @@ jobs:
                   mkdir -p roverd/target/aarch64-unknown-linux-gnu/release/
                   mv roverd-bin/* roverd/target/aarch64-unknown-linux-gnu/release/
                   chmod +x roverd/target/aarch64-unknown-linux-gnu/release/roverd
+            
+            - name: Download rover-local-arm64 artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: rover-local-binary-arm64
+                  path: rover-local-bin-arm64/
+
+            - name: Extract roverd artifact
+              run: |
+                  mkdir -p roverd/target/aarch64-unknown-linux-gnu/release/
+                  mv rover-local-bin-arm64/* roverd/target/aarch64-unknown-linux-gnu/release/
+                  chmod +x roverd/target/aarch64-unknown-linux-gnu/release/rover-local-arm64
+            
+            - name: Download rover-local-amd64 artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: rover-local-binary-amd64
+                  path: rover-local-bin-amd64/
+
+            - name: Extract roverd artifact
+              run: |
+                  mkdir -p roverd/target/release/
+                  mv rover-local-bin-amd64/* roverd/target/release/
+                  chmod +x roverd/target/release/rover-local-amd64
 
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
