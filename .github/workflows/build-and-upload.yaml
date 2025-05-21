@@ -214,6 +214,12 @@ jobs:
             - name: Make executable rover-local-amd64 artifact
               run: |
                   chmod +x rover-local-amd64
+            
+            - name: Debug print
+              run: |
+                  ls -lah
+                  file rover-local-amd64
+                  file rover-local-arm64
 
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
@@ -221,7 +227,19 @@ jobs:
             # Upload all binaries
             - uses: AButler/upload-release-assets@v3.0
               with:
-                  files: roverctl/bin/*;roverd/target/aarch64-unknown-linux-gnu/release/roverd;rover-local-arm64;rover-local-amd64
+                  files: roverctl/bin/*;roverd/target/aarch64-unknown-linux-gnu/release/roverd
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  release-tag: ${{ env.VERSION }}
+            
+            - uses: AButler/upload-release-assets@v3.0
+              with:
+                  files: rover-local-amd64
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  release-tag: ${{ env.VERSION }}
+            
+            - uses: AButler/upload-release-assets@v3.0
+              with:
+                  files: rover-local-arm64
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
                   release-tag: ${{ env.VERSION }}
 
