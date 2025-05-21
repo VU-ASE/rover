@@ -49,7 +49,7 @@ gen-open-api:
 
 	@./scripts/fix_open_api_gen.sh
 
-build: lint 1version-update gen-open-api
+build: lint version-update gen-open-api
 	@echo ">>> "
 	@echo ">>> STEP 3. Build roverd"
 	@echo ">>> "
