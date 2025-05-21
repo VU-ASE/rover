@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.6](https://github.com/VU-ASE/rover/compare/v1.1.5...v1.1.6) (2025-05-21)
+
+
+### Bug Fixes
+
+* separated upload and added debug prints ([37718dd](https://github.com/VU-ASE/rover/commit/37718dd825fed1fd0c88aa6534bc3749afe5bb47))
+
 ## [1.1.5](https://github.com/VU-ASE/rover/compare/v1.1.4...v1.1.5) (2025-05-21)
 
 
