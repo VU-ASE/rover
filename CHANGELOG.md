@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/VU-ASE/rover/compare/v1.1.4...v1.1.5) (2025-05-21)
+
+
+### Bug Fixes
+
+* testing upload CI script ([1a73412](https://github.com/VU-ASE/rover/commit/1a7341229eaeb66e1884195412a7f86492e40181))
+
 ## [1.1.4](https://github.com/VU-ASE/rover/compare/v1.1.3...v1.1.4) (2025-05-21)
 
 
