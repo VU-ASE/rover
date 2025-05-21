@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/VU-ASE/rover/compare/v1.1.0...v1.1.1) (2025-05-21)
+
+
+### Bug Fixes
+
+* added rover-local binary to CI ([c3c3ba3](https://github.com/VU-ASE/rover/commit/c3c3ba35e110476c0daa6549c49a36a0af7a3fa4))
+
 ## [1.1.0](https://github.com/VU-ASE/rover/compare/v1.0.2...v1.1.0) (2025-04-16)
 
 
