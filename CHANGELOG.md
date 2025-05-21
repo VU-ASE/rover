@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/VU-ASE/rover/compare/v1.1.1...v1.1.2) (2025-05-21)
+
+
+### Bug Fixes
+
+* removed cargo modules from devcontainer ([f93a7be](https://github.com/VU-ASE/rover/commit/f93a7be6d2700ee86206234f9b4a77d26500e974))
+
 ## [1.1.1](https://github.com/VU-ASE/rover/compare/v1.1.0...v1.1.1) (2025-05-21)
 
 
