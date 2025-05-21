@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/VU-ASE/rover/compare/v1.1.3...v1.1.4) (2025-05-21)
+
+
+### Bug Fixes
+
+* typo in makefile :( ([f581038](https://github.com/VU-ASE/rover/commit/f5810380aefa2134b918ce054252062863a5eb44))
+
 ## [1.1.3](https://github.com/VU-ASE/rover/compare/v1.1.2...v1.1.3) (2025-05-21)
 
 
