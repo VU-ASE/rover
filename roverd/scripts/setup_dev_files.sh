@@ -13,8 +13,7 @@ handle_error() {
     exit -1
 }
 
-PROJECT_ROOT=/workspace/rover/roverd/
-TEST_FILES=$PROJECT_ROOT/rover-validate/src/testfiles
+TEST_FILES=/workspace/rover/roverd/rover-validate/src/testfiles
 ROVER_INFO_FILE=/etc/roverd/info.txt
 
 # --- /etc/roverd/rover.yaml ---
