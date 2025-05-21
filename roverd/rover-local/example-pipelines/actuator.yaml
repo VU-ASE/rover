@@ -1,0 +1,47 @@
+name: actuator
+author: vu-ase
+source: https://github.com/vu-ase/actuator
+version: 1.0.10
+description: Controls the motors, servo, lights, and a fan?
+
+commands:
+  build: make build
+  run: ./bin/actuator
+
+inputs:
+  - service: controller
+    streams:
+      - decision
+
+outputs: []
+
+configuration:
+  - name: itwoc-bus
+    type: number
+    tunable: false
+    value: 3
+
+  - name: electronic-diff
+    type: number
+    tunable: false
+    value: 1
+
+  - name: track-width
+    type: number
+    tunable: false
+    value: 60
+
+  - name: servo-scaler
+    type: number
+    tunable: true
+    value: 0.9
+
+  - name: servo-trim
+    type: number
+    tunable: true
+    value: 0.0
+
+  - name: fan-cap
+    type: number
+    tunable: false
+    value: 100

@@ -86,8 +86,8 @@ loc:
 	@cd openapi/src && find . -name '*.rs' | xargs wc -l
 	@echo 
 
-	@echo rovervalidate
-	@cd rovervalidate/src && find . -name '*.rs' | xargs wc -l
+	@echo rover-validate
+	@cd rover-validate/src && find . -name '*.rs' | xargs wc -l
 	@echo 
 
 
@@ -96,4 +96,5 @@ generate-visualizations:
 	@cargo modules dependencies --no-externs --no-fns --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-modules.svg
 	@cargo modules dependencies --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-externs.svg
 
-	
+
+

@@ -7,10 +7,10 @@ use openapi::apis::pipeline::*;
 use openapi::models::*;
 use tracing::warn;
 
-use crate::constants::*;
-use crate::{
-    app::Roverd, error::Error, rover_is_dormant, rover_is_operating, service::FqBuf, warn_generic,
-};
+use crate::{app::Roverd, rover_is_dormant, rover_is_operating, warn_generic};
+use rover_constants::*;
+use rover_types::error::Error;
+use rover_types::service::FqBuf;
 
 #[async_trait]
 impl Pipeline for Roverd {
@@ -86,7 +86,7 @@ impl Pipeline for Roverd {
 
                         for val_error in val_errors {
                             match val_error {
-                                rovervalidate::error::Error::PipelineValidationError(
+                                rover_validate::error::Error::PipelineValidationError(
                                     pipeline_validation_error,
                                 ) => pipeline_errors.push(pipeline_validation_error),
                                 e => string_errors.push(e.to_string()),
@@ -101,9 +101,9 @@ impl Pipeline for Roverd {
 
                         for i in pipeline_errors {
                             match i {
-                                    rovervalidate::error::PipelineValidationError::UnmetDependencyError(unmet_dependency_error) => {
+                                    rover_validate::error::PipelineValidationError::UnmetDependencyError(unmet_dependency_error) => {
                                         match unmet_dependency_error {
-                                            rovervalidate::error::UnmetDependencyError::UnmetStream(unmet_stream_error) => {
+                                            rover_validate::error::UnmetDependencyError::UnmetStream(unmet_stream_error) => {
                                                 unmet_streams.push(
                                                     UnmetStreamError {
                                                         source: unmet_stream_error.source,
@@ -112,7 +112,7 @@ impl Pipeline for Roverd {
                                                     }
                                                 );
                                             },
-                                            rovervalidate::error::UnmetDependencyError::UnmetService(unmet_service_error) => {
+                                            rover_validate::error::UnmetDependencyError::UnmetService(unmet_service_error) => {
                                                 unmet_services.push(
                                                     UnmetServiceError {
                                                         source: unmet_service_error.source,
@@ -122,13 +122,13 @@ impl Pipeline for Roverd {
                                             },
                                         }
                                     },
-                                    rovervalidate::error::PipelineValidationError::DuplicateServiceError(s) => {
+                                    rover_validate::error::PipelineValidationError::DuplicateServiceError(s) => {
                                         duplicate_services.push(s);
                                     },
-                                    rovervalidate::error::PipelineValidationError::DuplicateAliasError(s) => {
+                                    rover_validate::error::PipelineValidationError::DuplicateAliasError(s) => {
                                         duplicate_aliases.push(s)
                                     },
-                                    rovervalidate::error::PipelineValidationError::AliasInUseAsNameError(s) => {
+                                    rover_validate::error::PipelineValidationError::AliasInUseAsNameError(s) => {
                                         aliases_in_use.push(s)
                                     },
                                 }

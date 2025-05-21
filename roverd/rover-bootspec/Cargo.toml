@@ -1,0 +1,10 @@
+[package]
+name = "rover-bootspec"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rover-validate = { version = "0.1.0", path = "../rover-validate" }
+rover-types = { version = "0.1.0", path = "../rover-types" }
+rover-constants = { version = "0.1.0", path = "../rover-constants" }
+serde = "1.0.219"

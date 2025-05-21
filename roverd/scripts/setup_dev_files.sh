@@ -14,7 +14,7 @@ handle_error() {
 }
 
 PROJECT_ROOT=/workspace/rover/roverd/
-TEST_FILES=$PROJECT_ROOT/rovervalidate/src/testfiles
+TEST_FILES=$PROJECT_ROOT/rover-validate/src/testfiles
 ROVER_INFO_FILE=/etc/roverd/info.txt
 
 # --- /etc/roverd/rover.yaml ---

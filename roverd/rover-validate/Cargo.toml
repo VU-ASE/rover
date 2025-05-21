@@ -1,5 +1,5 @@
 [package]
-name = "rovervalidate"
+name = "rover-validate"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.85.1"

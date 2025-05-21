@@ -12,15 +12,15 @@ use std::{
 
 use axum::http::StatusCode;
 
-use rovervalidate::config::{Configuration, Validate};
+use rover_validate::config::{Configuration, Validate};
 
-use rovervalidate::service::Service;
+use rover_validate::service::Service;
 use tracing::{info, warn};
 
-use crate::error::Error;
-use crate::service::FqBuf;
+use rover_types::error::Error;
+use rover_types::service::FqBuf;
 
-use crate::constants::*;
+use rover_constants::*;
 
 /// Makes all files within a directory and its subdirectories executable.
 fn make_files_executable<P: AsRef<Path>>(dir_path: P) -> Result<()> {
@@ -380,27 +380,6 @@ pub fn find_latest_daemon(author: &str, name: &str) -> Result<FqBuf, Error> {
             daemon_path
         )))
     }
-}
-
-pub fn get_service_as<T: AsRef<str>>(author: T, name: T, version: T) -> Option<String> {
-    let contents_opt = fs::read_to_string(format!(
-        "{}/{}/{}/{}/service.yaml",
-        ROVER_DIR,
-        author.as_ref(),
-        name.as_ref(),
-        version.as_ref()
-    ))
-    .ok();
-
-    if let Some(contents) = contents_opt {
-        let service_opt = serde_yaml::from_str::<rovervalidate::service::Service>(&contents).ok();
-        if let Some(service) = service_opt {
-            if let Ok(valid) = service.validate() {
-                return valid.0.service_as;
-            }
-        }
-    }
-    None
 }
 
 pub fn roverd_log(file_path: PathBuf, msg: String) -> Result<(), Error> {

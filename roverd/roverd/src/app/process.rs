@@ -6,7 +6,7 @@ use tokio::{process::Child, sync::Mutex};
 
 use openapi::models::*;
 
-use crate::service::FqBuf;
+use rover_types::service::FqBuf;
 
 #[derive(Debug, Clone)]
 pub struct SpawnedProcess {

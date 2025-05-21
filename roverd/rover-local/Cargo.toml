@@ -1,0 +1,11 @@
+[package]
+name = "rover-local"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rover-bootspec = { version = "0.1.0", path = "../rover-bootspec" }
+rover-types = { version = "0.1.0", path = "../rover-types" }
+rover-validate = { version = "0.1.0", path = "../rover-validate" }
+serde_yaml = "0.9.34"
+

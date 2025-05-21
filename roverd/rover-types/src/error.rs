@@ -88,5 +88,5 @@ pub enum Error {
     SerdeRawValue(String),
 
     #[from]
-    Validation(Vec<rovervalidate::error::Error>),
+    Validation(Vec<rover_validate::error::Error>),
 }

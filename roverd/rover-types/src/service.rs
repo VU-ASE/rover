@@ -1,17 +1,40 @@
-use std::{fmt::Display, path::Path};
+use std::{fmt::Display, fs, path::Path};
 
 use crate::error;
 use crate::error::*;
-use crate::util::get_service_as;
 
-use rovervalidate::service::ValidatedService;
+use rover_validate::config::Validate;
+use rover_validate::service::ValidatedService;
 
-use crate::constants::*;
+use rover_constants::*;
 
 use openapi::models::*;
 
+pub fn get_service_as<T: AsRef<str>>(author: T, name: T, version: T) -> Option<String> {
+    let contents_opt = fs::read_to_string(format!(
+        "{}/{}/{}/{}/service.yaml",
+        ROVER_DIR,
+        author.as_ref(),
+        name.as_ref(),
+        version.as_ref()
+    ))
+    .ok();
+
+    if let Some(contents) = contents_opt {
+        let service_opt = serde_yaml::from_str::<rover_validate::service::Service>(&contents).ok();
+        if let Some(service) = service_opt {
+            if let Ok(valid) = service.validate() {
+                return valid.0.service_as;
+            }
+        }
+    }
+    None
+}
+
+#[allow(dead_code)]
 pub struct FqVec<'a>(pub Vec<Fq<'a>>);
 
+#[allow(dead_code)]
 pub struct FqBufVec(pub Vec<FqBuf>);
 
 /// Internal representation of a service, whether as a source or user service.

@@ -9,7 +9,7 @@ use std::{
 };
 
 use openapi::models::ProcessStatus;
-use rovervalidate::{config::Validate, service::Service};
+use rover_validate::{config::Validate, service::Service};
 use tokio::{
     process::Command,
     sync::{broadcast, RwLock},
@@ -17,15 +17,15 @@ use tokio::{
 };
 use tracing::{error, info, warn};
 
+use crate::command::ParsedCommand;
+use crate::time_now;
 use crate::util::*;
-use crate::{command::ParsedCommand, constants::*};
-use crate::{error::Error, time_now};
 
-use super::bootspec::{Input, Stream};
-use super::{
-    bootspec::{BootSpec, BootSpecTuning},
-    process::Process,
-};
+use rover_bootspec::{BootSpec, BootSpecTuning, Input, Stream};
+use rover_constants::*;
+use rover_types::error::Error;
+
+use super::process::Process;
 
 #[derive(Debug, Clone)]
 pub struct DaemonManager {

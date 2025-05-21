@@ -1,3 +1,11 @@
 [workspace]
-members = ["roverd", "rovervalidate", "openapi"]
+members = [
+    "roverd",
+    "rover-validate",
+    "openapi",
+    "rover-bootspec",
+    "rover-types",
+    "rover-constants",
+    "rover-local",
+]
 resolver = "2"

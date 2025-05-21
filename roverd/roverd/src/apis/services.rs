@@ -14,9 +14,9 @@ use serde_json::value::RawValue;
 use tracing::warn;
 
 use crate::app::Roverd;
-use crate::error::Error;
-use crate::service::FqBuf;
 use crate::{rover_is_operating, warn_generic};
+use rover_types::error::Error;
+use rover_types::service::FqBuf;
 
 #[async_trait]
 impl Services for Roverd {
@@ -153,13 +153,13 @@ impl Services for Roverd {
             configuration.push(models::ServicesAuthorServiceVersionGet200ResponseConfigurationInner {
                 name: c.name.clone(),
                 r#type: match c.value.clone() {
-                    rovervalidate::service::Value::Double(_) => "number".to_string(),
-                    rovervalidate::service::Value::String(_) => "string".to_string(),
+                    rover_validate::service::Value::Double(_) => "number".to_string(),
+                    rover_validate::service::Value::String(_) => "string".to_string(),
                 },
                 tunable: c.tunable.unwrap_or(false),
                 value: match c.value.clone() {
-                    rovervalidate::service::Value::Double(n) => models::ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue(RawValue::from_string(format!("{}", n)).unwrap()),
-                    rovervalidate::service::Value::String(s) => models::ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue(RawValue::from_string(format!("\"{}\"", s)).unwrap()),
+                    rover_validate::service::Value::Double(n) => models::ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue(RawValue::from_string(format!("{}", n)).unwrap()),
+                    rover_validate::service::Value::String(s) => models::ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue(RawValue::from_string(format!("\"{}\"", s)).unwrap()),
                 },
             })
         }

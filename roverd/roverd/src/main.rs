@@ -6,13 +6,11 @@ use axum::response::Response;
 use base64::Engine;
 use openapi::models::DaemonStatus;
 use tower_http::cors::CorsLayer;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 mod apis;
 mod app;
 mod command;
-mod constants;
-mod error;
 mod log;
 mod util;
 
@@ -20,8 +18,8 @@ mod util;
 mod test;
 
 use app::*;
-use constants::*;
-use error::Error::*;
+use rover_constants::*;
+use rover_types::error::Error;
 
 /// Not ideal, but an error wrapper work around since middleware::from_fn_with_state expects
 /// Result<Response, StatusCode>. But ideally, we want to use custom Error to propogate our custom
@@ -36,7 +34,7 @@ async fn auth_wrapper(
         Err(e) => {
             warn!("Unauthorized or bad request: {:?}", e);
             match e {
-                Http(status_code) => Err(status_code),
+                Error::Http(status_code) => Err(status_code),
                 _ => Err(StatusCode::BAD_REQUEST),
             }
         }
@@ -44,10 +42,10 @@ async fn auth_wrapper(
 }
 
 /// Performs password check to hashed password stored on disk.
-fn check_auth(state: &Roverd, auth_str: &str) -> Result<(), error::Error> {
+fn check_auth(state: &Roverd, auth_str: &str) -> Result<(), Error> {
     let (user, password) = auth_str
         .split_once(':')
-        .ok_or(Http(StatusCode::BAD_REQUEST))?;
+        .ok_or(Error::Http(StatusCode::BAD_REQUEST))?;
 
     let stored_hash = sha256::digest(password);
 
@@ -59,16 +57,12 @@ fn check_auth(state: &Roverd, auth_str: &str) -> Result<(), error::Error> {
 
     warn!("Unauthorized access denied");
 
-    Err(Http(StatusCode::UNAUTHORIZED))
+    Err(Error::Http(StatusCode::UNAUTHORIZED))
 }
 
 /// Main authentication logic requires authenticated requests for all endpoints
 /// except for "/status".
-async fn auth(
-    State(state): State<Roverd>,
-    req: Request,
-    next: Next,
-) -> Result<Response, error::Error> {
+async fn auth(State(state): State<Roverd>, req: Request, next: Next) -> Result<Response, Error> {
     info!("{} {}", req.method(), *req.uri());
 
     // the /status and / endpoints do not require authentication, all others do.
@@ -78,13 +72,13 @@ async fn auth(
                 .headers()
                 .get(http::header::AUTHORIZATION)
                 .and_then(|header| header.to_str().ok())
-                .ok_or(Http(StatusCode::UNAUTHORIZED))?;
+                .ok_or(Error::Http(StatusCode::UNAUTHORIZED))?;
 
             let basic_auth: Vec<&str> = auth_header.split(' ').collect();
 
             if basic_auth.len() != 2 || basic_auth[0] != "Basic" {
                 // warn!("request is missing basic auth header");
-                return Err(Context(anyhow!(
+                return Err(Error::Context(anyhow!(
                     "basic_auth header != Basic or auth header did not contain exactly two items"
                 )));
             }
@@ -93,16 +87,16 @@ async fn auth(
 
             let raw_bytes = base64::prelude::BASE64_STANDARD
                 .decode(base64_data)
-                .map_err(|_| Http(StatusCode::BAD_REQUEST))?;
+                .map_err(|_| Error::Http(StatusCode::BAD_REQUEST))?;
 
-            let auth_str =
-                core::str::from_utf8(&raw_bytes).map_err(|_| Http(StatusCode::BAD_REQUEST))?;
+            let auth_str = core::str::from_utf8(&raw_bytes)
+                .map_err(|_| Error::Http(StatusCode::BAD_REQUEST))?;
 
             // Returns early if authentication fails
             check_auth(&state, auth_str)?;
         } else {
             warn!("could not handle request since roverd not operational");
-            return Err(error::Error::RoverdNotOperational);
+            return Err(Error::RoverdNotOperational);
         }
     }
 
@@ -117,7 +111,7 @@ fn is_not_root() -> bool {
 
 /// Entry of program, initializes logging and constructs app state used by axum router.
 #[tokio::main]
-async fn main() -> Result<(), error::Error> {
+async fn main() -> Result<(), Error> {
     if is_not_root() {
         panic!("roverd must be run with root privilieges");
     }

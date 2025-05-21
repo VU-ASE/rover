@@ -1,0 +1,41 @@
+name: controller
+author: vu-ase
+source: https://github.com/vu-ase/controller
+version: 1.0.0
+description: the authority on all steering decisions
+
+commands:
+  build: make build
+  run: ./bin/controller
+
+
+inputs:
+  - service: imaging
+    streams:
+      - path
+
+outputs:
+  - decision
+
+configuration:
+  - name: speed
+    tunable: true
+    type: number
+    value: 0.4
+    mutable: true
+  - name: kp
+    tunable: true
+    type: number
+    value: 0.003
+  - name: kd
+    tunable: true
+    type: number
+    value: 0.00001
+  - name: ki
+    tunable: true
+    type: number
+    value: 0
+  - name: desired-trajectory-point
+    tunable: false
+    type: number
+    value: 320 # 640 / 2

@@ -1,6 +1,6 @@
-use crate::error::Error;
 use anyhow::Context;
 use openapi::models::DaemonStatus;
+use rover_types::error::Error;
 use std::path::Path;
 use std::{fs::read_to_string, time::SystemTime};
 use sysinfo::System;
@@ -9,7 +9,7 @@ use tracing::error;
 // The script in src/build.rs populates a const containing the version
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
 
-use crate::constants::*;
+use rover_constants::*;
 
 #[derive(Debug, Clone)]
 pub struct Info {

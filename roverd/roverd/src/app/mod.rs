@@ -3,12 +3,12 @@ use axum_extra::extract::Multipart;
 use daemons::DaemonManager;
 use openapi::models::*;
 use process::{PipelineStats, Process, SpawnedProcess};
-use rovervalidate::config::{Configuration, ValidatedConfiguration};
-use rovervalidate::pipeline::interface::{Pipeline, RunnablePipeline};
-use rovervalidate::service::{Service, ValidatedService};
-use rovervalidate::validate::Validate;
+use rover_types::service::{Fq, FqBuf, FqBufVec, FqVec};
+use rover_validate::config::{Configuration, ValidatedConfiguration};
+use rover_validate::pipeline::interface::{Pipeline, RunnablePipeline};
+use rover_validate::service::{Service, ValidatedService};
+use rover_validate::validate::Validate;
 use serde_json::Value;
-use service::{Fq, FqBuf, FqBufVec, FqVec};
 use state::{Dormant, Operating, RoverState};
 use std::cmp;
 use std::collections::{HashMap, HashSet};
@@ -29,15 +29,16 @@ use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::{broadcast, broadcast::Sender, Mutex, RwLock};
 use tracing::{error, info, warn};
 
-use crate::error::Error;
+use crate::time_now;
 use crate::util::*;
-use crate::{constants::*, time_now};
+use rover_bootspec::BootSpecs;
+use rover_constants::*;
+use rover_types::error::Error;
+use rover_types::service::get_service_as;
 
-mod bootspec;
 pub mod daemons;
 pub mod info;
 pub mod process;
-pub mod service;
 pub mod state;
 
 /// The main struct that implements functions called from the api and holds all objects
@@ -299,7 +300,7 @@ impl App {
         let contents = fs::read_to_string(fq.path())
             .map_err(|_| Error::ServiceNotFound(format!("Could not find {} on disk", fq.path())))?;
         let service =
-            serde_yaml::from_str::<rovervalidate::service::Service>(&contents)?.validate()?;
+            serde_yaml::from_str::<rover_validate::service::Service>(&contents)?.validate()?;
 
         Ok(service)
     }
@@ -572,7 +573,7 @@ impl App {
         // clear the existing processes and then add them again
         let mut processes = self.processes.write().await;
 
-        let bootspecs = bootspec::BootSpecs::new(runnable.services().clone()).0;
+        let bootspecs = BootSpecs::new(runnable.clone()).0;
 
         let mut fqs = vec![];
         let mut service_data = vec![];
@@ -1123,11 +1124,11 @@ impl App {
                 if update_key == config.name {
                     match &update_value {
                         Value::Number(n) => {
-                            if let rovervalidate::service::Value::Double(_) = config.value {
+                            if let rover_validate::service::Value::Double(_) = config.value {
                                 if let Some(number) = n.as_f64() {
                                     // Here we are sure that the incoming json value is a Number,
                                     // and that the type stored on disk was a double, so we can update
-                                    config.value = rovervalidate::service::Value::Double(number);
+                                    config.value = rover_validate::service::Value::Double(number);
                                 } else {
                                     return Err(Error::InvalidKeyType(format!(
                                         "Key '{}' is of type Number, however unable to cast it to an f64",
@@ -1142,10 +1143,10 @@ impl App {
                             }
                         }
                         Value::String(s) => {
-                            if let rovervalidate::service::Value::String(_) = config.value {
+                            if let rover_validate::service::Value::String(_) = config.value {
                                 // Here we are sure that the incoming json value is a String,
                                 // and that the type stored on disk was also a String, so we can update
-                                config.value = rovervalidate::service::Value::String(s.clone())
+                                config.value = rover_validate::service::Value::String(s.clone())
                             } else {
                                 return Err(Error::InvalidKeyType(format!(
                                     "Key '{}' is of type Number, however a String was supplied",

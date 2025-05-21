@@ -1,6 +1,6 @@
 [package]
 name = "roverd"
-version = "1.0.1"
+version = "6.9.9"
 edition = "2021"
 rust-version = "1.85.1"
 build = "src/build.rs"
@@ -15,7 +15,10 @@ tokio = { version = "1.41.0", features = ["full"] }
 tower-http = { version = "0.6.1", features = ["cors"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
-rovervalidate = { version = "0.1.0", path = "../rovervalidate" }
+rover-validate = { version = "0.1.0", path = "../rover-validate" }
+rover-constants = { version = "0.1.0", path = "../rover-constants" }
+rover-types = { version = "0.1.0", path = "../rover-types" }
+rover-bootspec = { version = "0.1.0", path = "../rover-bootspec" }
 serde_yaml = "0.9.34"
 reqwest = { version = "0.12.9", features = [
     "multipart",

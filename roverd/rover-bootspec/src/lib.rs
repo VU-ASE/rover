@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::constants::*;
+use rover_constants::*;
 
-use rovervalidate::service::ValidatedService;
+use rover_validate::pipeline::interface::RunnablePipeline;
 use serde::{Deserialize, Serialize};
 
-use super::service::FqBuf;
+use rover_types::service::FqBuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Stream {
@@ -37,15 +37,18 @@ pub struct BootSpec {
     pub version: String,
     pub inputs: Vec<Input>,
     pub outputs: Vec<Stream>,
-    pub configuration: Vec<rovervalidate::service::Configuration>,
+    pub configuration: Vec<rover_validate::service::Configuration>,
     pub tuning: BootSpecTuning,
 }
 
 #[repr(transparent)]
+#[derive(Debug)]
 pub struct BootSpecs(pub HashMap<FqBuf, BootSpec>);
 
 impl BootSpecs {
-    pub fn new(mut services: Vec<ValidatedService>) -> Self {
+    pub fn new(pipeline: RunnablePipeline) -> Self {
+        let mut services = pipeline.0.services;
+
         // Transceiver outputs to START_PORT
         let mut tuning = BootSpecTuning {
             enabled: false,

@@ -1,4 +1,4 @@
-use crate::error;
+use rover_types::error;
 
 /// The service defines run and build commands which are encapsulated into this
 /// convenience struct.

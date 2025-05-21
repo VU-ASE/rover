@@ -9,7 +9,7 @@ use crate::{config::Validate, service};
 
 #[derive(Debug, Clone)]
 pub struct Pipeline {
-    services: Vec<service::ValidatedService>,
+    pub services: Vec<service::ValidatedService>,
 }
 
 // Pipelines are immutable, you initialize them once and then they are used as a whole.
