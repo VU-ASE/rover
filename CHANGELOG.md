@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/VU-ASE/rover/compare/v1.1.2...v1.1.3) (2025-05-21)
+
+
+### Bug Fixes
+
+* removed dev setup script from build target ([369c1d2](https://github.com/VU-ASE/rover/commit/369c1d21e9c4e2335e4c4412a102ccffb643d681))
+
 ## [1.1.2](https://github.com/VU-ASE/rover/compare/v1.1.1...v1.1.2) (2025-05-21)
 
 
