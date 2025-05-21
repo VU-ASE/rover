@@ -50,7 +50,7 @@ RUN sudo apt-get update && sudo apt install -y libssl-dev file git \
 COPY --chown=dev:dev .devcontainer/roverd/scripts/ssh_config /home/dev/.ssh/config
 
 # Visualize Rust Repo Dependencies
-RUN sudo apt install -y graphviz
-RUN /home/dev/.cargo/bin/cargo install cargo-modules
+# RUN sudo apt install -y graphviz
+# RUN /home/dev/.cargo/bin/cargo install cargo-modules
 
 
