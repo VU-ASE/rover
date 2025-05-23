@@ -31,7 +31,6 @@ pub enum Error {
     // --- Build ---
     BuildLog(Vec<String>),
     BuildCommandFailed,
-    BuildCommandMissing,
 
     // --- Runtime ---
     NoLogsFound,

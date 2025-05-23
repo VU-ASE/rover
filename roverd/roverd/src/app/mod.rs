@@ -383,10 +383,11 @@ impl App {
         let fq = FqBuf::from(&params);
         let service = self.get_service(fq.clone()).await?.0;
 
-        let build_string = &service
-            .commands
-            .build
-            .ok_or_else(|| Error::BuildCommandMissing)?;
+        let Some(build_string) = &service.commands.build else {
+            warn!("no build command found for: {}", service.name);
+            return Ok(());
+        };
+
         let log_file = create_log_file(&PathBuf::from(fq.build_log_file()))?;
         let stdout = Stdio::from(
             log_file
