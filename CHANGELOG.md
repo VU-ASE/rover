@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7](https://github.com/VU-ASE/rover/compare/v1.1.6...v1.1.7) (2025-05-23)
+
+
+### Bug Fixes
+
+* missing HOME environment variable when executing binary ([e7becf7](https://github.com/VU-ASE/rover/commit/e7becf7b03667960e66641b846ef6c3c55176e91))
+* only building rover-local in CI and added prints ([99356a3](https://github.com/VU-ASE/rover/commit/99356a35c7221789cee0df7e9e8857bf98bc1c7d))
+
 ## [1.1.6](https://github.com/VU-ASE/rover/compare/v1.1.5...v1.1.6) (2025-05-21)
 
 
