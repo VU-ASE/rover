@@ -677,6 +677,7 @@ impl App {
             command
                 .args(["-u", "debix", "-E", "bash", "-c", user_run_command.as_str()])
                 .env(ENV_KEY, p.injected_env.clone())
+                .env("HOME", "/home/debix")
                 .process_group(0)
                 .current_dir(p.fq.dir())
                 .stdout(stdout)
