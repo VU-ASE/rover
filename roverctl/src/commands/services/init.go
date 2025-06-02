@@ -15,7 +15,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 )
 
-var presets = []string{"go", "c", "python", "cpp"}
+var presets = []string{"go", "c", "python", "cpp", "c-sharp"}
 
 func addInit(rootCmd *cobra.Command) {
 	// General flags
@@ -147,6 +147,8 @@ func initializeTemplate(preset string, name string, author string, version strin
 		templateRepo = "https://github.com/VU-ASE/service-template-python"
 	case presets[3]:
 		templateRepo = "https://github.com/VU-ASE/service-template-cpp"
+	case presets[4]:
+		templateRepo = "https://github.com/VU-ASE/service-template-c-sharp"
 	}
 
 	if templateRepo == "" {
