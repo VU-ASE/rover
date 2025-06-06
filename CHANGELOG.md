@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/VU-ASE/rover/compare/v1.1.7...v1.2.0) (2025-06-06)
+
+
+### Features
+
+* added dummy version if not available, new even trigger ([fd5de49](https://github.com/VU-ASE/rover/commit/fd5de4917afc91dcac7733bb9a27710a1754508f))
+* service init for c# ([0d6d21f](https://github.com/VU-ASE/rover/commit/0d6d21ffc0aeb1ecd8dbb3eeec495739a5917068))
+
+
+### Bug Fixes
+
+* build command now optional ([b1a67b1](https://github.com/VU-ASE/rover/commit/b1a67b1f90f7ec48cd0922454d0041a4ef6a47a0))
+
 ## [1.1.7](https://github.com/VU-ASE/rover/compare/v1.1.6...v1.1.7) (2025-05-23)
 
 
