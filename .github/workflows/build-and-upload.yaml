@@ -3,6 +3,8 @@ name: Build and release all software
 on:
     release:
         types: [published]
+    pull_request:
+        types: [opened, edited]
 
 permissions:
     contents: write
@@ -30,8 +32,13 @@ jobs:
               with:
                   go-version: "1.22.12"
 
-            - name: Set VERSION from tag
-              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+            - name: Set VERSION (tag or fallback)
+              run: |
+                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                else
+                  echo "VERSION=9.9.9" >> $GITHUB_ENV
+                fi
 
               # Both devcontainer (devuser) and normal user need access
             - name: Fix permissions
@@ -78,8 +85,13 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
 
-            - name: Set VERSION from tag
-              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+            - name: Set VERSION (tag or fallback)
+              run: |
+                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                else
+                  echo "VERSION=9.9.9" >> $GITHUB_ENV
+                fi
 
             # This action works a bit differently than for roverctl, it builds everything inside
             # the docker container in the exact same way that is done during development. The
@@ -94,9 +106,6 @@ jobs:
                   docker build --build-arg HOST_UID=$(id -u) -t roverd-build-container -f .devcontainer/roverd/Dockerfile .
                   docker run -e VERSION=${VERSION} --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build-arm -C /home/dev/work/roverd'
                   docker run -e VERSION=${VERSION} --rm --user dev -v "$(pwd):/home/dev/work:z" roverd-build-container bash -ic 'make build -C /home/dev/work/roverd'
-
-            - name: Set VERSION from tag
-              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
             - name: Save roverd artifact (arm only)
               uses: actions/upload-artifact@v4
@@ -126,8 +135,13 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
 
-            - name: Set VERSION from tag
-              run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+            - name: Set VERSION (tag or fallback)
+              run: |
+                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                else
+                  echo "VERSION=9.9.9" >> $GITHUB_ENV
+                fi
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3
@@ -163,6 +177,10 @@ jobs:
             - build-rust-binaries
             - build-roverctl-web
         runs-on: ubuntu-latest
+        
+        # Only run this job when the workflow was triggered by a “release” event,not on pull_request.
+        if: github.event_name == 'release'
+
         steps:
             - name: Log in to GitHub Container Registry
               uses: docker/login-action@v3
