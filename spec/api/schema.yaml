@@ -52,12 +52,12 @@ paths:
                     format: "int64"
                     description: "Milliseconds since epoch when the pipeline was manually stopped"
                     example: 1612345678910
-                  stopping_service:
-                    type: object
-                    properties:
-                      fq:
-                        $ref: "#/components/schemas/FullyQualifiedService"
-                    description: "The service that caused the pipeline to stop"
+                  # stopping_service:
+                  #   type: object
+                  #   properties:
+                  #     fq:
+                  #       $ref: "#/components/schemas/FullyQualifiedService"
+                  #   description: "The service that caused the pipeline to stop"
                   last_restart:
                     type: integer
                     format: "int64"
