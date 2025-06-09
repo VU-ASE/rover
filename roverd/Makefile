@@ -68,11 +68,11 @@ build-arm: lint version-update gen-open-api
 	@echo ">>> "
 	cargo build --target=aarch64-unknown-linux-gnu --release
 
-TEST_ROVER=rover06
+ROVER_IP=192.168.0.159
 
 dev-arm: build-arm
-	scp ./target/aarch64-unknown-linux-gnu/release/roverd $(TEST_ROVER):/tmp/
-	ssh $(TEST_ROVER) "echo debix | sudo -S mv /tmp/roverd /usr/local/bin/ ; echo debix | sudo -S chown root:root /usr/local/bin/roverd"
+	scp ./target/aarch64-unknown-linux-gnu/release/roverd debix@$(ROVER_IP):/tmp/
+	ssh debix@$(ROVER_IP) "echo debix | sudo -S mv /tmp/roverd /usr/local/bin/ ; echo debix | sudo -S chown root:root /usr/local/bin/roverd"
 
 clean:
 	@cargo clean
@@ -91,10 +91,7 @@ loc:
 	@echo 
 
 # TODO: fix dockerfile installs for cargo-modules
-# generate-visualizations:
-# 	@mkdir -p media
-# 	@cargo modules dependencies --no-externs --no-fns --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-modules.svg
-# 	@cargo modules dependencies --no-sysroot --no-traits --no-types --no-uses -p roverd | dot -Tsvg > media/roverd-externs.svg
+
 
 
 
