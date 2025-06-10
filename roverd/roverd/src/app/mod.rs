@@ -784,7 +784,7 @@ impl App {
                         if let Some(id) = child.id() {
                             info!("terminating {} pid ({})", spawned.name, id);
                             unsafe {
-                                libc::kill(id as i32, libc::SIGTERM);
+                                libc::killpg(id as i32, libc::SIGTERM);
                             }
                         }
 
@@ -802,15 +802,23 @@ impl App {
                         match child.try_wait() {
                             Ok(None) => {
                                 info!("process {} did not terminate, killing", spawned.name);
-                                if let Err(e) = child.kill().await {
-                                    error!("error killing process {:?}: {:?}", spawned.name, e);
+                                if let Some(id) = child.id() {
+                                    unsafe {
+                                        libc::killpg(id as i32, libc::SIGKILL);
+                                    }
+                                } else {
+                                    error!("unable to fetch PID of {:?}", spawned.name);
                                 }
                             },
                             Ok(Some(_)) => {},
                             Err(e) => {
                                 error!("Error: {:?}", e);
-                                if let Err(e) = child.kill().await {
-                                    error!("error killing process {:?}: {:?}", spawned.name, e);
+                                if let Some(id) = child.id() {
+                                    unsafe {
+                                        libc::killpg(id as i32, libc::SIGKILL);
+                                    }
+                                } else {
+                                    error!("unable to fetch PID of {:?}", spawned.name);
                                 }
                             }
                         }
