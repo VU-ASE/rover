@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/VU-ASE/rover/compare/v1.2.0...v1.2.1) (2025-06-10)
+
+
+### Bug Fixes
+
+* roverd kills entire group instead of single process ([9278c80](https://github.com/VU-ASE/rover/commit/9278c80021358bd9849e2bcdef30243d4afab362))
+
 ## [1.2.0](https://github.com/VU-ASE/rover/compare/v1.1.7...v1.2.0) (2025-06-06)
 
 
