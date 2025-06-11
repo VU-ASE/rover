@@ -48,9 +48,18 @@ impl Pipeline for Roverd {
         _host: Host,
         _cookies: CookieJar,
     ) -> Result<PipelineGetResponse, ()> {
-        let enabled: Vec<PipelineGet200ResponseEnabledInner> =
-            warn_generic!(self.app.get_pipeline().await, PipelineGetResponse);
+        let (enabled, some_service): (
+            Vec<PipelineGet200ResponseEnabledInner>,
+            Option<FullyQualifiedService>,
+        ) = warn_generic!(self.app.get_pipeline().await, PipelineGetResponse);
         let stats = self.app.stats.read().await;
+
+        let stopping_service = if let Some(service) = some_service {
+            Some(PipelineGet200ResponseStoppingService { fq: Some(service) })
+        } else {
+            None
+        };
+
         Ok(
             PipelineGetResponse::Status200_PipelineStatusAndAnArrayOfProcesses(
                 PipelineGet200Response {
@@ -58,6 +67,7 @@ impl Pipeline for Roverd {
                     last_start: stats.last_start,
                     last_stop: stats.last_stop,
                     last_restart: stats.last_restart,
+                    stopping_service,
                     enabled,
                 },
             ),

@@ -1553,6 +1553,10 @@ pub struct PipelineGet200Response {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_stop: Option<i64>,
 
+    #[serde(rename = "stopping_service")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stopping_service: Option<models::PipelineGet200ResponseStoppingService>,
+
     /// Milliseconds since epoch when the pipeline was automatically restarted (on process faults)
     #[serde(rename = "last_restart")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1573,6 +1577,7 @@ impl PipelineGet200Response {
             status,
             last_start: None,
             last_stop: None,
+            stopping_service: None,
             last_restart: None,
             enabled,
         }
@@ -1592,6 +1597,7 @@ impl std::fmt::Display for PipelineGet200Response {
             self.last_stop
                 .as_ref()
                 .map(|last_stop| ["last_stop".to_string(), last_stop.to_string()].join(",")),
+            // Skipping stopping_service in query parameter serialization
             self.last_restart.as_ref().map(|last_restart| {
                 ["last_restart".to_string(), last_restart.to_string()].join(",")
             }),
@@ -1620,6 +1626,7 @@ impl std::str::FromStr for PipelineGet200Response {
             pub status: Vec<models::PipelineStatus>,
             pub last_start: Vec<i64>,
             pub last_stop: Vec<i64>,
+            pub stopping_service: Vec<models::PipelineGet200ResponseStoppingService>,
             pub last_restart: Vec<i64>,
             pub enabled: Vec<Vec<models::PipelineGet200ResponseEnabledInner>>,
         }
@@ -1650,6 +1657,8 @@ impl std::str::FromStr for PipelineGet200Response {
                     #[allow(clippy::redundant_clone)]
                     "last_stop" => intermediate_rep.last_stop.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     #[allow(clippy::redundant_clone)]
+                    "stopping_service" => intermediate_rep.stopping_service.push(<models::PipelineGet200ResponseStoppingService as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
+                    #[allow(clippy::redundant_clone)]
                     "last_restart" => intermediate_rep.last_restart.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     "enabled" => return std::result::Result::Err("Parsing a container in this style is not supported in PipelineGet200Response".to_string()),
                     _ => return std::result::Result::Err("Unexpected key while parsing PipelineGet200Response".to_string())
@@ -1669,6 +1678,7 @@ impl std::str::FromStr for PipelineGet200Response {
                 .ok_or_else(|| "status missing in PipelineGet200Response".to_string())?,
             last_start: intermediate_rep.last_start.into_iter().next(),
             last_stop: intermediate_rep.last_stop.into_iter().next(),
+            stopping_service: intermediate_rep.stopping_service.into_iter().next(),
             last_restart: intermediate_rep.last_restart.into_iter().next(),
             enabled: intermediate_rep
                 .enabled
@@ -2228,6 +2238,143 @@ impl std::convert::TryFrom<HeaderValue>
                         std::result::Result::Ok(value) => std::result::Result::Ok(header::IntoHeaderValue(value)),
                         std::result::Result::Err(err) => std::result::Result::Err(
                             format!("Unable to convert header value '{}' into PipelineGet200ResponseEnabledInnerService - {}",
+                                value, err))
+                    }
+             },
+             std::result::Result::Err(e) => std::result::Result::Err(
+                 format!("Unable to convert header: {:?} to string: {}",
+                     hdr_value, e))
+        }
+    }
+}
+
+/// The service that caused the pipeline to stop
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct PipelineGet200ResponseStoppingService {
+    #[serde(rename = "fq")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fq: Option<models::FullyQualifiedService>,
+}
+
+impl PipelineGet200ResponseStoppingService {
+    #[allow(clippy::new_without_default, clippy::too_many_arguments)]
+    pub fn new() -> PipelineGet200ResponseStoppingService {
+        PipelineGet200ResponseStoppingService { fq: None }
+    }
+}
+
+/// Converts the PipelineGet200ResponseStoppingService value to the Query Parameters representation (style=form, explode=false)
+/// specified in https://swagger.io/docs/specification/serialization/
+/// Should be implemented in a serde serializer
+impl std::fmt::Display for PipelineGet200ResponseStoppingService {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let params: Vec<Option<String>> = vec![
+            // Skipping fq in query parameter serialization
+
+        ];
+
+        write!(
+            f,
+            "{}",
+            params.into_iter().flatten().collect::<Vec<_>>().join(",")
+        )
+    }
+}
+
+/// Converts Query Parameters representation (style=form, explode=false) to a PipelineGet200ResponseStoppingService value
+/// as specified in https://swagger.io/docs/specification/serialization/
+/// Should be implemented in a serde deserializer
+impl std::str::FromStr for PipelineGet200ResponseStoppingService {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        /// An intermediate representation of the struct to use for parsing.
+        #[derive(Default)]
+        #[allow(dead_code)]
+        struct IntermediateRep {
+            pub fq: Vec<models::FullyQualifiedService>,
+        }
+
+        let mut intermediate_rep = IntermediateRep::default();
+
+        // Parse into intermediate representation
+        let mut string_iter = s.split(',');
+        let mut key_result = string_iter.next();
+
+        while key_result.is_some() {
+            let val = match string_iter.next() {
+                Some(x) => x,
+                None => {
+                    return std::result::Result::Err(
+                        "Missing value while parsing PipelineGet200ResponseStoppingService"
+                            .to_string(),
+                    )
+                }
+            };
+
+            if let Some(key) = key_result {
+                #[allow(clippy::match_single_binding)]
+                match key {
+                    #[allow(clippy::redundant_clone)]
+                    "fq" => intermediate_rep.fq.push(
+                        <models::FullyQualifiedService as std::str::FromStr>::from_str(val)
+                            .map_err(|x| x.to_string())?,
+                    ),
+                    _ => {
+                        return std::result::Result::Err(
+                            "Unexpected key while parsing PipelineGet200ResponseStoppingService"
+                                .to_string(),
+                        )
+                    }
+                }
+            }
+
+            // Get the next key
+            key_result = string_iter.next();
+        }
+
+        // Use the intermediate representation to return the struct
+        std::result::Result::Ok(PipelineGet200ResponseStoppingService {
+            fq: intermediate_rep.fq.into_iter().next(),
+        })
+    }
+}
+
+// Methods for converting between header::IntoHeaderValue<PipelineGet200ResponseStoppingService> and HeaderValue
+
+#[cfg(feature = "server")]
+impl std::convert::TryFrom<header::IntoHeaderValue<PipelineGet200ResponseStoppingService>>
+    for HeaderValue
+{
+    type Error = String;
+
+    fn try_from(
+        hdr_value: header::IntoHeaderValue<PipelineGet200ResponseStoppingService>,
+    ) -> std::result::Result<Self, Self::Error> {
+        let hdr_value = hdr_value.to_string();
+        match HeaderValue::from_str(&hdr_value) {
+             std::result::Result::Ok(value) => std::result::Result::Ok(value),
+             std::result::Result::Err(e) => std::result::Result::Err(
+                 format!("Invalid header value for PipelineGet200ResponseStoppingService - value: {} is invalid {}",
+                     hdr_value, e))
+        }
+    }
+}
+
+#[cfg(feature = "server")]
+impl std::convert::TryFrom<HeaderValue>
+    for header::IntoHeaderValue<PipelineGet200ResponseStoppingService>
+{
+    type Error = String;
+
+    fn try_from(hdr_value: HeaderValue) -> std::result::Result<Self, Self::Error> {
+        match hdr_value.to_str() {
+             std::result::Result::Ok(value) => {
+                    match <PipelineGet200ResponseStoppingService as std::str::FromStr>::from_str(value) {
+                        std::result::Result::Ok(value) => std::result::Result::Ok(header::IntoHeaderValue(value)),
+                        std::result::Result::Err(err) => std::result::Result::Err(
+                            format!("Unable to convert header value '{}' into PipelineGet200ResponseStoppingService - {}",
                                 value, err))
                     }
              },

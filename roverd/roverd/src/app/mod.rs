@@ -113,6 +113,7 @@ impl Roverd {
             info,
             app: App {
                 processes: Arc::new(RwLock::new(vec![])),
+                stopped_service: Arc::new(RwLock::new(None)),
                 spawned: Arc::new(RwLock::new(vec![])),
                 stats: Arc::new(RwLock::new(PipelineStats {
                     status: PipelineStatus::Startable,
@@ -185,6 +186,9 @@ pub struct App {
     /// Contains the "application view" of process after validation. In-between start / stop
     /// runs this vec remains unchanged.
     pub processes: Arc<RwLock<Vec<Process>>>,
+
+    /// If set, contains the most service that caused the pipeline to stop
+    pub stopped_service: Arc<RwLock<Option<FullyQualifiedService>>>,
 
     /// The "runtime" view of all processes, this contains handles to the spawned children.
     pub spawned: Arc<RwLock<Vec<SpawnedProcess>>>,
@@ -259,11 +263,6 @@ impl App {
                 .with_context(|| format!("failed to write data to {}", ZIP_FILE))?;
 
             let (fq_buf, directory) = extract_fq_from_zip(ZIP_FILE.to_string()).await?;
-
-            // syncing can overwrite the current contents
-            // if service_exists(&Fq::from(&fq_buf))? {
-            //     return Err(Error::ServiceAlreadyExists);
-            // }
 
             install_service(directory, &fq_buf).await?;
 
@@ -484,8 +483,17 @@ impl App {
         Ok(())
     }
 
-    /// Gets the current pipeline along with the list of processes if they are running.
-    pub async fn get_pipeline(&self) -> Result<Vec<PipelineGet200ResponseEnabledInner>, Error> {
+    /// Gets the current pipeline along with the list of processes if they are running as well as
+    /// the service to that stopped the pipeline.
+    pub async fn get_pipeline(
+        &self,
+    ) -> Result<
+        (
+            Vec<PipelineGet200ResponseEnabledInner>,
+            Option<FullyQualifiedService>,
+        ),
+        Error,
+    > {
         let stats = self.stats.read().await;
         if stats.status == PipelineStatus::Empty {
             let config = Configuration { enabled: vec![] };
@@ -495,6 +503,7 @@ impl App {
         let conf = get_config().await?;
 
         let processes = self.processes.read().await;
+        let stopped_service = self.stopped_service.read().await.clone();
 
         let mut responses = vec![];
 
@@ -560,7 +569,7 @@ impl App {
             });
         }
 
-        Ok(responses)
+        Ok((responses, stopped_service))
     }
 
     /// We want to start a pipeline since we are given a valid pipieline, however first we must
@@ -657,6 +666,7 @@ impl App {
 
         let mut spawned_procs = self.spawned.write().await;
         let mut procs = self.processes.write().await;
+        let mut stopping_service = self.stopped_service.write().await;
 
         spawned_procs.clear();
 
@@ -693,8 +703,10 @@ impl App {
                         info!("spawned process: {:?} at {}", p.name, id);
                         p.last_pid = Some(id);
                     } else {
+                        // In this branch the process exited immediately and since fetching its id fails
                         let err_msg = format!("process: {} exited immediately", p.name);
                         warn!(err_msg);
+                        *stopping_service = Some(FullyQualifiedService::from(p.fq.clone()));
                         p.faults += 1;
                         p.last_exit_code = 1;
                         self.cancel_start(&mut stats, &mut procs, &mut spawned_procs)
@@ -708,8 +720,10 @@ impl App {
                     });
                 }
                 Err(e) => {
+                    // Here the OS could not even launch the process
                     let err_msg = format!("{}", e);
                     warn!("failed to spawn process '{}': {}", p.name, &err_msg);
+                    *stopping_service = Some(FullyQualifiedService::from(p.fq.clone()));
                     p.faults += 1;
                     p.last_exit_code = 1;
                     self.cancel_start(&mut stats, &mut procs, &mut spawned_procs)
@@ -728,6 +742,7 @@ impl App {
 
             let procs_clone = Arc::clone(&self.processes);
             let stats_clone = Arc::clone(&self.stats);
+            let stopped_clone = Arc::clone(&self.stopped_service);
 
             tokio::spawn(async move {
                 let mut child = spawned.child.lock().await;
@@ -743,8 +758,8 @@ impl App {
                                 stats.last_restart = Some(time_now!() as i64);
                                 info!("child {} exited with status {}", spawned.name, exit_status);
 
-
-
+                                let mut stopped_service = stopped_clone.write().await;
+                                *stopped_service = Some(FullyQualifiedService::from(spawned.fq.clone()));
 
                                 let exit_code = exit_status.code();
                                 let mut procs_guard = procs_clone.write().await;
