@@ -333,6 +333,9 @@
 
 			// Fetch enabled services in the pipeline
 			const pipeline = await papi.pipelineGet();
+
+			console.log('Got stopping service', pipeline.data.stopping_service);
+
 			return pipeline.data;
 		},
 		{
@@ -350,7 +353,13 @@
 				}
 
 				if (previousData?.status === 'started' && data.status !== 'started') {
-					toast('Pipeline stopped', {
+					// If we know why, add it
+					let text = '';
+					if (data.stopping_service && data.stopping_service.fq) {
+						text = ` because service "${data.stopping_service.fq.name}" terminated`;
+					}
+
+					toast('Pipeline stopped' + text, {
 						icon: '🟥',
 						position: 'bottom-right',
 						duration: 4000
@@ -1059,7 +1068,7 @@
 																			e.stopPropagation();
 																			removeServiceByName(service.name);
 																		}}
-																		class="w-5 h-5 card variant-outline-secondary text-secondary-400"
+																		class="w-5 h-5 card variant-outline-secondary text-primary-400"
 																	>
 																		<CheckIcon />
 																	</button>
@@ -1082,6 +1091,10 @@
 														<div class="flex flex-row justify-between">
 															{#if $pipelineQuery.data && $pipelineQuery.data.enabled.some((s) => s.service.fq.author === group.author && s.service.fq.name === service.name && s.service.exit !== 0)}
 																<span class="font-mono text-warning-400 whitespace-nowrap truncate">
+																	{service.name}
+																</span>
+															{:else if $pipelineQuery.data && $pipelineQuery.data.stopping_service && $pipelineQuery.data.stopping_service.fq?.author === group.author && $pipelineQuery.data.stopping_service.fq?.name === service.name}
+																<span class="font-mono text-orange-400 whitespace-nowrap truncate">
 																	{service.name}
 																</span>
 															{:else}

@@ -271,6 +271,12 @@ export interface PipelineGet200Response {
      */
     'last_stop'?: number;
     /**
+     * 
+     * @type {PipelineGet200ResponseStoppingService}
+     * @memberof PipelineGet200Response
+     */
+    'stopping_service'?: PipelineGet200ResponseStoppingService;
+    /**
      * Milliseconds since epoch when the pipeline was automatically restarted (on process faults)
      * @type {number}
      * @memberof PipelineGet200Response
@@ -367,6 +373,19 @@ export interface PipelineGet200ResponseEnabledInnerService {
      * @memberof PipelineGet200ResponseEnabledInnerService
      */
     'exit': number;
+}
+/**
+ * The service that caused the pipeline to stop
+ * @export
+ * @interface PipelineGet200ResponseStoppingService
+ */
+export interface PipelineGet200ResponseStoppingService {
+    /**
+     * 
+     * @type {FullyQualifiedService}
+     * @memberof PipelineGet200ResponseStoppingService
+     */
+    'fq'?: FullyQualifiedService;
 }
 /**
  * 
