@@ -646,7 +646,6 @@
 					const address = passthrough.value.toString().replace(/^https?:\/\//, '');
 					const expected = config.passthrough.host + ':' + config.passthrough.port;
 
-					console.log('Comparing', address, expected);
 					set(address === expected);
 				} catch (error) {
 					console.error('Error checking debug mode', error);
@@ -685,7 +684,7 @@
 
 			for (const transceiver of transceivers) {
 				// Does this transceiver expose the same passthrough server as the roverctl configuration?
-				const service = await sapi.servicesAuthorServiceVersionGet(
+				let service = await sapi.servicesAuthorServiceVersionGet(
 					transceiver.author,
 					transceiver.name,
 					transceiver.version
@@ -695,7 +694,54 @@
 				}
 
 				// Find the "passthrough-address" configuration key
-				const passthrough = service.data.configuration.find(
+				let passthrough = service.data.configuration.find(
+					(c) => c.name === 'passthrough-address' && c.type === 'string'
+				);
+				if (!passthrough) {
+					continue;
+				}
+
+				// Enhancement: try to set the transceiver service.yaml configuration for the passthrough address
+				// to the one specified for roverctl.
+				// Then the user does not have to download the transceiver again
+				const newConfig = service.data.configuration.map((c) => {
+					if (
+						c.name === 'passthrough-address' &&
+						c.type === 'string' &&
+						config.success &&
+						config.passthrough
+					) {
+						return {
+							...c,
+							key: c.name,
+							value: 'http://' + config.passthrough.host + ':' + config.passthrough.port
+						};
+					} else {
+						return {
+							...c,
+							key: c.name
+						};
+					}
+				});
+				await sapi.servicesAuthorServiceVersionConfigurationPost(
+					transceiver.author,
+					transceiver.name,
+					transceiver.version,
+					newConfig
+				);
+
+				// Then try to refetch again
+				service = await sapi.servicesAuthorServiceVersionGet(
+					transceiver.author,
+					transceiver.name,
+					transceiver.version
+				);
+				if (!service.data) {
+					continue;
+				}
+
+				// Find the "passthrough-address" configuration key
+				passthrough = service.data.configuration.find(
 					(c) => c.name === 'passthrough-address' && c.type === 'string'
 				);
 				if (!passthrough) {
