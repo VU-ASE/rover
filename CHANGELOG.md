@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/VU-ASE/rover/compare/v1.2.1...v1.3.0) (2025-06-18)
+
+
+### Features
+
+* roverctl support for offline mode ([7d4d50f](https://github.com/VU-ASE/rover/commit/7d4d50f8511b6c8cf68683803f279af76526b3fe))
+* roverctl-web automatically update transceiver IP without reinstall ([a9d0db6](https://github.com/VU-ASE/rover/commit/a9d0db64e6f3a1ff782d1e79e57963cf930bbade))
+
 ## [1.2.1](https://github.com/VU-ASE/rover/compare/v1.2.0...v1.2.1) (2025-06-10)
 
 
