@@ -4,7 +4,7 @@ on:
     release:
         types: [published]
     pull_request:
-      types: [opened, synchronize, reopened, edited]
+        types: [opened, synchronize, reopened, edited]
 
 permissions:
     contents: write
@@ -34,11 +34,11 @@ jobs:
 
             - name: Set VERSION (tag or fallback)
               run: |
-                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-                else
-                  echo "VERSION=9.9.9" >> $GITHUB_ENV
-                fi
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                    echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                  else
+                    echo "VERSION=9.9.9" >> $GITHUB_ENV
+                  fi
 
               # Both devcontainer (devuser) and normal user need access
             - name: Fix permissions
@@ -87,11 +87,11 @@ jobs:
 
             - name: Set VERSION (tag or fallback)
               run: |
-                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-                else
-                  echo "VERSION=9.9.9" >> $GITHUB_ENV
-                fi
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                    echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                  else
+                    echo "VERSION=9.9.9" >> $GITHUB_ENV
+                  fi
 
             # This action works a bit differently than for roverctl, it builds everything inside
             # the docker container in the exact same way that is done during development. The
@@ -112,13 +112,13 @@ jobs:
               with:
                   name: roverd-binary
                   path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/roverd"
-            
+
             - name: Save rover-local-arm64 artifact
               uses: actions/upload-artifact@v4
               with:
                   name: rover-local-binary-arm64
                   path: "${{ github.workspace }}/roverd/target/aarch64-unknown-linux-gnu/release/rover-local"
-            
+
             - name: Save rover-local-amd64 artifact
               uses: actions/upload-artifact@v4
               with:
@@ -137,11 +137,11 @@ jobs:
 
             - name: Set VERSION (tag or fallback)
               run: |
-                if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-                  echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-                else
-                  echo "VERSION=9.9.9" >> $GITHUB_ENV
-                fi
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                    echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+                  else
+                    echo "VERSION=9.9.9" >> $GITHUB_ENV
+                  fi
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3
@@ -177,7 +177,7 @@ jobs:
             - build-rust-binaries
             - build-roverctl-web
         runs-on: ubuntu-latest
-        
+
         # Only run this job when the workflow was triggered by a “release” event,not on pull_request.
         if: github.event_name == 'release'
 
@@ -212,7 +212,7 @@ jobs:
                   mkdir -p roverd/target/aarch64-unknown-linux-gnu/release/
                   mv roverd-bin/* roverd/target/aarch64-unknown-linux-gnu/release/
                   chmod +x roverd/target/aarch64-unknown-linux-gnu/release/roverd
-            
+
             - name: Download rover-local-arm64 artifact
               uses: actions/download-artifact@v4
               with:
@@ -222,7 +222,7 @@ jobs:
             - name: Make executable rover-local-arm64 artifact
               run: |
                   chmod +x rover-local-arm64/*
-            
+
             - name: Download rover-local-amd64 artifact
               uses: actions/download-artifact@v4
               with:
@@ -232,12 +232,6 @@ jobs:
             - name: Make executable rover-local-amd64 artifact
               run: |
                   chmod +x rover-local-amd64/*
-            
-            - name: Debug print
-              run: |
-                  ls -lah
-                  file rover-local-amd64/*
-                  file rover-local-arm64/*
 
             - name: Set VERSION from tag
               run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
