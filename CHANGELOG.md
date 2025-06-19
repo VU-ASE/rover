@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/VU-ASE/rover/compare/v1.3.0...v1.4.0) (2025-06-19)
+
+
+### Features
+
+* add roverctl-web info and notifications based on stopping service ([ca92f9e](https://github.com/VU-ASE/rover/commit/ca92f9e621a2f986872b33e9e88ba9788ffd45b2))
+
 ## [1.3.0](https://github.com/VU-ASE/rover/compare/v1.2.1...v1.3.0) (2025-06-18)
 
 
