@@ -9,3 +9,6 @@ build-open-api:
 	@echo "generating openapi client"
 	@openapi-generator-cli generate -i ../spec/api/schema.yaml -g typescript-axios -o src/lib/openapi 
 
+start:
+	@echo "Starting the application..."
+	@npm run dev
