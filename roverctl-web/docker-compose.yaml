@@ -13,9 +13,11 @@ services:
       - '3000:3000'
     environment:
       - NODE_ENV=production
-      - PUBLIC_ROVERD_HOST=${PUBLIC_ROVERD_HOST}
-      - PUBLIC_ROVERD_PORT=${PUBLIC_ROVERD_PORT}
-      - PUBLIC_ROVERD_USERNAME=${PUBLIC_ROVERD_USERNAME}
-      - PUBLIC_ROVERD_PASSWORD=${PUBLIC_ROVERD_PASSWORD}
-      - PUBLIC_PASSTHROUGH_HOST=${PUBLIC_PASSTHROUGH_HOST}
-      - PUBLIC_PASSTHROUGH_PORT=${PUBLIC_PASSTHROUGH_PORT}
+      # This information is normally set by roverctl when running the docker image
+      # but it can be useful to set it yourself during development
+      - PUBLIC_ROVERD_HOST=${PUBLIC_ROVERD_HOST} # for example, rover01.local
+      - PUBLIC_ROVERD_PORT=${PUBLIC_ROVERD_PORT} # almost always 80 (the HTTP port that roverd exposes its API on)
+      - PUBLIC_ROVERD_USERNAME=${PUBLIC_ROVERD_USERNAME} # almost always "debix"
+      - PUBLIC_ROVERD_PASSWORD=${PUBLIC_ROVERD_PASSWORD} # almost always "debix"
+      - PUBLIC_PASSTHROUGH_HOST=${PUBLIC_PASSTHROUGH_HOST} # your local IP, only set if the passthrough server is on, for example 192.168.0.119
+      - PUBLIC_PASSTHROUGH_PORT=${PUBLIC_PASSTHROUGH_PORT} # the port that the passthrough server is running on, almost always 7500 but do not set if the passthrough server is off

@@ -1,10 +1,10 @@
-import type { CameraSensorOutput_DebugFrame } from 'ase-rovercom/gen/outputs/camera';
+import type { DebugFrame } from 'ase-rovercom/gen/outputs/camera';
 
 let latestJpeg: Uint8Array | null = null;
 
 const populateCanvas = async (
 	jpeg: Uint8Array | null,
-	canvasData: CameraSensorOutput_DebugFrame['canvas'],
+	canvasData: DebugFrame['canvas'],
 	canvas: OffscreenCanvas,
 	ctx: CanvasRenderingContext2D
 ) => {
@@ -60,11 +60,7 @@ const populateCanvas = async (
 					const x = center?.x ?? 0;
 					const y = center?.y ?? 0;
 
-					if (object.circle.color) {
-						ctx.fillStyle = `rgb(${object.circle.color.r}, ${object.circle.color.g}, ${object.circle.color.b})`;
-					} else {
-						ctx.fillStyle = 'green';
-					}
+					ctx.fillStyle = 'green';
 
 					// todo: add support for radii and different objects
 					ctx.fillRect(x, y, 4, 4);

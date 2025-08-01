@@ -51,7 +51,7 @@
     "@svelte-kit/svelte-toast": "^0.9.7",
     "@sveltestack/svelte-query": "^1.6.0",
     "@xyflow/svelte": "^0.1.30",
-    "ase-rovercom": "https://gitpkg.vercel.app/VU-ASE/rovercom/packages/typescript?v1.7.0",
+    "ase-rovercom": "https://gitpkg.vercel.app/VU-ASE/rovercom/packages/typescript?v2.0.0",
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
     "chartjs-adapter-luxon": "^1.3.1",
