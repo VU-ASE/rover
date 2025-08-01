@@ -11,7 +11,7 @@ const trySensorType = (sensorData: TimestampedSensorOutput): string | undefined 
 	// Is this a video?
 	try {
 		const cameraData = sensorData.sensorData.cameraOutput;
-		if (cameraData && (cameraData.debugFrame || cameraData.trajectory)) {
+		if (cameraData && (cameraData.debugFrame || cameraData.horizontalScans)) {
 			return 'video';
 		}
 	} catch (e) {
@@ -72,12 +72,26 @@ const getParametersFromFrame = (frame: TimestampedSensorOutput) => {
 			) as [string, number][])
 		];
 	}
-	if (frame.sensorData.rpmOuput) {
-		entries = [
-			...(Object.entries(frame.sensorData.rpmOuput).filter(
+	if (frame.sensorData.rpmOutput) {
+		entries = [];
+
+		// Add left motor information (flatten)
+		(
+			Object.entries(frame.sensorData.rpmOutput.leftMotor || {}).filter(
 				([, value]) => typeof value === 'number'
-			) as [string, number][])
-		];
+			) as [string, number][]
+		).forEach(([key, value]) => {
+			entries.push([`leftMotor_${key}`, value]);
+		});
+
+		// Add right motor information (flatten)
+		(
+			Object.entries(frame.sensorData.rpmOutput.rightMotor || {}).filter(
+				([, value]) => typeof value === 'number'
+			) as [string, number][]
+		).forEach(([key, value]) => {
+			entries.push([`rightMotor_${key}`, value]);
+		});
 	}
 	if (frame.sensorData.batteryOutput) {
 		entries = [
