@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/VU-ASE/rover/compare/v1.4.0...v2.0.0) (2025-08-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* updated roverctl-web to rovercom v2
+
+### Features
+
+* updated roverctl-web to rovercom v2 ([1c50f44](https://github.com/VU-ASE/rover/commit/1c50f44bf751a6f3ea98f2935729b4a511c61730))
+
 ## [1.4.0](https://github.com/VU-ASE/rover/compare/v1.3.0...v1.4.0) (2025-06-19)
 
 
