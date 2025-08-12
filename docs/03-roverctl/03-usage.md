@@ -79,6 +79,22 @@ roverctl --host 192.168.0.112
 roverctl -r 12 --username admin --password welcome123
 ```
 
+## Open `roverctl-web` in Debug Mode
+
+To open the `roverctl-web` interface and configure the `passthrough` server, you can run `roverctl` with the `--debug` flag, followed by the Rover you want to connect to. **Docker needs to be installed**.
+
+### Example Usage
+```bash
+# Open roverctl-web and the passthrough server for Rover 12
+roverctl --rover 12 --debug
+
+# Open roverctl-web and the passthrough server for a Rover at 192.168.0.112
+roverctl --host 192.168.0.112 --debug
+
+# Open roverctl-web and the passthrough server for Rover 12 with a custom username and password
+roverctl -r 12 --username admin --password welcome123 --debug
+```
+
 ## View Build Info
 
 To view information about your `roverctl` and/or `roverd` installation, you can use the `roverctl info` command. When no Rover is specified, `roverd`-specific information will not be fetched.
