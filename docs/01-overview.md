@@ -4,10 +4,11 @@ The [rover repository](https://github.com/VU-ASE/rover) houses the software fram
 
 - `roverd`: the daemon that runs on the Rover and listens to commands on an exposed HTTP REST API
 - `roverctl`: the CLI that runs on your local device and interfaces with the `roverd` API to control your Rover
+- `roverctl-web`: the web interface that allows you to execute and debug pipelines
 
 Additional tools are available for debugging and tuning your Rover.
 
-![Schematic of roverd and roverctl](https://github.com/user-attachments/assets/8b9e1c8b-192e-48ba-9dae-d300caf61290)
+![Schematic of roverd and roverctl](https://github.com/user-attachments/assets/477b21f9-7edf-4f7e-8f15-f60e0d5874a7)
 
 ## Versioning and compatibility
 
