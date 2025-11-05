@@ -53,6 +53,7 @@ jobs:
             - name: Build binaries for linux and macos (amd64 and arm64)
               env:
                   VERSION: ${{ env.VERSION }}
+                  CGO_ENABLED: 0 # This ensures that the binary is statically linked.
               working-directory: roverctl/src
               run: |
                   BUILD_DIR=../bin/
