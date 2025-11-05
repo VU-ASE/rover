@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/VU-ASE/rover/compare/v2.0.0...v2.0.1) (2025-11-05)
+
+
+### Bug Fixes
+
+* attempting to build roverctl statically ([5f7e9b7](https://github.com/VU-ASE/rover/commit/5f7e9b779e3ba1a0eea2fd6046722306868c66ce))
+
 ## [2.0.0](https://github.com/VU-ASE/rover/compare/v1.4.0...v2.0.0) (2025-08-01)
 
 
