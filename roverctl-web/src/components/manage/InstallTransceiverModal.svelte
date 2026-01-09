@@ -214,6 +214,22 @@
 		);
 
 	};
+
+	// Mutation store for UI state
+	const installTransceiverMutation = useMutation(
+		'installTransceiver',
+		async () => {
+			await installTransceiver();
+		},
+		{
+			onSettled: () => {
+				queryClient.invalidateQueries('pipeline');
+				queryClient.invalidateQueries('availableServices');
+				queryClient.invalidateQueries('pipelineNodes');
+				queryClient.invalidateQueries('debugActive');
+			}
+		}
+	);
 </script>
 
 {#if $enableMutation.isError}
@@ -221,6 +237,7 @@
 	<div class="fixed inset-0 flex items-center justify-center z-50" aria-modal="true" role="dialog">
 		<!-- Dark background overlay -->
 		<div class="fixed inset-0 bg-black opacity-50"></div>
+
 		<!-- Modal content container -->
 		<div class="bg-surface-600 shadow-lg relative z-50 text-secondary-700 min-w-[40vw]">
 			{#if $enableMutation.error instanceof RoverError && $enableMutation.error.code === 'ERR_NO_TRANSCEIVER_INSTALLED'}
@@ -236,95 +253,63 @@
 
 					<!-- Fetching release -->
 					{#if $getLatestValidRelease.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
+						<div class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
 							<Circle size="20" color={colors.white} />
 							<p>Fetching latest release from github</p>
 						</div>
 					{:else if $getLatestValidRelease.isSuccess}
 						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Found {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables
-								?.repo} release {$getLatestValidRelease.data?.version}
+							Found {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables?.repo}
+							release {$getLatestValidRelease.data?.version}
 						</div>
 					{:else if $getLatestValidRelease.isError}
 						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not fetch for {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease
-								.variables?.repo}:
+							Could not fetch for {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables?.repo}:
 							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
 								{errorToText($getLatestValidRelease.error)}
 							</div>
 						</div>
 					{/if}
 
-					<!-- Downloading zip -->
-					{#if $downloadFile.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
+					<!-- Installing transceiver (NEW: mutation-based UI state) -->
+					{#if $installTransceiverMutation.isLoading}
+						<div class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
 							<Circle size="20" color={colors.white} />
-							<p>Downloading release</p>
+							<p>Installing & configuring transceiver</p>
 						</div>
-					{:else if $downloadFile.isSuccess}
+					{:else if $installTransceiverMutation.isSuccess}
 						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Download successful
+							Installed transceiver successfully
 						</div>
-					{:else if $downloadFile.isError}
+					{:else if $installTransceiverMutation.isError}
 						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not download from {$downloadFile.variables}:
+							Could not install transceiver:
 							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($downloadFile.error)}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Modifying service YAML to match configured passthrough -->
-					{#if $adjustServiceYamlInZip.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
-							<Circle size="20" color={colors.white} />
-							<p>Modifying release properties</p>
-						</div>
-					{:else if $adjustServiceYamlInZip.isSuccess}
-						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Modified service.yaml
-						</div>
-					{:else if $adjustServiceYamlInZip.isError}
-						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not update service.yaml:
-							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($adjustServiceYamlInZip.error)}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Upload zip to Rover -->
-					{#if $uploadZipToRover.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
-							<Circle size="20" color={colors.white} />
-							<p>Uploading tooling to Rover</p>
-						</div>
-					{:else if $uploadZipToRover.isSuccess}
-						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Uploaded transceiver to Rover
-						</div>
-					{:else if $uploadZipToRover.isError}
-						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not upload transceiver:
-							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($uploadZipToRover.error)}
+								{errorToText($installTransceiverMutation.error)}
 							</div>
 						</div>
 					{/if}
 				</div>
+
 				<div class="flex flex-row justify-end mt-4 p-6 pt-2 gap-4">
-					<button on:click={$enableMutation.reset} class="btn variant-soft-secondary">
+					<button
+						on:click={() => {
+							$enableMutation.reset();
+							$installTransceiverMutation.reset();
+						}}
+						class="btn variant-soft-secondary"
+						disabled={$installTransceiverMutation.isLoading}
+					>
 						Close
 					</button>
-					<button on:click={installTransceiver} class="btn variant-soft-primary"> Install </button>
+
+					<button
+						on:click={() => $installTransceiverMutation.mutate()}
+						class="btn variant-soft-primary"
+						disabled={$installTransceiverMutation.isLoading || $getLatestValidRelease.isLoading}
+					>
+						Install
+					</button>
 				</div>
 			{:else if $enableMutation.error instanceof RoverError && $enableMutation.error.code === 'ERR_PASSTHROUGH_DISABLED'}
 				<div class="p-6 pb-4">
