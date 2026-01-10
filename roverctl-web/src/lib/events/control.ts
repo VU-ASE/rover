@@ -3,7 +3,7 @@
  */
 
 import { globalStore } from '$lib/store';
-import { ConnectionState, ControlError } from 'ase-rovercom/gen/control/control';
+import { ConnectionState, ControlError } from 'rovercom/gen/control/control';
 
 const handleIncomingControlMessage = async (e: MessageEvent<ArrayBuffer>) => {
 	globalStore.setCarConnected(true);

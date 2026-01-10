@@ -1,4 +1,4 @@
-import type { DebugFrame } from 'ase-rovercom/gen/outputs/camera';
+import type { DebugFrame } from 'rovercom/gen/outputs/camera';
 
 let latestJpeg: Uint8Array | null = null;
 

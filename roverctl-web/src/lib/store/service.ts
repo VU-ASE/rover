@@ -2,8 +2,8 @@
  * This is all state associated with a service store.
  */
 
-import { SensorOutput } from 'ase-rovercom/gen/outputs/wrapper';
-import type { ServiceEndpoint, ServiceIdentifier } from 'ase-rovercom/gen/debug/debug';
+import { SensorOutput } from 'rovercom/gen/outputs/wrapper';
+import type { ServiceEndpoint, ServiceIdentifier } from 'rovercom/gen/debug/debug';
 import { get, writable } from 'svelte/store';
 import { createSensorStreamStore, type SensorStreamStore } from './sensorstream';
 

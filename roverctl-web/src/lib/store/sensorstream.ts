@@ -3,7 +3,7 @@
  */
 
 import { writable } from 'svelte/store';
-import { SensorOutput } from 'ase-rovercom/gen/outputs/wrapper';
+import { SensorOutput } from 'rovercom/gen/outputs/wrapper';
 import { getParametersFromFrame } from '$lib/utils/sensorType';
 import {
 	addFrameToCircularBuffer,

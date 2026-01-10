@@ -13,11 +13,15 @@ RUN apt-get update && \
     make \
     build-essential \
     pkg-config \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install nodejs (20) and npm
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
+
+# Install bun, pinned to a specific version
+RUN curl -fsSL https://bun.com/install | bash -s "bun-v1.3.5"
 
 # Install Java based on architecture
 RUN ARCH=$(dpkg --print-architecture) && \
@@ -43,5 +47,7 @@ RUN npm install -g @openapitools/openapi-generator-cli
 
 # Verify openapi-generator-cli installation
 RUN openapi-generator-cli version
+
+
 
 
