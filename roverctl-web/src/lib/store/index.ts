@@ -5,9 +5,9 @@
 
 import { get, writable } from 'svelte/store';
 import { type ServiceStore } from './service';
-import { DebugOutput } from 'ase-rovercom/gen/debug/debug';
-import { SensorOutput } from 'ase-rovercom/gen/outputs/wrapper';
-import { TuningState } from 'ase-rovercom/gen/tuning/tuning';
+import { DebugOutput } from 'rovercom/gen/debug/debug';
+import { SensorOutput } from 'rovercom/gen/outputs/wrapper';
+import { TuningState } from 'rovercom/gen/tuning/tuning';
 import { notify } from '$lib/events/notifications';
 
 type GlobalState = {

@@ -3,8 +3,8 @@
  */
 
 import { globalStore } from '$lib/store';
-import { Segment } from 'ase-rovercom/gen/segmentation/segmentation';
-import { DebugOutput } from 'ase-rovercom/gen/debug/debug';
+import { Segment } from 'rovercom/gen/segmentation/segmentation';
+import { DebugOutput } from 'rovercom/gen/debug/debug';
 
 // This keeps track of the last frame that was sent to the server (and the bytes associated to it)
 // we don't need cool svelte stores for it, because we don't need to react to changes
