@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.1.0](https://github.com/VU-ASE/rover/compare/v2.0.1...v2.1.0) (2026-01-16)
+
+
+### Features
+
+* added battery indicator instead of timeoffset ([e220fd1](https://github.com/VU-ASE/rover/commit/e220fd1e19c3bf8df5fbc6af49ee0ab9da21067e))
+* added clock drift warning on timing issues ([418e046](https://github.com/VU-ASE/rover/commit/418e0467a649f9b3a891c7722639127973daadcd))
+* removed corsproxy from transceiver install ([932f287](https://github.com/VU-ASE/rover/commit/932f287c6aaf1ba7184bed2c322d1ffa49bbd422))
+* show transceiver install progress using mutation ([4925b1c](https://github.com/VU-ASE/rover/commit/4925b1c631120913575176006630a6a1771a35a5))
+
+
+### Bug Fixes
+
+* do not freeze lockfile for roverctl-web builds ([8e742c2](https://github.com/VU-ASE/rover/commit/8e742c207e90deafdd204c1b45ccced12b64ed14))
+* removed dependency on gitpkg by switching to bun for repo installs ([8f97b02](https://github.com/VU-ASE/rover/commit/8f97b02e70e4e5484c54226dd743c70724ce3dc0))
+* resolved port forwarding issue in devcontainer, with default setup ([de35ffc](https://github.com/VU-ASE/rover/commit/de35ffc31ab2fd178ad354de9d2a3bef05664c69))
+* update dockerfile and add correct bufbuild dep ([10335c3](https://github.com/VU-ASE/rover/commit/10335c3e90a2a9eeda54421c5a4bdbb4465cb3aa))
+* use bun, instead of npm for builds ([b720c7e](https://github.com/VU-ASE/rover/commit/b720c7e7933a139bcf0ff3f4a2bb2305f34df87f))
+
 ## [2.0.1](https://github.com/VU-ASE/rover/compare/v2.0.0...v2.0.1) (2025-11-05)
 
 
