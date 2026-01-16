@@ -14,7 +14,7 @@
 	import PlaybackSlider from './playbackSlider/index.svelte';
 	import PlaybackIndicator from './indicators/playback.svelte';
 	import PassthroughIndicator from './indicators/passthrough.svelte';
-	import OffsetIndicator from './indicators/offset.svelte';
+	import BatteryIndicator from './indicators/battery.svelte';
 	import BufferSizeIndicator from './indicators/buffer.svelte';
 	import CacheSizeIndicator from './indicators/cache.svelte';
 	import DelayIndicator from './indicators/delay.svelte';
@@ -25,6 +25,7 @@
 	import { serviceIdentifier } from '$lib/utils/service';
 	import { TRANSCEIVER_IDENTIFIER } from '$lib/constants';
 	import { derived, writable } from 'svelte/store';
+	import Clockdrift from './clockdrift.svelte';
 
 	// Periodically refetch the pipeline so that we can show tunables even for services that do not expose
 	// output data
@@ -172,6 +173,7 @@
 			</div>
 		</div>
 	{:else}
+		<Clockdrift />
 		<div
 			class=" animate-fade-out w-full grid grid-cols-1 md:grid-cols-2 p-2 gap-x-4 gap-y-2 items-start"
 		>
@@ -180,7 +182,7 @@
 				<div class="w-full grid grid-cols-3 gap-x-2 gap-y-2">
 					<PlaybackIndicator />
 					<PassthroughIndicator />
-					<OffsetIndicator />
+					<BatteryIndicator />
 					<BufferSizeIndicator />
 					<CacheSizeIndicator />
 					<DelayIndicator />
