@@ -3,7 +3,7 @@ FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 COPY package*.json .
 COPY bun.lockb* .
-RUN bun install --frozen-lockfile
+RUN bun install
 COPY . .
 # These are runtime arguments, but they do need to exist at built time to be able to import from public in svelte
 ARG PUBLIC_ROVERD_HOST=""
@@ -14,7 +14,7 @@ ARG PUBLIC_PASSTHROUGH_HOST=""
 ARG PUBLIC_PASSTHROUGH_PORT=""
 
 RUN bun run build
-RUN bun install --production --frozen-lockfile
+RUN bun install --production
 
 FROM oven/bun:1-alpine
 WORKDIR /app
