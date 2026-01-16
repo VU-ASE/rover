@@ -46,6 +46,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@bufbuild/protobuf": "^2.10.2",
     "@floating-ui/dom": "1.6.12",
     "@iconify-icons/bx": "^1.2.6",
     "@paralleldrive/cuid2": "^2.2.2",
