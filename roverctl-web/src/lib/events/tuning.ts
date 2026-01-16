@@ -1,4 +1,4 @@
-import { TuningState } from 'ase-rovercom/gen/tuning/tuning';
+import { TuningState } from 'rovercom/gen/tuning/tuning';
 
 const sendTuningState = async (channel: RTCDataChannel, state: TuningState) => {
 	const serialized = TuningState.encode(state).finish();

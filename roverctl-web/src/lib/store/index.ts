@@ -5,9 +5,9 @@
 
 import { get, writable } from 'svelte/store';
 import { type ServiceStore } from './service';
-import { DebugOutput } from 'ase-rovercom/gen/debug/debug';
-import { SensorOutput } from 'ase-rovercom/gen/outputs/wrapper';
-import { TuningState } from 'ase-rovercom/gen/tuning/tuning';
+import { DebugOutput } from 'rovercom/gen/debug/debug';
+import { SensorOutput } from 'rovercom/gen/outputs/wrapper';
+import { TuningState } from 'rovercom/gen/tuning/tuning';
 import { notify } from '$lib/events/notifications';
 
 type GlobalState = {
@@ -18,7 +18,7 @@ type GlobalState = {
 
 	// Used to show status when the car is (dis)connected
 	carConnected: boolean;
-	carOffset: number; // The clock offset between the car and the forwarding server, will be <0 if the car is behind
+	carOffset: number; // The clock offset between the car and the forwarding server, will be <0 if the car is behind. Currently not used
 
 	// A map of all services (as nested stores), indexed by their name
 	services: Map<string, ServiceStore>;
@@ -51,6 +51,15 @@ type GlobalState = {
 				value: string;
 		  }
 	))[];
+
+	// If set, this holds a timestamp of a received frame from the car, used to display a warning about clock drift
+	clockDrift: Date | null;
+
+	// If set, holds the battery voltage of the car
+	battery?: {
+		voltage: number;
+		sentAt: Date;
+	};
 };
 
 const defaultState: GlobalState = {
@@ -63,7 +72,9 @@ const defaultState: GlobalState = {
 	cameraFeeds: [],
 	fullscreenMode: false,
 	tuning: undefined,
-	tuningOverrides: []
+	tuningOverrides: [],
+	clockDrift: null,
+	battery: undefined
 };
 
 const createGlobalStore = () => {
@@ -113,7 +124,7 @@ const createGlobalStore = () => {
 			}
 
 			if (parsedData.cameraOutput) {
-				parsedData.timestamp = frame.sentAt; // todo: check
+				parsedData.timestamp = frame.sentAt;
 			}
 
 			if (!parsedData.sensorId) {
@@ -125,23 +136,47 @@ const createGlobalStore = () => {
 			const endpoint = frame.endpoint;
 			const sentAt = new Date(frame.sentAt); // convert ms timestamp to Date
 
+			// Compare the offset between the car and the local clock
+			const carOffset = sentAt.getTime() - Date.now();
+			if (Math.abs(carOffset - val.carOffset) > 500 && !val.clockDrift) {
+				// More than 500ms difference, and we are not already showing a clock drift warning
+				update((oldState) => {
+					return {
+						...oldState,
+						clockDrift: sentAt
+					};
+				});
+			} else if (Math.abs(carOffset - val.carOffset) <= 500 && val.clockDrift) {
+				// Less than 500ms difference, and we are showing a clock drift warning, get rid of it
+				update((oldState) => {
+					return {
+						...oldState,
+						clockDrift: null
+					};
+				});
+			}
+
 			// Is this service already in the global state?
 			const serviceStore = val.services.get(service.name);
-			if (!serviceStore) {
-				// update((oldState) => {
-				// 	const newState = { ...oldState };
-				// 	const newService = createServiceStore({
-				// 		// Name and display name are the same, because that is all
-				// 		name: service.name,
-				// 		displayName: service.name,
-				// 		pid: -1,
-				// 		endpoints: new Map()
-				// 	});
-				// 	newService.addFrame(endpoint, sentAt, parsedData);
-				// 	newState.services.set(service.name, newService);
-				// 	return newState;
-				// });
-				console.error('Received debug data from a service  not found in global state', service);
+			if (!serviceStore && service.name === 'battery') {
+				console.log('Received battery info:', parsedData);
+				if (parsedData.batteryOutput) {
+					update((oldState) => {
+						return {
+							...oldState,
+							battery: {
+								voltage: parsedData.batteryOutput?.currentOutputVoltage || 0,
+								sentAt: sentAt
+							}
+						};
+					});
+				}
+			} else if (!serviceStore) {
+				console.warn(
+					'Received debug data from a service  not found in global state',
+					service,
+					parsedData
+				);
 			} else {
 				serviceStore.addFrame(endpoint, sentAt, parsedData);
 			}

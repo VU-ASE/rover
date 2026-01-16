@@ -17,7 +17,7 @@
 	import PlusIcon from '~icons/subway/add-1';
 	import WebIcon from '~icons/mdi/web';
 	import UploadIcon from '~icons/ic/baseline-upload';
-
+	import { compareVersions } from '$lib/utils/versions';
 	import { Accordion, AccordionItem } from '@skeletonlabs/skeleton';
 
 	import { useStore } from '@xyflow/svelte';
@@ -103,101 +103,133 @@
 		}
 	);
 
-	// Download a file as a Blob.
-	const downloadFile = useMutation('downloadFile', async (url: string) => {
-		const response = await fetch(url);
-		if (!response.ok) throw new Error('Failed to download file');
-		return await response.blob();
-	});
-
-	const adjustServiceYamlInZip = useMutation('modifyZip', async (zipBlob: Blob) => {
-		const zip = await JSZip.loadAsync(zipBlob);
-
-		const serviceYamlFile = zip.file('service.yaml');
-		if (!serviceYamlFile) {
-			throw new Error('service.yaml not found in zip');
-		}
-
-		if (!config.success) {
-			throw new Error(
-				'Local configuration could not be loaded. Did you start roverctl-web through roverctl?'
-			);
-		}
-
-		if (!config.passthrough) {
-			throw new Error('Passthrough address not configured');
-		}
-
-		// Read service.yaml
-		const serviceYamlContent = await serviceYamlFile.async('string');
-		let yamlData = yaml.load(serviceYamlContent) as {
-			configuration: ({
-				name: string;
-			} & (
-				| {
-						type: 'string';
-						value: string;
-				  }
-				| {
-						type: 'number';
-						value: number;
-				  }
-			))[];
-		};
-
-		const ptId = 'passthrough-address';
-		yamlData.configuration = yamlData.configuration.filter((config) => config.name !== ptId);
-		yamlData.configuration.push({
-			name: ptId,
-			type: 'string',
-			value: `http://${config.passthrough.host}:${config.passthrough.port}`
-		});
-
-		// Write back the modified service.yaml
-		const newYamlContent = yaml.dump(yamlData);
-		zip.file('service.yaml', newYamlContent);
-
-		// Generate new zip Blob
-		return zip.generateAsync({ type: 'blob' });
-	});
-
-	const uploadZipToRover = useMutation('uploadZip', async (zipBlob: Blob) => {
-		if (!config.success) {
-			throw new Error(
-				'Local configuration could not be loaded. Did you start roverctl-web through roverctl?'
-			);
-		}
-
-		const zipFile = new File([zipBlob], 'transceiver.zip', { type: zipBlob.type });
-		const sapi = new ServicesApi(config.roverd.api);
-		const res = await sapi.uploadPost(zipFile);
-		return res.data;
-	});
-
 	const installTransceiver = async () => {
 		// Reset all mutations
 		$getLatestValidRelease.reset();
-		$downloadFile.reset();
-		$adjustServiceYamlInZip.reset();
-		$uploadZipToRover.reset();
 
+		if (!config.success) {
+			throw new RoverError('Config could not be loaded', 'ERR_CONFIG_INVALID');
+		}
+
+		if (!config.passthrough) {
+			throw new RoverError('Passthrough was not enabled', 'ERR_PASSTHROUGH_DISABLED');
+		}
+
+		// Get the latest valid release
 		const release = await $getLatestValidRelease.mutateAsync({
 			author: ASE_AUTHOR_IDENTIFIER,
 			repo: TRANSCEIVER_IDENTIFIER
 		});
-		// Bypass cors :(
-		const releaseZip = await $downloadFile.mutateAsync(`https://corsproxy.io?url=${release.url}`);
-		const modifiedZip = await $adjustServiceYamlInZip.mutateAsync(releaseZip);
-		await $uploadZipToRover.mutateAsync(modifiedZip);
-		$enableMutation.reset();
-		$enableMutation.mutate();
 
-		// Reset all mutations
-		$getLatestValidRelease.reset();
-		$downloadFile.reset();
-		$adjustServiceYamlInZip.reset();
-		$uploadZipToRover.reset();
+		// Install from URL via roverd as done in the enableDebugMode mutation
+		const sapi = new ServicesApi(config.roverd.api);
+		const request: FetchPostRequest = { url: release.url };
+		await sapi.fetchPost(request);
+
+		const services = await sapi.fqnsGet();
+		const transceivers = services.data
+			.filter((s) => s.name === TRANSCEIVER_IDENTIFIER)
+			.sort((a, b) => compareVersions(b.version, a.version));
+
+		for (const transceiver of transceivers) {
+			// Does this transceiver expose the same passthrough server as the roverctl configuration?
+			let service = await sapi.servicesAuthorServiceVersionGet(
+				transceiver.author,
+				transceiver.name,
+				transceiver.version
+			);
+			if (!service.data) {
+				continue;
+			}
+
+			// Find the "passthrough-address" configuration key
+			let passthrough = service.data.configuration.find(
+				(c) => c.name === 'passthrough-address' && c.type === 'string'
+			);
+			if (!passthrough) {
+				continue;
+			}
+
+			// Enhancement: try to set the transceiver service.yaml configuration for the passthrough address
+			// to the one specified for roverctl.
+			const newConfig = service.data.configuration.map((c) => {
+				if (
+					c.name === 'passthrough-address' &&
+					c.type === 'string' &&
+					config.success &&
+					config.passthrough
+				) {
+					return {
+						...c,
+						key: c.name,
+						value: 'http://' + config.passthrough.host + ':' + config.passthrough.port
+					};
+				} else {
+					return {
+						...c,
+						key: c.name
+					};
+				}
+			});
+
+			await sapi.servicesAuthorServiceVersionConfigurationPost(
+				transceiver.author,
+				transceiver.name,
+				transceiver.version,
+				newConfig
+			);
+
+			// Then try to refetch again
+			service = await sapi.servicesAuthorServiceVersionGet(
+				transceiver.author,
+				transceiver.name,
+				transceiver.version
+			);
+			if (!service.data) {
+				continue;
+			}
+
+			// Find the "passthrough-address" configuration key
+			passthrough = service.data.configuration.find(
+				(c) => c.name === 'passthrough-address' && c.type === 'string'
+			);
+			if (!passthrough) {
+				continue;
+			}
+
+			const address = passthrough.value.toString().replace(/^https?:\/\//, '');
+			if (address === config.passthrough.host + ':' + config.passthrough.port) {
+				// 4) Enable debug mode (your existing flow)
+				$enableMutation.reset();
+				$enableMutation.mutate();
+
+				// Reset mutation we used here
+				$getLatestValidRelease.reset();
+				return;
+			}
+		}
+		throw new RoverError(
+			'Could not configure transceiver to use the configured passthrough server',
+			'ERR_PASSTHROUGH_NOT_CONFIGURED'
+		);
+
 	};
+
+	// Mutation store for UI state
+	const installTransceiverMutation = useMutation(
+		'installTransceiver',
+		async () => {
+			await installTransceiver();
+		},
+		{
+			onSettled: () => {
+				queryClient.invalidateQueries('pipeline');
+				queryClient.invalidateQueries('availableServices');
+				queryClient.invalidateQueries('pipelineNodes');
+				queryClient.invalidateQueries('debugActive');
+			}
+		}
+	);
 </script>
 
 {#if $enableMutation.isError}
@@ -205,6 +237,7 @@
 	<div class="fixed inset-0 flex items-center justify-center z-50" aria-modal="true" role="dialog">
 		<!-- Dark background overlay -->
 		<div class="fixed inset-0 bg-black opacity-50"></div>
+
 		<!-- Modal content container -->
 		<div class="bg-surface-600 shadow-lg relative z-50 text-secondary-700 min-w-[40vw]">
 			{#if $enableMutation.error instanceof RoverError && $enableMutation.error.code === 'ERR_NO_TRANSCEIVER_INSTALLED'}
@@ -220,95 +253,63 @@
 
 					<!-- Fetching release -->
 					{#if $getLatestValidRelease.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
+						<div class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
 							<Circle size="20" color={colors.white} />
 							<p>Fetching latest release from github</p>
 						</div>
 					{:else if $getLatestValidRelease.isSuccess}
 						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Found {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables
-								?.repo} release {$getLatestValidRelease.data?.version}
+							Found {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables?.repo}
+							release {$getLatestValidRelease.data?.version}
 						</div>
 					{:else if $getLatestValidRelease.isError}
 						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not fetch for {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease
-								.variables?.repo}:
+							Could not fetch for {$getLatestValidRelease.variables?.author}/{$getLatestValidRelease.variables?.repo}:
 							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
 								{errorToText($getLatestValidRelease.error)}
 							</div>
 						</div>
 					{/if}
 
-					<!-- Downloading zip -->
-					{#if $downloadFile.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
+					<!-- Installing transceiver (NEW: mutation-based UI state) -->
+					{#if $installTransceiverMutation.isLoading}
+						<div class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400">
 							<Circle size="20" color={colors.white} />
-							<p>Downloading release</p>
+							<p>Installing & configuring transceiver</p>
 						</div>
-					{:else if $downloadFile.isSuccess}
+					{:else if $installTransceiverMutation.isSuccess}
 						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Download successful
+							Installed transceiver successfully
 						</div>
-					{:else if $downloadFile.isError}
+					{:else if $installTransceiverMutation.isError}
 						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not download from {$downloadFile.variables}:
+							Could not install transceiver:
 							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($downloadFile.error)}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Modifying service YAML to match configured passthrough -->
-					{#if $adjustServiceYamlInZip.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
-							<Circle size="20" color={colors.white} />
-							<p>Modifying release properties</p>
-						</div>
-					{:else if $adjustServiceYamlInZip.isSuccess}
-						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Modified service.yaml
-						</div>
-					{:else if $adjustServiceYamlInZip.isError}
-						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not update service.yaml:
-							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($adjustServiceYamlInZip.error)}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Upload zip to Rover -->
-					{#if $uploadZipToRover.isLoading}
-						<div
-							class="flex flex-row gap-2 px-4 py-2 border-l-2 border-l-secondary-400 text-secondary-400"
-						>
-							<Circle size="20" color={colors.white} />
-							<p>Uploading tooling to Rover</p>
-						</div>
-					{:else if $uploadZipToRover.isSuccess}
-						<div class="px-4 py-2 border-l-2 border-l-green-500 text-green-600">
-							Uploaded transceiver to Rover
-						</div>
-					{:else if $uploadZipToRover.isError}
-						<div class="gap-2 px-4 py-2 border-l-2 border-l-error-400 text-error-400">
-							Could not upload transceiver:
-							<div class="card mt-2 p-2 px-4 text-red-500 font-mono whitespace-pre-line">
-								{errorToText($uploadZipToRover.error)}
+								{errorToText($installTransceiverMutation.error)}
 							</div>
 						</div>
 					{/if}
 				</div>
+
 				<div class="flex flex-row justify-end mt-4 p-6 pt-2 gap-4">
-					<button on:click={$enableMutation.reset} class="btn variant-soft-secondary">
+					<button
+						on:click={() => {
+							$enableMutation.reset();
+							$installTransceiverMutation.reset();
+						}}
+						class="btn variant-soft-secondary"
+						disabled={$installTransceiverMutation.isLoading}
+					>
 						Close
 					</button>
-					<button on:click={installTransceiver} class="btn variant-soft-primary"> Install </button>
+
+					<button
+						on:click={() => $installTransceiverMutation.mutate()}
+						class="btn variant-soft-primary"
+						disabled={$installTransceiverMutation.isLoading || $getLatestValidRelease.isLoading}
+					>
+						Install
+					</button>
 				</div>
 			{:else if $enableMutation.error instanceof RoverError && $enableMutation.error.code === 'ERR_PASSTHROUGH_DISABLED'}
 				<div class="p-6 pb-4">
