@@ -34,14 +34,8 @@ func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost strin
 		if strings.HasSuffix(host, ".local") {
 			if ip, err := utils.ResolveHostWithPing(host); err == nil {
 				host = ip
-			} else {
-				fmt.Printf(">> NOPE 1, %s", err)
 			}
-
-		} else {
-			fmt.Printf(">> NOPE 2")
 		}
-
 	}
 
 	// Create connection
