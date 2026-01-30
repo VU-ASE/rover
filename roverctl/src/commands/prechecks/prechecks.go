@@ -2,9 +2,11 @@ package command_prechecks
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
 	view_incompatible "github.com/VU-ASE/rover/roverctl/src/views/incompatible"
+	"github.com/VU-ASE/rover/roverctl/src/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -28,6 +30,12 @@ func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost strin
 		// Pad number to two digits and use mDNS to resolve the rover's hostname
 		host = fmt.Sprintf("rover%02d.local", roverIndex)
 		// host = fmt.Sprintf("192.168.0.%d", roverIndex+100)
+
+		if strings.HasPrefix(host, ".local") {
+			if ip, error := utils.ResolveHostWithPing(host); error == nil {
+				host = ip
+			}
+		}
 	}
 
 	// Create connection
