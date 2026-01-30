@@ -11,7 +11,7 @@ import (
 )
 
 // A regular expression to match IPv4 addresses in ping output
-var theIPv4Regex = regexp.MustCompile(`$begin:math:text$\(\\d\{1\,3\}\(\?\:\\\.\\d\{1\,3\}\)\{3\}\)$end:math:text$`)
+var theIPv4Regex = regexp.MustCompile(`\((\d+\.\d+\.\d+\.\d+)\)`)
 
 func ResolveHostWithPing(host string) (string, error) {
 	// We use a context with timeout to avoid hanging indefinitely on the ping command

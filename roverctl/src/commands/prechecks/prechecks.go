@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/VU-ASE/rover/roverctl/src/configuration"
-	view_incompatible "github.com/VU-ASE/rover/roverctl/src/views/incompatible"
 	"github.com/VU-ASE/rover/roverctl/src/utils"
+	view_incompatible "github.com/VU-ASE/rover/roverctl/src/views/incompatible"
 
 	"github.com/spf13/cobra"
 )
@@ -31,11 +31,17 @@ func Perform(cmd *cobra.Command, args []string, roverIndex int, roverdHost strin
 		host = fmt.Sprintf("rover%02d.local", roverIndex)
 		// host = fmt.Sprintf("192.168.0.%d", roverIndex+100)
 
-		if strings.HasPrefix(host, ".local") {
-			if ip, error := utils.ResolveHostWithPing(host); error == nil {
+		if strings.HasSuffix(host, ".local") {
+			if ip, err := utils.ResolveHostWithPing(host); err == nil {
 				host = ip
+			} else {
+				fmt.Printf(">> NOPE 1, %s", err)
 			}
+
+		} else {
+			fmt.Printf(">> NOPE 2")
 		}
+
 	}
 
 	// Create connection
