@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/VU-ASE/rover/compare/v2.1.0...v2.1.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* ping rover#.local and use that ip to connect ([9023056](https://github.com/VU-ASE/rover/commit/9023056e3a3baa274e20f6690057c6760f817090))
+
 ## [2.1.0](https://github.com/VU-ASE/rover/compare/v2.0.1...v2.1.0) (2026-01-16)
 
 
