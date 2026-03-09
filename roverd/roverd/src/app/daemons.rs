@@ -123,7 +123,7 @@ impl DaemonManager {
                 streams: vec![voltage_stream.clone()],
             }],
             outputs: vec![],
-            configuration: vec![],
+            configuration: display_service.0.configuration,
             tuning: BootSpecTuning {
                 enabled: false,
                 address: format!("{}:{}", DATA_ADDRESS, START_PORT), // transceiver address
@@ -135,7 +135,7 @@ impl DaemonManager {
             version: battery_service.0.version.clone(),
             inputs: vec![],
             outputs: vec![voltage_stream],
-            configuration: vec![],
+            configuration: battery_service.0.configuration,
             tuning: BootSpecTuning {
                 enabled: false,
                 address: format!("{}:{}", DATA_ADDRESS, START_PORT), // transceiver address
